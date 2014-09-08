@@ -1,0 +1,9 @@
+.pyc
+__pycache__
+
+# ignore the actually used settings file
+/settings.py
+
+# ignore downloads
+/downloads
+
