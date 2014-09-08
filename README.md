@@ -9,8 +9,11 @@ This script does its job for the most part, but it doesn't yet handle all FHIR p
 
 ### Use ###
 
-Copy the file `settings.py` from the respective subdirectory into the project's root directory, adjust the paths if needed, then execute `./generate.py`.
-Supply the `-f` flag to force a re-download of the spec.
+1. Copy the file `settings.py` from the respective subdirectory into the project's root directory, 
+2. Adjust the paths, if necessary
+3. Execute `./generate.py` to run the script.
+    This will use Python _3_, issue `python generate.py` if you don't have Python 3 yet.
+    Supply the `-f` flag to force a re-download of the spec.
 
 > NOTE that the script currently overwrites existing files without asking and without regret.
 
