@@ -39,19 +39,19 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 	public var {{ prop.name }}: {% if prop.isArray %}[{% endif %}{{ prop.className }}{% if prop.isArray %}]{% endif %}?
 	{%- endif %}
 {% endfor -%}
-{% if klass.nonoptional|length > 0 %}	
+{% if klass.hasNonoptional %}	
 	public convenience init(
-	{%- for nonop in klass.nonoptional -%}
+	{%- for nonop in klass.properties %}{% if nonop.nonoptional -%}
 		{{ nonop.name }}: {% if nonop.isArray %}[{% endif %}{{ nonop.className }}{% if nonop.isArray %}]{% endif %}?
 		{%- if not loop.last %}, {% endif -%}
-	{%- endfor -%}
+	{%- endif %}{% endfor -%}
 	) {
 		self.init(json: nil)
-	{%- for nonop in klass.nonoptional %}
+	{%- for nonop in klass.properties %}{% if nonop.nonoptional -%}
 		if nil != {{ nonop.name }} {
 			self.{{ nonop.name }} = {{ nonop.name }}
 		}
-	{%- endfor %}
+	{%- endif %}{% endfor -%}
 	}
 {%- endif %}	
 {% if klass.properties %}

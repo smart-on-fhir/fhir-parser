@@ -2,8 +2,14 @@
 
 from Swift.mappings import *
 
+# where to load the specification archive from
+specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
+
 # the path to prepend to all filenames specified below (will be os.path.join-ed)
 writepath_prepend = '..'
+
+# to how many lines to wrap comments
+wrap_after = 110
 
 # classes/resources
 write_resources = True

@@ -22,6 +22,9 @@ classmap = {
 	'code': 'String',		# for now we're not generating enums for these
 }
 
+# Which class names are native to the lannguage
+natives = ['Bool', 'Int', 'String', 'NSNumber', 'NSDecimalNumber', 'NSDate', 'NSURL']
+
 # Which classes are to be expected from JSON decoding
 jsonmap = {
 	'FHIRElement': 'NSDictionary',
@@ -34,9 +37,9 @@ jsonmap = {
 	'String': 'String',
 	'NSDate': 'String',
 	'NSDecimalNumber': 'Double',
-	'NSDate': 'String',
 	'NSURL': 'String',
 }
+jsonmap_default = 'NSDictionary'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {

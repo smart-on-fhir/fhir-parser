@@ -17,7 +17,6 @@ from jinja2 import Environment, PackageLoader
 from settings import *
 
 
-url_spec = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
 cache = 'downloads'
 loglevel = 0
 
@@ -166,6 +165,7 @@ def process_profile(path, info):
 		main = superclass
 	elif main != superclass:
 		is_subclass = True
+	info['main'] = main
 	
 	print('-->  Parsing profile {}  --  {}'.format(main, filename))
 	classes = []
@@ -212,7 +212,35 @@ def process_profile(path, info):
 				newklass['formal'] = _wrap(profile.get('description'))
 				break
 	
-	info['main'] = main
+	# determine imported classes
+	inline = set()
+	names = set()
+	imports = []
+	for klass in classes:
+		inline.add(klass['className'])
+	
+	for klass in classes:
+		sup = klass.get('superclass')
+		if sup is not None and sup not in names:
+			names.add(sup)
+			imports.append({
+				'name': sup,
+				'native': True if sup in natives else False,
+				'inline': True if sup in inline else False,
+			})
+		
+		for prop in klass['properties']:
+			name = prop['className']
+			if name not in names:
+				names.add(name)
+				imports.append({
+					'name': name,
+					'native': True if name in natives else False,
+					'inline': True if name in inline else False,
+				})
+	
+	info['imports'] = sorted(imports, key=lambda x: x['name'])
+	
 	if write_resources:
 		render({'info': info, 'classes': classes}, tpl_resource_source, tpl_resource_target_ptrn.format(main))
 	
@@ -275,7 +303,7 @@ def parse_elem(path, name, definition, klass):
 			'short': _wrap(short),
 			'formal': _wrap(formal),
 			'properties': [],
-			'nonoptional': []
+			'hasNonoptional': False,
 		}
 		
 		if 0 == len(types):
@@ -299,15 +327,16 @@ def parse_elem(path, name, definition, klass):
 				'name': reservedmap.get(myname, myname),
 				'short': short,
 				'className': mappedClass,
-				'jsonClass': jsonmap.get(mappedClass, 'NSDictionary'),
+				'jsonClass': jsonmap.get(mappedClass, jsonmap_default),
 				'isArray': True if '*' == n_max else False,
 				'isReferenceTo': ref,
-				#'modOptional': '?' if int(n_min) < 1 else ''
+				'nonoptional': 0 != int(n_min),
+				'isNative': True if mappedClass in natives else False,
 			}
 			
 			klass['properties'].append(prop)
-			if 0 != int(n_min):
-				klass['nonoptional'].append(prop)
+			if prop['nonoptional']:
+				klass['hasNonoptional'] = True
 	
 	return newklass
 
@@ -471,7 +500,7 @@ def handle_unittest_property(tests, path, value, klass, is_reference, classes):
 					del value['display']
 			
 			tests.extend(process_unittest_properties(value, subklass, classes, path))
-				
+	
 	# generate correct code for the respective type
 	elif 'String' == klass:
 		tests.append({'path': path, 'expr': u'"{}"'.format(value.replace('"', '\\"'))})
@@ -516,7 +545,7 @@ def _wrap(text):
 	lines = []
 	for line in text.split("\r\n"):		# The spec uses "\r\n"
 		if line:
-			lines.extend(textwrap.wrap(line, width=110))
+			lines.extend(textwrap.wrap(line, width=wrap_after))
 		else:
 			lines.append('')
 	
@@ -550,13 +579,13 @@ if '__main__' == __name__:
 			os.rmdir(cache)
 	
 	# download spec if needed and extract
-	path_spec = os.path.join(cache, os.path.split(url_spec)[1])
+	path_spec = os.path.join(cache, os.path.split(specification_url)[1])
 	expanded_spec = os.path.dirname(path_spec)
 
 	if not os.path.exists(path_spec):
 		if not os.path.isdir(cache):
 			os.mkdir(cache)
-		download(url_spec, path_spec)
+		download(specification_url, path_spec)
 		expand(path_spec, expanded_spec)
 
 	# parse
