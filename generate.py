@@ -507,22 +507,21 @@ def handle_unittest_property(path, value, klass, is_reference, classes):
 	return tests
 
 
-def render(data, template, filename):
+def render(data, template, filepath):
 	""" Render the given class data using the given Jinja2 template, writing
 	the output into 'Models'.
 	"""
 	assert(os.path.exists(template))
 	template = jinjaenv.get_template(template)
 	
-	if not filename:
-		raise Exception("No target filename provided")
-	filepath = os.path.join(writepath_prepend, filename)
+	if not filepath:
+		raise Exception("No target filepath provided")
 	dirpath = os.path.dirname(filepath)
 	if not os.path.isdir(dirpath):
 		os.makedirs(dirpath)
 	
 	with io.open(filepath, 'w', encoding='utf-8') as handle:
-		print('-->  Writing {}'.format(filename))
+		print('-->  Writing {}'.format(filepath))
 		rendered = template.render(data)
 		handle.write(rendered)
 		# handle.write(rendered.encode('utf-8'))

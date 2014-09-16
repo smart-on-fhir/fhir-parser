@@ -30,11 +30,11 @@ jsonmap = {
 	'FHIRElement': 'dict',
 	'FHIRResource': 'dict',
 	
-	'Int': 'int',
+	'str': 'str',
+	'int': 'int',
 	'bool': 'bool',
-	'Double': 'float',
+	'float': 'float',
 	
-	'String': 'str',
 	'FHIRDate': 'str',
 }
 jsonmap_default = 'dict'
