@@ -85,7 +85,7 @@ def parse(path):
 	log0("->  This is FHIR version {}".format(version))
 	now = datetime.date.today()
 	info = {
-		'version': version,
+		'version': version.strip() if version else 'X',
 		'date': now.isoformat(),
 		'year': now.year
 	}
@@ -514,7 +514,11 @@ def handle_unittest_property(path, value, klass, is_reference, classes):
 			
 			tests.extend(process_unittest_properties(value, subklass, classes, path))
 	else:
-		tests.append({'path': path, 'class': klass, 'value': value.replace("\n", "\\n") if str == type(value) else value})
+		isstr = isinstance(value, str)
+		if not isstr and sys.version_info[0] < 3:		# Python 2.x has 'str' and 'unicode'
+			isstr = isinstance(value, basestring)
+			
+		tests.append({'path': path, 'class': klass, 'value': value.replace("\n", "\\n") if isstr else value})
 	
 	return tests
 

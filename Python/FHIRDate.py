@@ -3,22 +3,36 @@
 #
 #  Facilitate working with dates.
 
+import sys
+import isodate
+
+
 class FHIRDate(object):
     """ Facilitate working with dates.
+    
+    - `date`: datetime object representing the receiver's date-time
     """
     
-    def __init__(self, jsondict=None):
-        pass
+    def __init__(self, jsonval=None):
+        self.date = None
+        if jsonval is not None:
+            if 'T' in jsonval:
+                self.date = isodate.parse_datetime(jsonval)
+            else:
+                self.date = isodate.parse_date(jsonval)
     
     @classmethod
     def withJSON(cls, jsonobj):
-        """ Initialize an element from a JSON dictionary or array.
+        """ Initialize a date from an ISO date string.
         """
-        if dict == type(jsonobj):
+        isstr = isinstance(jsonobj, str)
+        if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
+            isstr = isinstance(jsonobj, basestring)
+        if isstr:
             return cls(jsonobj)
         
         arr = []
-        for jsondict in jsonobj:
-            arr.append(cls(jsondict))
+        for jsonval in jsonobj:
+            arr.append(cls(jsonval))
         return arr
     
