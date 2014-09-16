@@ -13,7 +13,13 @@ write_resources = True
 tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source
 tpl_resource_target_ptrn = '../Models/{}.swift'				# where to write the output
 resource_base_target = '../Models/'
-resource_baseclasses = []						# TODO: include from SMART?
+resource_baseclasses = [
+	'Swift/FHIRElement.swift',
+	'Swift/FHIRResource.swift',
+	'Swift/FHIRContainedResource.swift',
+	'Swift/FHIRSearchParam.swift',
+	'Swift/JSON-extensions.swift',
+]
 
 # factory methods
 write_factory = True

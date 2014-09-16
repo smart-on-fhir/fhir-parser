@@ -41,17 +41,18 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 {% endfor -%}
 {% if klass.hasNonoptional %}	
 	public convenience init(
-	{%- for nonop in klass.properties %}{% if nonop.nonoptional -%}
+	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
+		{%- if past_first_item %}, {% endif -%}
 		{{ nonop.name }}: {% if nonop.isArray %}[{% endif %}{{ nonop.className }}{% if nonop.isArray %}]{% endif %}?
-		{%- if not loop.last %}, {% endif -%}
+		{%- set past_first_item = True %}
 	{%- endif %}{% endfor -%}
 	) {
 		self.init(json: nil)
-	{%- for nonop in klass.properties %}{% if nonop.nonoptional -%}
+	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
 		if nil != {{ nonop.name }} {
 			self.{{ nonop.name }} = {{ nonop.name }}
 		}
-	{%- endif %}{% endfor -%}
+	{%- endif %}{% endfor %}
 	}
 {%- endif %}	
 {% if klass.properties %}

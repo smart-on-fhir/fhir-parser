@@ -27,19 +27,19 @@ class {{ class }}Tests: FHIRModelTestCase
 		XCTAssertNotNil(inst, "Must have instantiated a {{ class }} instance")
 	{% for onetest in tcase.tests %}	
 	{%- if "String" == onetest.class %}	
-		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
+		XCTAssertEqual(inst!.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
 	{%- else %}{% if "Int" == onetest.class or "Double" == onetest.class or "NSDecimalNumber" == onetest.class %}
-		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
+		XCTAssertEqual(inst!.{{ onetest.path }}, {{ onetest.value }})
 	{%- else %}{% if "Bool" == onetest.class %}
 		{%- if onetest.value %}
-		XCTAssertTrue(inst.{{ onetest.path }})
+		XCTAssertTrue(inst!.{{ onetest.path }})
 		{%- else %}
-		XCTAssertFalse(inst.{{ onetest.path }})
+		XCTAssertFalse(inst!.{{ onetest.path }})
 		{%- endif %}
 	{%- else %}{% if "NSDate" == onetest.class %}
-		XCTAssertEqual(inst.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}"))
+		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}"))
 	{%- else %}{% if "NSURL" == onetest.class %}
-		XCTAssertEqual(inst.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}"))
+		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}"))
 	{%- else %}
 		# Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.class }}
 	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
