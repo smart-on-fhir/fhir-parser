@@ -12,6 +12,12 @@ wrap_after = 76
 write_resources = True
 tpl_resource_source = 'Python/template-resource.py'		# the template to use as source
 tpl_resource_target_ptrn = '../models/{}.py'			# where to write the output
+resource_base_target = '../models/'
+resource_baseclasses = [
+	'Python/FHIRElement.py',
+	'Python/FHIRResource.py',
+	'Python/FHIRDate.py',
+]
 
 # factory methods
 write_factory = False

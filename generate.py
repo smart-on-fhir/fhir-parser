@@ -7,6 +7,7 @@
 import io
 import sys
 import os.path
+import shutil
 import glob
 import re
 import json
@@ -30,6 +31,10 @@ skip_properties = [
 jinjaenv = Environment(loader=PackageLoader('generate', '.'))
 
 
+def log0(*logstring):
+	if loglevel >= 0:
+		print(' '.join(str(s) for s in logstring))
+
 def log1(*logstring):
 	if loglevel > 0:
 		print(' '.join(str(s) for s in logstring))
@@ -40,7 +45,7 @@ def download(url, path):
 	"""
 	import requests		# import here as we can bypass its use with a manual download
 	
-	print('->  Downloading {}'.format(url))
+	log0('->  Downloading {}'.format(url))
 	ret = requests.get(url)
 	assert(ret.ok)
 	with open(path, 'wb') as handle:
@@ -54,7 +59,7 @@ def expand(path, target):
 	assert(os.path.exists(path))
 	import zipfile		# import here as we can bypass its use with a manual unzip
 	
-	print('->  Extracting to {}'.format(target))
+	log0('->  Extracting to {}'.format(target))
 	with zipfile.ZipFile(path) as z:
 		z.extractall(target)
 
@@ -77,7 +82,7 @@ def parse(path):
 					version = v
 	
 	assert(version is not None)
-	print("->  This is FHIR version {}".format(version))
+	log0("->  This is FHIR version {}".format(version))
 	now = datetime.date.today()
 	info = {
 		'version': version,
@@ -111,6 +116,14 @@ def parse(path):
 				else:
 					in_profiles[spp] = set([profile_name])
 	
+	# write base classes
+	if write_resources and len(all_classes) > 0:
+		for base in resource_baseclasses:
+			if os.path.exists(base):
+				tgt = os.path.join(resource_base_target, os.path.basename(base))
+				log0("-->  Copying base class {} to {}".format(os.path.basename(base), tgt))
+				shutil.copyfile(base, tgt)
+	
 	# process element factory
 	process_factories(factories, info)
 	
@@ -140,7 +153,7 @@ def process_profile(path, info):
 	
 	structure_arr = profile.get('structure')
 	if structure_arr is None or 0 == len(structure_arr):
-		print('xx>  Profile {} has no structure'.format(path))
+		log0('xx>  Profile {} has no structure'.format(path))
 		return None, None, None, None
 	
 	info['filename'] = filename = os.path.basename(path)
@@ -167,7 +180,7 @@ def process_profile(path, info):
 		is_subclass = True
 	info['main'] = main
 	
-	print('-->  Parsing profile {}  --  {}'.format(main, filename))
+	log0('-->  Parsing profile {}  --  {}'.format(main, filename))
 	classes = []
 	
 	# loop elements
@@ -186,7 +199,7 @@ def process_profile(path, info):
 		
 		definition = element.get('definition')
 		if definition is None:
-			print('xx>  No definition for {}'.format(elem_path))
+			log0('xx>  No definition for {}'.format(elem_path))
 			continue
 		
 		k = mapping.get(classpath)
@@ -390,7 +403,7 @@ def process_unittests(path, classes, info):
 	"""
 	all_tests = {}
 	for utest in glob.glob(os.path.join(path, '*-example-*.json')):
-		print('-->  Parsing unit test {}'.format(os.path.basename(utest)))
+		log0('-->  Parsing unit test {}'.format(os.path.basename(utest)))
 		class_name, tests = process_unittest(utest, classes)
 		if class_name is not None:
 			test = {
@@ -432,7 +445,7 @@ def process_unittest(path, classes):
 	del utest['resourceType']
 	klass = classes.get(className)
 	if klass is None:
-		print('xx>  There is no class for "{}"'.format(className))
+		log0('xx>  There is no class for "{}"'.format(className))
 		return None, None
 	
 	# TODO: some "subclasses" like Age are empty because all their definitons are in their parent (Quantity). This
@@ -458,7 +471,7 @@ def process_unittest_properties(utest, klass, classes, prefix=None):
 	for key, val in utest.items():
 		prop = props.get(key)
 		if prop is None:
-			print('xxx>  Unknown property "{}" in unit test on {}'.format(key, klass.get('className')))
+			log1('xxx>  Unknown property "{}" in unit test on {}'.format(key, klass.get('className')))
 		else:
 			propClass = prop['className']
 			refTo = prop.get('isReferenceTo')
@@ -490,8 +503,7 @@ def handle_unittest_property(path, value, klass, is_reference, classes):
 	if dict == type(value):
 		subklass = classes.get(klass)
 		if subklass is None:
-			print('xxx>  No class {} found for "{}"'.format(klass, path))
-			# print(value)
+			log1('xxx>  No class {} found for "{}"'.format(klass, path))
 		else:
 			# TODO: the `reference` and `display` properties on references are not yet supported
 			if is_reference:
@@ -521,7 +533,7 @@ def render(data, template, filepath):
 		os.makedirs(dirpath)
 	
 	with io.open(filepath, 'w', encoding='utf-8') as handle:
-		print('-->  Writing {}'.format(filepath))
+		log0('-->  Writing {}'.format(filepath))
 		rendered = template.render(data)
 		handle.write(rendered)
 		# handle.write(rendered.encode('utf-8'))

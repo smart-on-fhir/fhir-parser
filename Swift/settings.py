@@ -12,6 +12,8 @@ wrap_after = 110
 write_resources = True
 tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source
 tpl_resource_target_ptrn = '../Models/{}.swift'				# where to write the output
+resource_base_target = '../Models/'
+resource_baseclasses = []						# TODO: include from SMART?
 
 # factory methods
 write_factory = True
