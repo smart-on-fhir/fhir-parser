@@ -36,7 +36,8 @@ class {{ class }}Tests(unittest.TestCase):
 		self.assertFalse(inst.{{ onetest.path }})
 		{%- endif %}
 	{%- else %}{% if "FHIRDate" == onetest.class %}
-		#self.assertEqual(inst.{{ onetest.path }}, FHIRDate("{{ onetest.value }}"))
+		self.assertEqual(inst.{{ onetest.path }}.date, FHIRDate("{{ onetest.value }}").date)
+		self.assertEqual(inst.{{ onetest.path }}.isostring, "{{ onetest.value }}")
 	{%- else %}
 		# Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.class }}
 	{%- endif %}{% endif %}{% endif %}{% endif %}

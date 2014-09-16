@@ -5,6 +5,7 @@
 
 import sys
 import isodate
+import datetime
 
 
 class FHIRDate(object):
@@ -20,6 +21,14 @@ class FHIRDate(object):
                 self.date = isodate.parse_datetime(jsonval)
             else:
                 self.date = isodate.parse_date(jsonval)
+    
+    @property
+    def isostring(self):
+        if self.date is None:
+            return None
+        if isinstance(self.date, datetime.datetime):
+            return isodate.datetime_isoformat(self.date)
+        return isodate.date_isoformat(self.date)
     
     @classmethod
     def withJSON(cls, jsonobj):
