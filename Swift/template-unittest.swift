@@ -37,7 +37,7 @@ class {{ class }}Tests: FHIRModelTestCase
 		XCTAssertFalse(inst!.{{ onetest.path }})
 		{%- endif %}
 	{%- else %}{% if "NSDate" == onetest.class %}
-		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}"))
+		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}")!)
 	{%- else %}{% if "NSURL" == onetest.class %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}"))
 	{%- else %}
