@@ -394,7 +394,7 @@ def process_unittests(path, classes, info):
 		class_name, tests = process_unittest(utest, classes)
 		if class_name is not None:
 			test = {
-				'filename': os.path.basename(utest),
+				'filename': os.path.join(unittest_filename_prefix, os.path.basename(utest)),
 				'tests': tests,
 			}
 			
@@ -438,9 +438,9 @@ def process_unittest(path, classes):
 	# TODO: some "subclasses" like Age are empty because all their definitons are in their parent (Quantity). This
 	# means that later on, the property lookup fails to find the properties for "Age", so fix this please.
 	
-	# gather properties and 
+	# gather testable properties
 	tests = process_unittest_properties(utest, klass, classes)
-	return className, tests
+	return className, sorted(tests, key=lambda x: x['path'])
 
 
 def process_unittest_properties(utest, klass, classes, prefix=None):
@@ -465,27 +465,28 @@ def process_unittest_properties(utest, klass, classes, prefix=None):
 			if refTo is not None and 'http://hl7.org/fhir/profiles/' in refTo:		# could be cleaner
 				propClass = refTo.replace('http://hl7.org/fhir/profiles/', '')
 			
-			path = u'{}.{}'.format(prefix, key) if prefix else key
+			path = unittest_format_path_key.format(prefix, key) if prefix else key
 			
 			# property is an array
 			if list == type(val):
 				i = 0
 				for v in val:
-					mypath = '{}![{}]'.format(path, i)
-					handle_unittest_property(tests, mypath, v, propClass, refTo is not None, classes)
+					mypath = unittest_format_path_index.format(path, i)
+					tests.extend(handle_unittest_property(mypath, v, propClass, refTo is not None, classes))
 					i += 1
 			else:
-				handle_unittest_property(tests, path + '!', val, propClass, refTo is not None, classes)
+				tests.extend(handle_unittest_property(unittest_format_path_prepare.format(path), val, propClass, refTo is not None, classes))
 	
 	return tests
 
 
-def handle_unittest_property(tests, path, value, klass, is_reference, classes):
+def handle_unittest_property(path, value, klass, is_reference, classes):
 	assert(path is not None)
 	assert(value is not None)
 	assert(klass is not None)
+	tests = []
 	
-	# property is another element
+	# property is another element, recurse
 	if dict == type(value):
 		subklass = classes.get(klass)
 		if subklass is None:
@@ -500,20 +501,10 @@ def handle_unittest_property(tests, path, value, klass, is_reference, classes):
 					del value['display']
 			
 			tests.extend(process_unittest_properties(value, subklass, classes, path))
-	
-	# generate correct code for the respective type
-	elif 'String' == klass:
-		tests.append({'path': path, 'expr': u'"{}"'.format(value.replace('"', '\\"'))})
-	elif 'Int' == klass or 'Double' == klass or 'NSDecimalNumber' == klass:
-		tests.append({'path': path, 'expr': value})
-	elif 'Bool' == klass:
-		tests.append({'path': path, 'expr': 'true' if value else 'false'})
-	elif 'NSDate' == klass:
-		tests.append({'path': path, 'expr': u'NSDate.dateFromISOString("{}")!'.format(value)})
-	elif 'NSURL' == klass:
-		tests.append({'path': path, 'expr': u'NSURL(string: "{}")'.format(value)})
 	else:
-		print("xxx>  Don't know how to handle \"{}\":".format(path))
+		tests.append({'path': path, 'class': klass, 'value': value.replace("\n", "\\n") if str == type(value) else value})
+	
+	return tests
 
 
 def render(data, template, filename):
