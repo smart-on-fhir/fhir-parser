@@ -3,7 +3,7 @@ Python FHIR Parser
 
 A Python FHIR specification parser for model class generation.
 The `generate.py` script downloads the latest [FHIR specification][fhir], parses resources and their search parameters and puts them into Python dictionaries.
-These dictionaries are then used by [Jinja][] templates to create classes in certain programming languages (currently only _Swift_).
+These dictionaries are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
 
 This script does its job for the most part, but it doesn't yet handle all FHIR pecularities and there's no guarantee the output is correct or complete.
 
