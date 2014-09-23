@@ -10,15 +10,16 @@ wrap_after = 110
 
 # classes/resources
 write_resources = True
-tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source
-tpl_resource_target_ptrn = '../Models/{}.swift'				# where to write the output
-resource_base_target = '../Models/'
-resource_baseclasses = [
-	'Swift/FHIRElement.swift',
-	'Swift/FHIRResource.swift',
-	'Swift/FHIRContainedResource.swift',
-	'Swift/FHIRSearchParam.swift',
-	'Swift/JSON-extensions.swift',
+tpl_resource_source = 'Swift/template-resource.swift'       # the template to use as source
+tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
+resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
+resource_default_base = 'FHIRElement'                       # the default superclass to use
+resource_baseclasses = [                                    # all these files should be copied to `resource_base_target` as well
+    'Swift/FHIRElement.swift',
+    'Swift/FHIRResource.swift',
+    'Swift/FHIRContainedResource.swift',
+    'Swift/FHIRSearchParam.swift',
+    'Swift/JSON-extensions.swift',
 ]
 
 # factory methods
@@ -36,6 +37,6 @@ write_unittests = True
 tpl_unittest_source = 'Swift/template-unittest.swift'
 tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'
 unittest_filename_prefix = ''
-unittest_format_path_prepare = '{}!'			# used to format `path` before appending another path element - one placeholder for `path`
-unittest_format_path_key = '{}.{}'				# used to create property paths by appending `key` to the existing `path` - two placeholders
-unittest_format_path_index = '{}![{}]'			# used for array properties - two placeholders, `path` and the array index
+unittest_format_path_prepare = '{}!'            # used to format `path` before appending another path element - one placeholder for `path`
+unittest_format_path_key = '{}.{}'              # used to create property paths by appending `key` to the existing `path` - two placeholders
+unittest_format_path_index = '{}![{}]'          # used for array properties - two placeholders, `path` and the array index
