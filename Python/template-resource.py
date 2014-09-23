@@ -15,7 +15,7 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
     """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
 {%- if klass.formal %}
     
-    {{ klass.formal|replace("\n", "\n    ")|wordwrap(width=75, wrapstring="\n    ") }}
+    {{ klass.formal|wordwrap(width=75, wrapstring="\n    ") }}
 {%- endif %}
     """
 {%- if klass.resourceName %}

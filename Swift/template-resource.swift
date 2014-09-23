@@ -13,7 +13,7 @@ import Foundation
  *  {{ klass.short|wordwrap(width=116, wrapstring="\n *  ") }}.
 {%- if klass.formal %}
  *
- *  {{ klass.formal|replace("\n", "\n *  ")|wordwrap(width=116, wrapstring="\n *  ") }}
+ *  {{ klass.formal|wordwrap(width=116, wrapstring="\n *  ") }}
 {%- endif %}
  */
 public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }}
