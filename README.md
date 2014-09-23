@@ -34,6 +34,21 @@ Python
 ------
 
 Classes for Python are targeted towards Python 3 but will support the later 2.x versions – at least they should.
+All resource classes will inherit from the `FHIRResource` base class, which is a subclass of `FHIRElement`.
+Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
+
+### Todo: ###
+
+```text
+[x] Generate Python classes
+[x] Deserialize from JSON
+[ ] Implement reference resolver (FHIRElement._resolveReference() and co.)
+[ ] Generate factories if needed
+[ ] Serialize to JSON
+[ ] Create a FHIR server class/protocol for easy resource hookup
+[ ] Generate search parameter constructor
+[x] Generate unit tests from JSON example files
+```
 
 ### Requirements ###
 
