@@ -12,7 +12,6 @@ import glob
 import re
 import json
 import datetime
-import textwrap
 from jinja2 import Environment, PackageLoader
 
 from settings import *
@@ -213,7 +212,7 @@ def process_profile(path, info):
             # is this the resource description itself?
             if elem_path == main:
                 newklass['resourceName'] = main
-                newklass['formal'] = _wrap(requirements)
+                newklass['formal'] = requirements
             
             # this is a "subclass", such as "Age" on "Quantity"
             elif is_subclass:
@@ -221,8 +220,8 @@ def process_profile(path, info):
                 newklass['className'] = main
                 newklass['superclass'] = superclass
                 newklass['is_subclass'] = True
-                newklass['short'] = _wrap(profile.get('name'))
-                newklass['formal'] = _wrap(profile.get('description'))
+                newklass['short'] = profile.get('name')
+                newklass['formal'] = profile.get('description')
                 break
     
     # determine imported classes
@@ -313,8 +312,8 @@ def parse_elem(path, name, definition, klass):
             'path': path,
             'className': className,
             'superclass': classmap.get(types[0][0], resource_default_base) if len(types) > 0 else resource_default_base,
-            'short': _wrap(short),
-            'formal': _wrap(formal),
+            'short': short,
+            'formal': formal,
             'properties': [],
             'hasNonoptional': False,
         }
@@ -543,21 +542,6 @@ def render(data, template, filepath):
         # handle.write(rendered.encode('utf-8'))
 
 
-def _wrap(text):
-    """ Wrap text to a maximum line width.
-    """
-    if text is None:
-        return None
-    lines = []
-    for line in text.split("\r\n"):     # The spec uses "\r\n"
-        if line:
-            lines.extend(textwrap.wrap(line, width=wrap_after))
-        else:
-            lines.append('')
-    
-    return "\n".join(lines)
-
-
 def _camelCase(string, splitter='_'):
     """ Turns a string into CamelCase form without changing the first part's
     case.
@@ -582,7 +566,7 @@ if '__main__' == __name__:
     # start from scratch?
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
         if os.path.isdir(cache):
-            os.rmdir(cache)
+            shutil.rmtree(cache)
     
     # download spec if needed and extract
     path_spec = os.path.join(cache, os.path.split(specification_url)[1])
@@ -596,5 +580,4 @@ if '__main__' == __name__:
 
     # parse
     parse(os.path.join(expanded_spec, 'site'))
-
 

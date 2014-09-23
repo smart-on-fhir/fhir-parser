@@ -12,10 +12,10 @@ from {{ imp.name }} import {{ imp.name }}
 
 
 class {{ klass.className }}({{ klass.superclass|default('object')}}):
-    """ {{ klass.short|replace("\n", "\n    ") }}.
+    """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
 {%- if klass.formal %}
     
-    {{ klass.formal|replace("\n", "\n    ") }}
+    {{ klass.formal|replace("\n", "\n    ")|wordwrap(width=75, wrapstring="\n    ") }}
 {%- endif %}
     """
 {%- if klass.resourceName %}
@@ -29,7 +29,7 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
     {%- for prop in klass.properties %}
         
         self.{{ prop.name }} = {% if "bool" == prop.className %}False{% else %}None{% endif %}
-        """ {{ prop.short }}.
+        """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         Type `{{ prop.className }}`{% if prop.jsonClass != prop.className %}, in jsondict `{{ prop.jsonClass }}`{% endif %} """
     {%- endfor %}
         

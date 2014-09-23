@@ -10,10 +10,10 @@ import Foundation
 {% for klass in classes %}
 
 /**
- *  {{ klass.short|replace("\n", "\n *  ") }}.
+ *  {{ klass.short|wordwrap(width=116, wrapstring="\n *  ") }}.
 {%- if klass.formal %}
  *
- *  {{ klass.formal|replace("\n", "\n *  ") }}
+ *  {{ klass.formal|replace("\n", "\n *  ")|wordwrap(width=116, wrapstring="\n *  ") }}
 {%- endif %}
  */
 public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }}
@@ -25,7 +25,7 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 {% endif -%}
 	
 {%- for prop in klass.properties %}	
-	/** {{ prop.short }} */
+	/** {{ prop.short|wordwrap(width=112, wrapstring="\n     *  ") }} */
 	{%- if prop.isReferenceTo %}
 	public var {{ prop.name }}: {% if prop.isArray %}[{% endif %}FHIRElement{% if prop.isArray %}]{% endif %}? {
 		get { return resolveReference{% if prop.isArray %}s{% endif %}("{{ prop.name }}") }

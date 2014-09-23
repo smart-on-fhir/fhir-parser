@@ -5,9 +5,6 @@ from Swift.mappings import *
 # where to load the specification archive from
 specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
 
-# to how many lines to wrap comments
-wrap_after = 110
-
 # classes/resources
 write_resources = True
 tpl_resource_source = 'Swift/template-resource.swift'       # the template to use as source

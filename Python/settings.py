@@ -5,9 +5,6 @@ from Python.mappings import *
 # where to load the specification archive from
 specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
 
-# to how many lines to wrap comments
-wrap_after = 75
-
 # classes/resources
 write_resources = True
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source
