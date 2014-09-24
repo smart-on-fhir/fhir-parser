@@ -10,15 +10,15 @@ class FHIRElement(object):
     
     def __init__(self, jsondict=None):
         if jsondict is not None:
-            self.updateWithJSON(jsondict)
+            self.update_with_json(jsondict)
     
-    def updateWithJSON(self, jsondict):
+    def update_with_json(self, jsondict):
         """ Update the receiver with data in a JSON dictionary.
         """
         pass
     
     @classmethod
-    def withJSON(cls, jsonobj):
+    def with_json(cls, jsonobj):
         """ Initialize an element from a JSON dictionary or array.
         """
         if dict == type(jsonobj):
@@ -32,15 +32,15 @@ class FHIRElement(object):
     
     # Mark: Resource References
     
-    def _resolveReference(self, name):
+    def _resolve_reference(self, name):
         pass
     
-    def _resolveReferences(self, name):
+    def _resolve_references(self, name):
         pass
     
-    def _didSetReference(self, newValue, name):
+    def _did_set_reference(self, newValue, name):
         pass
     
-    def _didSetReferences(self, newValue, name):
+    def _did_set_references(self, newValue, name):
         pass
     

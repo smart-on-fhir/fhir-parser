@@ -31,7 +31,7 @@ class FHIRDate(object):
         return isodate.date_isoformat(self.date)
     
     @classmethod
-    def withJSON(cls, jsonobj):
+    def with_json(cls, jsonobj):
         """ Initialize a date from an ISO date string.
         """
         isstr = isinstance(jsonobj, str)

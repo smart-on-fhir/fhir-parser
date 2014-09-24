@@ -350,6 +350,10 @@ def parse_elem(path, name, definition, klass):
             klass['properties'].append(prop)
             if prop['nonoptional']:
                 klass['hasNonoptional'] = True
+        
+        # sort properties by name
+        if (klass['properties']) > 0:
+            klass['properties'] = sorted(klass['properties'], key=lambda x: x['name'])
     
     return newklass
 
