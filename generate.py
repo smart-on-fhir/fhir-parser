@@ -48,7 +48,7 @@ def download(url, path):
     log0('->  Downloading {}'.format(url))
     ret = requests.get(url)
     assert(ret.ok)
-    with open(path, 'wb') as handle:
+    with io.open(path, 'wb') as handle:
         for chunk in ret.iter_content():
             handle.write(chunk)
 
@@ -73,7 +73,7 @@ def parse(path):
     
     # get FHIR version
     version = None
-    with open(os.path.join(path, 'version.info'), 'r') as handle:
+    with io.open(os.path.join(path, 'version.info'), 'r', encoding='utf-8') as handle:
         text = handle.read()
         for line in text.split("\n"):
             if '=' in line:
@@ -145,7 +145,7 @@ def process_profile(path, info):
     
     # read the profile
     profile = None
-    with open(path, 'r') as handle:
+    with io.open(path, 'r', encoding='utf-8') as handle:
         profile = json.load(handle)
     
     assert(profile != None)
@@ -439,7 +439,7 @@ def process_unittest(path, classes):
     """
     utest = None
     assert(os.path.exists(path))
-    with open(path, 'r') as handle:
+    with io.open(path, 'r', encoding='utf-8') as handle:
         utest = json.load(handle)
     assert(utest != None)
     

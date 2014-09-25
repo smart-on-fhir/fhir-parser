@@ -13,7 +13,7 @@ from FHIRDate import FHIRDate
 
 class {{ class }}Tests(unittest.TestCase):
     def instantiateFrom(self, filename):
-        with open(filename, 'r') as handle:
+        with io.open(filename, 'r', encoding='utf-8') as handle:
             js = json.load(handle)
         instance = {{ class }}(js)
         self.assertIsNotNone(instance, "Must have instantiated a test instance")
