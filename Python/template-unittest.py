@@ -5,6 +5,7 @@
 #  Copyright (c) {{ info.year }} SMART Platforms. All rights reserved.
 
 
+import io
 import unittest
 import json
 from {{ class }} import {{ class }}
@@ -12,7 +13,7 @@ from FHIRDate import FHIRDate
 
 
 class {{ class }}Tests(unittest.TestCase):
-    def instantiateFrom(self, filename):
+    def instantiate_from(self, filename):
         with io.open(filename, 'r', encoding='utf-8') as handle:
             js = json.load(handle)
         instance = {{ class }}(js)
@@ -22,7 +23,7 @@ class {{ class }}Tests(unittest.TestCase):
 {%- for tcase in tests %}
     
     def test{{ class }}{{ loop.index }}(self):
-        inst = self.instantiateFrom("{{ tcase.filename }}")
+        inst = self.instantiate_from("{{ tcase.filename }}")
         self.assertIsNotNone(inst, "Must have instantiated a {{ class }} instance")
     {% for onetest in tcase.tests %}
     {%- if "str" == onetest.class %}

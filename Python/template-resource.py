@@ -43,8 +43,7 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
         {%- if prop.jsonClass != prop.className %} (represented as `{{ prop.jsonClass }}` in JSON){% endif %}. """
     {%- endfor %}
         
-        if jsondict is not None:
-            self.update_with_json(jsondict)
+        super({{ klass.className }}, self).__init__(jsondict)
     
 {%- for prop in klass.properties %}{% if prop.isReferenceTo %}
     
@@ -60,7 +59,7 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
 {%- if klass.properties %}
     
     def update_with_json(self, jsondict):
-        super(self.__class__, self).update_with_json(jsondict)
+        super({{ klass.className }}, self).update_with_json(jsondict)
         {%- for prop in klass.properties %}
         if '{{ prop.name }}' in jsondict:
             {%- if prop.isNative %}
