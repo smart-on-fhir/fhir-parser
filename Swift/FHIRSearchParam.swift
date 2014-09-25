@@ -13,6 +13,16 @@ let FHIRSearchErrorDomain = "FHIRSearchErrorDomain"
 
 /**
  *  Instances of this class are used to construct parameters for a FHIR search.
+ *  
+ *  Search parameters are designed to be chained together. The first parameter instance in the chain must define
+ *  `profileType`, all subsequent params must have their `subject` set to be useful. Upon calling `construct()` on
+ *  the last item in a chain, all instances are constructed into a URL path with arguments, like:
+ *  
+ *      let qry = Patient.search().address("Boston").gender("male").given_exact("Willis")
+ *  
+ *  Then qry.construct() will create the string:
+ *  
+ *      "Patient?address=Boston&gender=male&given:exact=Willis"
  */
 public class FHIRSearchParam
 {

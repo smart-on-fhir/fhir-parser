@@ -7,3 +7,6 @@ __pycache__
 # ignore downloads
 /downloads
 
+# ignore IDE files
+*.sublime-*
+

@@ -4,6 +4,7 @@
 #  Base class for FHIR resources.
 
 from FHIRElement import FHIRElement
+from FHIRSearchParam import FHIRSearchParam
 
 
 class FHIRResource(FHIRElement):
@@ -34,3 +35,21 @@ class FHIRResource(FHIRElement):
     	instance._server = server
     	
     	return instance
+    
+    
+    # MARK: search
+    
+    def search(self):
+        if self._remote_id is not None:
+            p = FHIRSearchParam('_id')
+            p.reference = self._remote_id
+            p.profile_type = self.__class__
+            return p
+        return self.__class__.where()
+    
+    @classmethod
+    def where(cls):
+        p = FHIRSearchParam(None)
+        p.profile_type = cls
+        return p
+    

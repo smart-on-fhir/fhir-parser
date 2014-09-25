@@ -11,7 +11,7 @@ tpl_resource_source = 'Swift/template-resource.swift'       # the template to us
 tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
 resource_default_base = 'FHIRElement'                       # the default superclass to use
-resource_baseclasses = [                                    # all these files should be copied to `resource_base_target` as well
+resource_baseclasses = [                                    # all these files should be copied to `resource_base_target`
     'Swift/FHIRElement.swift',
     'Swift/FHIRResource.swift',
     'Swift/FHIRContainedResource.swift',
@@ -26,6 +26,7 @@ tpl_factory_target = '../Models/FHIRElement+Factory.swift'
 
 # search parameters
 write_searchparams = True
+search_generate_camelcase = True
 tpl_searchparams_source = 'Swift/template-searchparams.swift'
 tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
 

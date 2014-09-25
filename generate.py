@@ -268,7 +268,10 @@ def process_profile(path, info):
             orig = name
             name = re.sub(r'[^\w\d\-]', '', name)
             if '-' in name:
-                name = _camelCase(name, '-')
+                if search_generate_camelcase:
+                    name = _camelCase(name, '-')
+                else:
+                    name = name.replace('-', '_')
             
             search_params.add('{}|{}|{}'.format(name, orig, tp))
             supported.add(name)

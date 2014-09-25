@@ -45,8 +45,8 @@ Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 [ ] Implement reference resolver (FHIRElement._resolveReference() and co.)
 [ ] Generate factories if needed
 [ ] Serialize to JSON
-[ ] Create a FHIR server class/protocol for easy resource hookup
-[ ] Generate search parameter constructor
+[~] Create a FHIR server class/protocol for easy resource hookup
+[x] Generate search parameter builder
 [x] Generate unit tests from JSON example files
 ```
 
