@@ -8,7 +8,7 @@ class FHIRSearchParam:
     """ This class enables pythonic creation of search URL strings.
     
     Search parameters are designed to be chained together. The first parameter
-    instance in the chain must define `profile_type`, all subsequent params
+    instance in the chain must define `resource_type`, all subsequent params
     must have their `subject` set to be useful. Upon calling `construct()` on
     the last item in a chain, all instances are constructed into a URL path
     with arguments, like:
@@ -27,8 +27,8 @@ class FHIRSearchParam:
         self.subject = subject
         """ The name of the search parameter. """
         
-        self.profile_type = None
-        """ The first search parameter in a list must define a profile type to
+        self.resource_type = None
+        """ The first search parameter in a list must define a resource type to
         which the search is applied. """
         
         self.supported_profiles = None
@@ -128,12 +128,33 @@ class FHIRSearchParam:
             prev = self._previous.construct()
             sep = '&' if self._previous.previous is not None else '?'
             path = '{}{}{}'.format(prev, sep, self.as_param())
-        elif self.profile_type:
-            path = self.profile_type.resource_name
+        elif self.resource_type:
+            path = self.resource_type.resource_name
         else:
-            raise Exception("The first search parameter needs to have \"profile_type\" set")
+            raise Exception("The first search parameter needs to have \"resource_type\" set")
         
         return path
+    
+    
+    # MARK: Execution
+    
+    def perform(self, server):
+        """ Construct the search URL, execute it against the given server and
+        return a list of instances created from returned data.
+        """
+        if server is None:
+            raise Exception("Need a server to perform search")
+        
+        restype = self.first().resource_type
+        if restype is None:
+            raise Exception("Cannot find the resource type against which to run the search")
+        
+        res = server.request_json(self.construct())
+        instances = []
+        if 'entry' in res:
+            for entry in res['entry']:
+                print('entry:', entry)
+        return instances
     
     
     # MARK: Chaning
