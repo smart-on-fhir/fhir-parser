@@ -4,12 +4,14 @@
 #  Base class for FHIR resources.
 
 from FHIRElement import FHIRElement
-from FHIRSearchParam import FHIRSearchParam
+from FHIRSearch import FHIRSearch
+from FHIRSearchElement import FHIRSearchElement
 
 
 class FHIRResource(FHIRElement):
     """ Extends the FHIRElement base class with server talking capabilities.
     """
+    resource_name = 'Resource'
     
     def __init__(self, jsondict=None):
         self._remote_id = None
@@ -39,17 +41,46 @@ class FHIRResource(FHIRElement):
     
     # MARK: search
     
-    def search(self):
-        if self._remote_id is not None:
-            p = FHIRSearchParam('_id')
+    def search(self, struct=None):
+        """ Search can be started in two ways:
+        
+          - via a dictionary containing a search construct
+          - by chaining FHIRSearchElement instances
+        
+        Calling this method with a search struct will return a `FHIRSearch`
+        object representing the search struct. Not supplying a search struct
+        will return a `FHIRSearchElement` instance which will accept subsequent
+        search elements and create a chain.
+        
+        :param dict struct: An optional search structure
+        :returns: A FHIRSearch or FHIRSearchElement instance
+        """
+        if struct is None and self._remote_id is not None:
+            p = FHIRSearchElement('_id')        # TODO: currently the subject of the first search element is ignored, make this work
             p.reference = self._remote_id
-            p.profile_type = self.__class__
+            p.resource_type = self.__class__.resource_name
             return p
-        return self.__class__.where()
+        return self.__class__.where(struct)
     
     @classmethod
-    def where(cls):
-        p = FHIRSearchParam(None)
-        p.profile_type = cls
+    def where(cls, struct=None):
+        """ Search can be started in two ways:
+        
+          - via a dictionary containing a search construct
+          - by chaining FHIRSearchElement instances
+        
+        Calling this method with a search struct will return a `FHIRSearch`
+        object representing the search struct. Not supplying a search struct
+        will return a `FHIRSearchElement` instance which will accept subsequent
+        search elements and create a chain.
+        
+        :param dict struct: An optional search structure
+        :returns: A FHIRSearch or FHIRSearchElement instance
+        """
+        if struct is not None:
+            return FHIRSearch(cls.resource_name, struct)
+        
+        p = FHIRSearchElement(None)
+        p.resource_type = cls.resource_name
         return p
     

@@ -3,15 +3,16 @@
 #
 # Construct server search parameters
 
+from FHIRSearch import FHIRSearch, FHIRSearchParam
 
-class FHIRSearchParam:
+
+class FHIRSearchElement:
     """ This class enables pythonic creation of search URL strings.
     
-    Search parameters are designed to be chained together. The first parameter
+    Search elements are designed to be chained together. The first parameter
     instance in the chain must define `resource_type`, all subsequent params
     must have their `subject` set to be useful. Upon calling `construct()` on
-    the last item in a chain, all instances are constructed into a URL path
-    with arguments, like:
+    the last item in a chain, all instances are constructed into a URL query:
     
     qry = Patient.where().address("Boston").gender('male').given_exact("Willis")
     
@@ -81,21 +82,19 @@ class FHIRSearchParam:
     # MARK: Construction
     
     def as_param(self):
-        """ Returns a string representing the receiver, ready to be used as
-        URL query part. """
+        """ Returns a FHIRSearchParam instance representing the receiver.
+        """
         if self.subject:
             if self.missing is not None:
-                return "{}:missing={}".format(self.subject, 'true' if self.missing else 'false')
+                return FHIRSearchParam('{}:missing'.format(self.subject), 'true' if self.missing else 'false')
             
             if self.string and self.string_exact:
-                return "{}:exact={}".format(self.subject, self.param_value())
+                return FHIRSearchParam('{}:exact'.format(self.subject), self.param_value())
             
             if self.token and self.token_as_text:
-                return "{}:text={}".format(self.subject, self.param_value())
+                return FHIRSearchParam('{}:text'.format(self.subject), self.param_value())
             
-            return "{}={}".format(self.subject, self.param_value())
-        
-        return ''
+        return FHIRSearchParam(self.subject, self.param_value())
     
     def param_value(self):
         """ The value of the parameter. """
@@ -113,48 +112,40 @@ class FHIRSearchParam:
             return self.reference
         return ''
     
-    def construct(self):
-        """ Construct the search param string, if the receiver is part of a
-        chain BACK TO the first search param in a chain.
-        
-        Use the `last` method to get the last param of a chain, then call
-        this method to create the parameter string of the whole chain.
-        """
-        path = ''
-        if self._previous:
-            if not self.subject:
-                raise Exception("Need a subject to construct a search URL for the 2nd or later argument")
-            
-            prev = self._previous.construct()
-            sep = '&' if self._previous.previous is not None else '?'
-            path = '{}{}{}'.format(prev, sep, self.as_param())
-        elif self.resource_type:
-            path = self.resource_type.resource_name
-        else:
-            raise Exception("The first search parameter needs to have \"resource_type\" set")
-        
-        return path
-    
     
     # MARK: Execution
+    
+    def as_search(self):
+        """ Create a `FHIRSearch` representation of the chain up to the
+        receiver. This is internally used for the `construct` and `perform`
+        calls, which are executed on the FHIRSearch instance created here.
+        """
+        params = []
+        prev = self
+        while prev.previous is not None:
+            params.insert(0, prev.as_param())
+            prev = prev.previous
+        
+        if not prev.resource_type:
+            raise Exception("The first search parameter needs to have \"resource_type\" set")
+        
+        srch = FHIRSearch(prev.resource_type)
+        srch.params = params
+        return srch
+    
+    def construct(self):
+        """ Construct and return the search query string.
+        
+        Use the `last` method to get the last param of a chain if needed, then
+        call this method to create the parameter string of the whole chain.
+        """
+        return self.as_search().construct()
     
     def perform(self, server):
         """ Construct the search URL, execute it against the given server and
         return a list of instances created from returned data.
         """
-        if server is None:
-            raise Exception("Need a server to perform search")
-        
-        restype = self.first().resource_type
-        if restype is None:
-            raise Exception("Cannot find the resource type against which to run the search")
-        
-        res = server.request_json(self.construct())
-        instances = []
-        if 'entry' in res:
-            for entry in res['entry']:
-                print('entry:', entry)
-        return instances
+        return self.as_search().perform(server)
     
     
     # MARK: Chaning

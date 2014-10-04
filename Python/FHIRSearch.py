@@ -10,50 +10,87 @@ except Exception as e:
 
 
 class FHIRSearch(object):
-    """ Create FHIR search params from NoSQL-like query structures.
+    """ Create a FHIR search from NoSQL-like query structures.
     """
     
-    def __init__(self, struct):
-        if dict != type(struct):
-            raise Exception("Must pass a Python dictionary, but got a {}".format(type(struct)))
-        
+    def __init__(self, resource_type, struct=None):
+        self.resource_type = resource_type
         self.params = []
-        for key, val in struct.items():
-            self.params.append(FHIRSearchParam(key, val))
+        self.wants_expand = False
+        
+        if struct is not None:
+            if dict != type(struct):
+                raise Exception("Must pass a Python dictionary, but got a {}".format(type(struct)))
+            self.wants_expand = True
+            for key, val in struct.items():
+                self.params.append(FHIRSearchParam(key, val))
+    
+    
+    # MARK: Execution
     
     def construct(self):
+        """ Constructs the URL with query string from the receiver's params.
+        """
         parts = []
         if self.params is not None:
             for param in self.params:
-                for expanded in param.expand():
-                    parts.append(expanded.as_parameter())
-        return '&'.join(parts)
+                if self.wants_expand:
+                    for expanded in param.handle():
+                        parts.append(expanded.as_parameter())
+                else:
+                    parts.append(param.as_parameter())
+        
+        return '{}?{}'.format(self.resource_type, '&'.join(parts))
+    
+    def perform(self, server):
+        """ Construct the search URL and execute it against the given server.
+        :returns: A list of instances created from returned data (TODO)
+        """
+        if server is None:
+            raise Exception("Need a server to perform search")
+        if self.resource_type is None:
+            raise Exception("Need resource_type set to perform search")
+        
+        res = server.request_json(self.construct())
+        instances = []
+        if 'entry' in res:
+            for entry in res['entry']:
+                print('entry:', entry)
+        return instances
 
 
 class FHIRSearchParam(object):
     """ Holds one search parameter.
+    
+    The instance's `value` can either be a string value or a search construct
+    dictionary. In the latter case the class's `handle` method must be called
+    to arrive at search parameter instances that can be converted into a URL
+    query.
     """
     
     def __init__(self, name, value):
         self.name = name
         self.value = value
-        self.handler = None
     
     def copy(self):
         clone = object.__new__(self.__class__)
         clone.__dict__ = self.__dict__.copy()
         return clone
     
-    def expand(self):
-        """ Parse the receiver's value and return a list of directly usable
-        FHIRSearchParam instances.
+    def handle(self):
+        """ Parses the receiver's value and returns a list of FHIRSearchParam
+        instances. Needs only be called if the param needs to be handled, i.e.
+        its value is a query structure.
+        
+        :returns: A list with one or more FHIRSearchParam instances, not
+        altering the receiver
         """
-        if self.handler is None:
-            self.handler = FHIRSearchParamHandler.handler_for(self.name)(None, self.value)
-        self.handler.prepare()
-        return self.handler.apply(self)
+        handler = FHIRSearchParamHandler.handler_for(self.name)(None, self.value)
+        return handler.handle(self.copy())
     
     def as_parameter(self):
+        """ Return a string that represents the reciever as "key=value".
+        """
         return '{}={}'.format(self.name, quote_plus(self.value, safe=',<=>'))
 
 
@@ -85,7 +122,16 @@ class FHIRSearchParamHandler(object):
         self.modifier = []
         self.multiplier = []
     
+    def handle(self, param):
+        """ Applies all handlers to the given search parameter.
+        :returns: A list of one or more new `FHIRSearchParam` instances
+        """
+        self.prepare()
+        return self.expand(param)
+    
     def prepare(self, parent=None):
+        """ Creates sub-handlers as needed, then prepares the receiver.
+        """
         if dict == type(self.value):
             for key, val in self.value.items():
                 handler = FHIRSearchParamHandler.handler_for(key)(key, val)
@@ -94,25 +140,30 @@ class FHIRSearchParamHandler(object):
         if parent is not None:
             parent.multiplier.append(self)
     
-    def apply(self, param):
-        for handler in self.modifier:
-            handler.apply(param)
+    def expand(self, param):
+        """ Executes the receiver's modifier and multiplier on itself, applying
+        changes to the given search param instance.
         
-        self._apply(param)
+        :returns: A list of one or more FHIRSearchParam instances
+        """
+        for handler in self.modifier:
+            handler.expand(param)
+        
+        self.apply(param)
         
         # if we have multiplier, expand sequentially
         if len(self.multiplier) > 0:
             expanded = []
             for handler in self.multiplier:
                 clone = param.copy()
-                expanded.extend(handler.apply(clone))
+                expanded.extend(handler.expand(clone))
             
             return expanded
         
         # no multiplier, just return the passed-in paramater
         return [param]
     
-    def _apply(self, param):
+    def apply(self, param):
         if self.key is not None:
             param.name = '{}.{}'.format(param.name, self.key)
         if 0 == len(self.multiplier):
@@ -130,7 +181,7 @@ class FHIRSearchParamModifierHandler(FHIRSearchParamHandler):
     }
     handles = modifiers.keys()
     
-    def _apply(self, param):
+    def apply(self, param):
         if self.key not in self.__class__.modifiers:
             raise Exception('Unknown modifier "{}" for "{}"'.format(self.key, param.name))
         param.name += self.__class__.modifiers[self.key]
@@ -146,7 +197,7 @@ class FHIRSearchParamOperatorHandler(FHIRSearchParamHandler):
     }
     handles = operators.keys()
     
-    def _apply(self, param):
+    def apply(self, param):
         if self.key not in self.__class__.operators:
             raise Exception('Unknown operator "{}" for "{}"'.format(self.key, parent.name))
         param.value = self.__class__.operators[self.key] + self.value
@@ -184,7 +235,7 @@ class FHIRSearchParamTypeHandler(FHIRSearchParamHandler):
     def prepare(self, parent):
         parent.modifier.append(self)
     
-    def _apply(self, param):
+    def apply(self, param):
         param.name = '{}:{}'.format(param.name, self.value)
     
 
@@ -196,24 +247,32 @@ FHIRSearchParamHandler.announce_handler(FHIRSearchParamTypeHandler)
 
 
 if '__main__' == __name__:
-    print('1 '+FHIRSearch({'name': 'Willis'}).construct())
-    print('1 name=Willis')
+    from Patient import Patient
+    print('1 '+FHIRSearch('Patient', {'name': 'Willis'}).construct())
+    print('1 '+Patient.where({'name': 'Willis'}).construct())
+    print('1 '+Patient.where().name('Willis').construct())
+    print('= Patient?name=Willis')
     print('')
-    print('2 '+FHIRSearch({'name': {'$exact': 'Willis'}}).construct())
-    print('2 name:exact=Willis')
+    print('2 '+FHIRSearch('Patient', {'name': {'$exact': 'Willis'}}).construct())
+    print('= Patient?name:exact=Willis')
     print('')
-    print('3 '+FHIRSearch({'name': {'$or': ['Willis', 'Wayne', 'Bruce']}}).construct())
-    print('3 name=Willis,Wayne,Bruce')
+    print('3 '+FHIRSearch('Patient', {'name': {'$or': ['Willis', 'Wayne', 'Bruce']}}).construct())
+    print('= Patient?name=Willis,Wayne,Bruce')
     print('')
-    print('4 '+FHIRSearch({'name': {'$and': ['Willis', {'$exact': 'Bruce'}]}}).construct())
-    print('4 name=Willis&name:exact=Bruce')
+    print('4 '+FHIRSearch('Patient', {'name': {'$and': ['Willis', {'$exact': 'Bruce'}]}}).construct())
+    print('= Patient?name=Willis&name:exact=Bruce')
     print('')
-    print('5 '+FHIRSearch({'birthDate': {'$gt': '1950', '$lte': '1970'}}).construct())
-    print('5 birthDate=>1950&birthDate=<=1970')
+    print('5 '+FHIRSearch('Patient', {'birthDate': {'$gt': '1950', '$lte': '1970'}}).construct())
+    print('= Patient?birthDate=>1950&birthDate=<=1970')
     print('')
-    print('6 '+FHIRSearch({'subject.name': {'$exact': 'Willis'}}).construct())
-    print('6 subject.name:exact=Willis')
+    print('6 '+FHIRSearch('Patient', {'subject.name': {'$exact': 'Willis'}}).construct())
+    print('= Patient?subject.name:exact=Willis')
     print('')
-    print('7 '+FHIRSearch({'subject': {'$type': 'Patient', 'name': 'Willis', 'birthDate': {'$gt': '1950', '$lte': '1970'}}}).construct())
-    print('7 subject:Patient.name=Willis&subject:Patient.birthDate=>1950&subject:Patient.birthDate=<=1970')
+    srch = FHIRSearch('Patient', {'subject': {'$type': 'Patient', 'name': 'Willis', 'birthDate': {'$gt': '1950', '$lte': '1970'}}})
+    print('7 '+srch.construct())
+    print('7 '+srch.construct())
+    print('= Patient?subject:Patient.name=Willis&subject:Patient.birthDate=>1950&subject:Patient.birthDate=<=1970')
+    print('')
+    print('8 '+FHIRSearch('Patient', {"name": {"$and": ["Willis", {"$exact": "Bruce"}]}, "birthDay": {"$and": [{"$lt": "1970", "$gte": "1950"}]}}).construct())
+    print('= Patient?name=Willis&name:exact=Bruce&birthDay=>=1950&birthDay=<1970')
     
