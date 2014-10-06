@@ -58,7 +58,7 @@ class FHIRResource(FHIRElement):
         if struct is None and self._remote_id is not None:
             p = FHIRSearchElement('_id')        # TODO: currently the subject of the first search element is ignored, make this work
             p.reference = self._remote_id
-            p.resource_type = self.__class__.resource_name
+            p.resource_type = self.__class__
             return p
         return self.__class__.where(struct)
     
@@ -81,6 +81,6 @@ class FHIRResource(FHIRElement):
             return FHIRSearch(cls.resource_name, struct)
         
         p = FHIRSearchElement(None)
-        p.resource_type = cls.resource_name
+        p.resource_type = cls
         return p
     

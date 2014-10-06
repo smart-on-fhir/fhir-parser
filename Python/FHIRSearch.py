@@ -15,8 +15,13 @@ class FHIRSearch(object):
     
     def __init__(self, resource_type, struct=None):
         self.resource_type = resource_type
+        """ The resource type class. """
+        
         self.params = []
+        """ FHIRSearchParam instances. """
+        
         self.wants_expand = False
+        """ Used internally; whether or not `params` must be expanded first. """
         
         if struct is not None:
             if dict != type(struct):
@@ -40,7 +45,7 @@ class FHIRSearch(object):
                 else:
                     parts.append(param.as_parameter())
         
-        return '{}?{}'.format(self.resource_type, '&'.join(parts))
+        return '{}?{}'.format(self.resource_type.resource_name, '&'.join(parts))
     
     def perform(self, server):
         """ Construct the search URL and execute it against the given server.
@@ -52,10 +57,12 @@ class FHIRSearch(object):
             raise Exception("Need resource_type set to perform search")
         
         res = server.request_json(self.construct())
+        cls = self.resource_type
         instances = []
         if 'entry' in res:
             for entry in res['entry']:
-                print('entry:', entry)
+                if 'content' in entry:
+                    instances.append(cls(jsondict=entry['content']))
         return instances
 
 
@@ -248,31 +255,31 @@ FHIRSearchParamHandler.announce_handler(FHIRSearchParamTypeHandler)
 
 if '__main__' == __name__:
     from Patient import Patient
-    print('1 '+FHIRSearch('Patient', {'name': 'Willis'}).construct())
+    print('1 '+FHIRSearch(Patient, {'name': 'Willis'}).construct())
     print('1 '+Patient.where({'name': 'Willis'}).construct())
     print('1 '+Patient.where().name('Willis').construct())
     print('= Patient?name=Willis')
     print('')
-    print('2 '+FHIRSearch('Patient', {'name': {'$exact': 'Willis'}}).construct())
+    print('2 '+FHIRSearch(Patient, {'name': {'$exact': 'Willis'}}).construct())
     print('= Patient?name:exact=Willis')
     print('')
-    print('3 '+FHIRSearch('Patient', {'name': {'$or': ['Willis', 'Wayne', 'Bruce']}}).construct())
+    print('3 '+FHIRSearch(Patient, {'name': {'$or': ['Willis', 'Wayne', 'Bruce']}}).construct())
     print('= Patient?name=Willis,Wayne,Bruce')
     print('')
-    print('4 '+FHIRSearch('Patient', {'name': {'$and': ['Willis', {'$exact': 'Bruce'}]}}).construct())
+    print('4 '+FHIRSearch(Patient, {'name': {'$and': ['Willis', {'$exact': 'Bruce'}]}}).construct())
     print('= Patient?name=Willis&name:exact=Bruce')
     print('')
-    print('5 '+FHIRSearch('Patient', {'birthDate': {'$gt': '1950', '$lte': '1970'}}).construct())
+    print('5 '+FHIRSearch(Patient, {'birthDate': {'$gt': '1950', '$lte': '1970'}}).construct())
     print('= Patient?birthDate=>1950&birthDate=<=1970')
     print('')
-    print('6 '+FHIRSearch('Patient', {'subject.name': {'$exact': 'Willis'}}).construct())
+    print('6 '+FHIRSearch(Patient, {'subject.name': {'$exact': 'Willis'}}).construct())
     print('= Patient?subject.name:exact=Willis')
     print('')
-    srch = FHIRSearch('Patient', {'subject': {'$type': 'Patient', 'name': 'Willis', 'birthDate': {'$gt': '1950', '$lte': '1970'}}})
+    srch = FHIRSearch(Patient, {'subject': {'$type': 'Patient', 'name': 'Willis', 'birthDate': {'$gt': '1950', '$lte': '1970'}}})
     print('7 '+srch.construct())
     print('7 '+srch.construct())
     print('= Patient?subject:Patient.name=Willis&subject:Patient.birthDate=>1950&subject:Patient.birthDate=<=1970')
     print('')
-    print('8 '+FHIRSearch('Patient', {"name": {"$and": ["Willis", {"$exact": "Bruce"}]}, "birthDay": {"$and": [{"$lt": "1970", "$gte": "1950"}]}}).construct())
+    print('8 '+FHIRSearch(Patient, {"name": {"$and": ["Willis", {"$exact": "Bruce"}]}, "birthDay": {"$and": [{"$lt": "1970", "$gte": "1950"}]}}).construct())
     print('= Patient?name=Willis&name:exact=Bruce&birthDay=>=1950&birthDay=<1970')
     
