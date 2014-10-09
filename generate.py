@@ -185,7 +185,10 @@ def process_profile(path, info):
     
     # loop elements
     mapping = {}
-    elements = structure.get('element', [])
+    if 'snapshot' in structure:
+        elements = structure['snapshot'].get('element', [])     # 0.3 (or nightly)
+    else:
+        elements = structure.get('element', [])                 # 0.28
     
     for element in elements:
         elem_path = element['path']
@@ -607,6 +610,8 @@ if '__main__' == __name__:
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
         if os.path.isdir(cache):
             shutil.rmtree(cache)
+    else:
+        log0('->  Using cached FHIR spec, supply "-f" to re-download')
     
     # download spec if needed and extract
     path_spec = os.path.join(cache, os.path.split(specification_url)[1])
