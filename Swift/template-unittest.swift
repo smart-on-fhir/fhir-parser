@@ -3,7 +3,7 @@
 //  {{ class }}Tests
 //
 //  Generated from FHIR {{ info.version }} on {{ info.date }}.
-//  Copyright (c) {{ info.year }} SMART Platforms. All rights reserved.
+//  {{ info.year }}, SMART Platforms.
 //
 
 import Cocoa

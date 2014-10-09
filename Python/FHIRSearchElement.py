@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Construct server search parameters
+#  Construct server search parameters.
+#  2014, SMART Platforms.
 
 from FHIRSearch import FHIRSearch, FHIRSearchParam
 

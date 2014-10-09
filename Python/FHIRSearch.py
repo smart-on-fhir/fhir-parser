@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Create FHIR search params from NoSQL-like query structures.
+#  Create FHIR search params from NoSQL-like query structures.
+#  2014, SMART Platforms.
 
 try:
     from urllib import quote_plus

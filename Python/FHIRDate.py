@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Facilitate working with dates.
+#  2014, SMART Platforms.
 
 import sys
 import isodate

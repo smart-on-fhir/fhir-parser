@@ -3,7 +3,7 @@
 //  SMART-on-FHIR
 //
 //  Created by Pascal Pfiffner on 7/18/14.
-//  Copyright (c) 2014 SMART Platforms. All rights reserved.
+//  2014, SMART Platforms.
 //
 
 import Foundation

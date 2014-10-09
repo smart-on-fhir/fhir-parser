@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Base class for FHIR resources.
+#  2014, SMART Platforms.
 
 from FHIRElement import FHIRElement
 from FHIRSearch import FHIRSearch

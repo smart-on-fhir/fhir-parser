@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Generated from FHIR {{ info.version }} ({{ info.filename }}) on {{ info.date }}.
-#  Copyright (c) {{ info.year }} SMART Platforms. All rights reserved.
+#  {{ info.year }}, SMART Platforms.
 
 # We need to support importing other generated classes without relying on the
 # models being part of a specific module. To do so we prepend the current
