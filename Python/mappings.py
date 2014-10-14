@@ -4,6 +4,8 @@
 classmap = {
     'Structure': 'FHIRElement',
     'Resource': 'FHIRResource',
+    'ResourceReference': 'FHIRReference',
+    'Any': 'FHIRResource',
     
     'boolean': 'bool',
     'integer': 'int',
@@ -20,6 +22,11 @@ classmap = {
     'base64Binary': 'str',
     'xhtml': 'str',
     'code': 'str',      # for now we're not generating enums for these
+}
+
+# Which mapped class is a subclass of a profile (used for FHIRReference)
+subclassmap = {
+    'FHIRReference': 'ResourceReference',
 }
 
 # Which class names are native to the lannguage

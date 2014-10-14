@@ -239,23 +239,23 @@ def process_profile(path, info):
         sup = klass.get('superclass')
         if sup is not None and sup not in names:
             names.add(sup)
-            imports.append({
-                'name': sup,
-                'native': True if sup in natives else False,
-                'inline': True if sup in inline else False,
-            })
+            if sup not in natives and sup not in inline:
+                imports.append(sup)
         
         for prop in klass['properties']:
             name = prop['className']
             if name not in names:
                 names.add(name)
-                imports.append({
-                    'name': name,
-                    'native': True if name in natives else False,
-                    'inline': True if name in inline else False,
-                })
+                if name not in natives and name not in inline:
+                    imports.append(name)
+            
+            refTo = prop.get('isReferenceTo')
+            if refTo is not None and refTo not in names:
+                names.add(refTo)
+                if refTo not in natives and refTo not in inline:
+                    imports.append(refTo)
     
-    info['imports'] = sorted(imports, key=lambda x: x['name'])
+    info['imports'] = sorted(imports)
     
     if write_resources:
         render({'info': info, 'classes': classes}, tpl_resource_source, tpl_resource_target_ptrn.format(main))
@@ -336,11 +336,18 @@ def parse_elem(path, name, definition, klass):
                 tp = 'FHIRElement'
                 myname = name.replace('[x]', '')
             if '[x]' in myname:
-                # TODO: "MedicationPrescription.reason[x]" can be a "ResourceReference" but apparently
-                # should be called "reasonResource", NOT "reasonResourceReference". Interesting.
-                if 'ResourceReference' == tp:
-                    tp = 'Resource'
-                myname = name.replace('[x]', '{}{}'.format(tp[:1].upper(), tp[1:]))
+                # TODO: "MedicationPrescription.reason[x]" can be a
+                # "ResourceReference" but apparently should be called
+                # "reasonResource", NOT "reasonResourceReference". Interesting.
+                kl = 'Resource' if 'ResourceReference' == tp else tp
+                myname = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
+            
+            # reference?
+            if ref is not None:
+                ref = ref.replace('http://hl7.org/fhir/profiles/', '')      # could be cleaner
+                ref = classmap.get(ref, ref)
+            
+            # describe the property
             mappedClass = classmap.get(tp, tp)
             prop = {
                 'name': reservedmap.get(myname, myname),
@@ -439,7 +446,8 @@ def process_unittests(path, classes, info):
 
 
 def process_unittest(path, classes):
-    """ Process a unit test file at the given path with a given class.
+    """ Process a unit test file at the given path, determining class structure
+    from the given classes dict.
     
     :returns: A tuple with (top-class-name, [test-dictionaries])
     """
@@ -484,10 +492,6 @@ def process_unittest_properties(utest, klass, classes, prefix=None):
             log1('xxx>  Unknown property "{}" in unit test on {}'.format(key, klass.get('className')))
         else:
             propClass = prop['className']
-            refTo = prop.get('isReferenceTo')
-            if refTo is not None and 'http://hl7.org/fhir/profiles/' in refTo:      # could be cleaner
-                propClass = refTo.replace('http://hl7.org/fhir/profiles/', '')
-            
             path = unittest_format_path_key.format(prefix, key) if prefix else key
             
             # property is an array
@@ -495,15 +499,15 @@ def process_unittest_properties(utest, klass, classes, prefix=None):
                 i = 0
                 for v in val:
                     mypath = unittest_format_path_index.format(path, i)
-                    tests.extend(handle_unittest_property(mypath, v, propClass, refTo is not None, classes))
+                    tests.extend(handle_unittest_property(mypath, v, propClass, classes))
                     i += 1
             else:
-                tests.extend(handle_unittest_property(unittest_format_path_prepare.format(path), val, propClass, refTo is not None, classes))
+                tests.extend(handle_unittest_property(unittest_format_path_prepare.format(path), val, propClass, classes))
     
     return tests
 
 
-def handle_unittest_property(path, value, klass, is_reference, classes):
+def handle_unittest_property(path, value, klass, classes):
     assert(path is not None)
     assert(value is not None)
     assert(klass is not None)
@@ -511,17 +515,10 @@ def handle_unittest_property(path, value, klass, is_reference, classes):
     
     # property is another element, recurse
     if dict == type(value):
-        subklass = classes.get(klass)
+        subklass = classes.get(subclassmap[klass] if klass in subclassmap else klass)
         if subklass is None:
             log1('xxx>  No class {} found for "{}"'.format(klass, path))
         else:
-            # TODO: the `reference` and `display` properties on references are not yet supported
-            if is_reference:
-                if 'reference' in value:
-                    del value['reference']
-                if 'display' in value:
-                    del value['display']
-            
             tests.extend(process_unittest_properties(value, subklass, classes, path))
     else:
         isstr = isinstance(value, str)

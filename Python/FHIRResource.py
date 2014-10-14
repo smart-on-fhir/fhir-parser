@@ -4,12 +4,12 @@
 #  Base class for FHIR resources.
 #  2014, SMART Platforms.
 
-from FHIRElement import FHIRElement
-from FHIRSearch import FHIRSearch
-from FHIRSearchElement import FHIRSearchElement
+import FHIRElement
+import FHIRSearch
+import FHIRSearchElement
 
 
-class FHIRResource(FHIRElement):
+class FHIRResource(FHIRElement.FHIRElement):
     """ Extends the FHIRElement base class with server talking capabilities.
     """
     resource_name = 'Resource'
@@ -57,7 +57,7 @@ class FHIRResource(FHIRElement):
         :returns: A FHIRSearch or FHIRSearchElement instance
         """
         if struct is None and self._remote_id is not None:
-            p = FHIRSearchElement('_id')        # TODO: currently the subject of the first search element is ignored, make this work
+            p = FHIRSearchElement.FHIRSearchElement('_id')        # TODO: currently the subject of the first search element is ignored, make this work
             p.reference = self._remote_id
             p.resource_type = self.__class__
             return p
@@ -79,9 +79,9 @@ class FHIRResource(FHIRElement):
         :returns: A FHIRSearch or FHIRSearchElement instance
         """
         if struct is not None:
-            return FHIRSearch(cls.resource_name, struct)
+            return FHIRSearch.FHIRSearch(cls.resource_name, struct)
         
-        p = FHIRSearchElement(None)
+        p = FHIRSearchElement.FHIRSearchElement(None)
         p.resource_type = cls
         return p
     

@@ -13,14 +13,14 @@ abspath = os.path.abspath(os.path.dirname(__file__))
 if abspath not in sys.path:
     sys.path.insert(0, abspath)
 
-{% for imp in info.imports %}{% if not imp.native and not imp.inline %}
-from {{ imp.name }} import {{ imp.name }}
-{%- endif %}{% endfor %}
+{% for imp in info.imports %}
+import {{ imp }}
+{%- endfor %}
 
 {%- for klass in classes %}
 
 
-class {{ klass.className }}({{ klass.superclass|default('object')}}):
+class {{ klass.className }}({% if klass.superclass in info.imports %}{{ klass.superclass }}.{% endif %}{{ klass.superclass|default('object')}}):
     """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
 {%- if klass.formal %}
     
@@ -40,22 +40,12 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
         self.{{ prop.name }} = {% if "bool" == prop.className %}False{% else %}None{% endif %}
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         {% if prop.isArray %}List of{% else %}Type{% endif %} `{{ prop.className }}`{% if prop.isArray %} items{% endif %}
+        {%- if prop.isReferenceTo %} referencing `{{ prop.isReferenceTo }}`{% endif %}
         {%- if prop.jsonClass != prop.className %} (represented as `{{ prop.jsonClass }}` in JSON){% endif %}. """
     {%- endfor %}
         
         super({{ klass.className }}, self).__init__(jsondict)
     
-{%- for prop in klass.properties %}{% if prop.isReferenceTo %}
-    
-    @property
-    def {{ prop.name }}(self):
-        return self._resolve_reference{% if prop.isArray %}s{% endif %}("{{ prop.name }}")
-    
-    @{{ prop.name }}.setter
-    def {{ prop.name }}(self, newValue):
-        if newValue is not None:
-            self._did_set_reference{% if prop.isArray %}s{% endif %}(newValue, name="{{ prop.name }}")
-{%- endif %}{% endfor %}    
 {%- if klass.properties %}
     
     def update_with_json(self, jsondict):
@@ -64,9 +54,14 @@ class {{ klass.className }}({{ klass.superclass|default('object')}}):
         if '{{ prop.name }}' in jsondict:
             {%- if prop.isNative %}
             self.{{ prop.name }} = jsondict['{{ prop.name }}']
+            {%- else %}{% if prop.isReferenceTo %}
+            self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}
+                {{ prop.className }}.with_json_and_class(jsondict['{{ prop.name }}'], {% if prop.isReferenceTo in info.imports %}{{ prop.isReferenceTo }}.{% endif -%}
+                {{ prop.isReferenceTo }})
             {%- else %}
-            self.{{ prop.name }} = {{ prop.className }}.with_json(jsondict['{{ prop.name }}'])
-            {%- endif %}
+            self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}
+                {{ prop.className }}.with_json(jsondict['{{ prop.name }}'])
+            {%- endif %}{% endif %}
         {%- endfor %}
     
 {%- endif %}

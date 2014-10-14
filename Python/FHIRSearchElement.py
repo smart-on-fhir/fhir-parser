@@ -4,10 +4,10 @@
 #  Construct server search parameters.
 #  2014, SMART Platforms.
 
-from FHIRSearch import FHIRSearch, FHIRSearchParam
+import FHIRSearch
 
 
-class FHIRSearchElement:
+class FHIRSearchElement(object):
     """ This class enables pythonic creation of search URL strings.
     
     Search elements are designed to be chained together. The first parameter
@@ -87,15 +87,15 @@ class FHIRSearchElement:
         """
         if self.subject:
             if self.missing is not None:
-                return FHIRSearchParam('{}:missing'.format(self.subject), 'true' if self.missing else 'false')
+                return FHIRSearch.FHIRSearchParam('{}:missing'.format(self.subject), 'true' if self.missing else 'false')
             
             if self.string and self.string_exact:
-                return FHIRSearchParam('{}:exact'.format(self.subject), self.param_value())
+                return FHIRSearch.FHIRSearchParam('{}:exact'.format(self.subject), self.param_value())
             
             if self.token and self.token_as_text:
-                return FHIRSearchParam('{}:text'.format(self.subject), self.param_value())
+                return FHIRSearch.FHIRSearchParam('{}:text'.format(self.subject), self.param_value())
             
-        return FHIRSearchParam(self.subject, self.param_value())
+        return FHIRSearch.FHIRSearchParam(self.subject, self.param_value())
     
     def param_value(self):
         """ The value of the parameter. """
@@ -130,7 +130,7 @@ class FHIRSearchElement:
         if not prev.resource_type:
             raise Exception("The first search parameter needs to have \"resource_type\" set")
         
-        srch = FHIRSearch(prev.resource_type)
+        srch = FHIRSearch.FHIRSearch(prev.resource_type)
         srch.params = params
         return srch
     

@@ -20,6 +20,8 @@ class FHIRElement(object):
     @classmethod
     def with_json(cls, jsonobj):
         """ Initialize an element from a JSON dictionary or array.
+        
+        :returns: An instance or a list of instances created from JSON data
         """
         if dict == type(jsonobj):
             return cls(jsonobj)
@@ -28,19 +30,4 @@ class FHIRElement(object):
         for jsondict in jsonobj:
             arr.append(cls(jsondict))
         return arr
-    
-    
-    # Mark: Resource References
-    
-    def _resolve_reference(self, name):
-        pass
-    
-    def _resolve_references(self, name):
-        pass
-    
-    def _did_set_reference(self, newValue, name):
-        pass
-    
-    def _did_set_references(self, newValue, name):
-        pass
     
