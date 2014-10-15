@@ -25,7 +25,7 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 {% endif -%}
 	
 {%- for prop in klass.properties %}	
-	/** {{ prop.short|wordwrap(width=112, wrapstring="\n     *  ") }} */
+	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}
 	public var {{ prop.name }}: {% if prop.isArray %}[{% endif %}{{ prop.className }}{% if prop.isReferenceTo %}<{{ prop.isReferenceTo }}>{% endif %}{% if prop.isArray %}]{% endif %}?
 {% endfor -%}
 {% if klass.hasNonoptional %}	
