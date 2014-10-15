@@ -14,13 +14,14 @@ resource_default_base = 'FHIRElement'                       # the default superc
 resource_baseclasses = [                                    # all these files should be copied to `resource_base_target`
     'Swift/FHIRElement.swift',
     'Swift/FHIRResource.swift',
+    'Swift/FHIRReference.swift',
     'Swift/FHIRContainedResource.swift',
     'Swift/FHIRSearchParam.swift',
     'Swift/JSON-extensions.swift',
 ]
 
 # factory methods
-write_factory = True
+write_factory = False
 tpl_factory_source = 'Swift/template-elementfactory.swift'
 tpl_factory_target = '../Models/FHIRElement+Factory.swift'
 

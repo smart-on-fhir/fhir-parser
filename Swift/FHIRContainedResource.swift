@@ -10,7 +10,9 @@ import Foundation
 
 
 /**
- *  Contained resources are store to instances of this class until they need to be resolved.
+ *  Contained resources are stored to instances of this class until they are resolved.
+ *  The id of contained resources will be appended to the hash sign (#) because they are usually referred to as URL
+ *  fragment only. We'll have to see how this works or if we need to be more sophisticated.
  *
  *  http://hl7.org/implement/standards/fhir/references.html#contained
  */
@@ -32,34 +34,12 @@ public class FHIRContainedResource
 	}
 	
 	public convenience init(json: NSDictionary) {
-		let id = json["_id"] as? String
+		var id: String?
+		if let jsonId = json["_id"] as? String {
+			id = "#\(jsonId)"
+		}
 		let type = json["resourceType"] as? String
 		self.init(id: id, type: type, json: json)
-	}
-	
-	
-	// MARK: - Resolving References
-	
-	func resolve() -> FHIRElement? {
-		if nil != type && nil != json {
-			return FHIRElement.factory(type!, json: json!)
-		}
-		
-		return nil
-	}
-	
-	class func processIdentifier(identifier: String?) -> String? {
-		if nil != identifier && countElements(identifier!) > 0 {
-			
-			// process fragment-only id
-			if "#" == identifier![identifier!.startIndex] {
-				return identifier![advance(identifier!.startIndex, 1)..<identifier!.endIndex]
-			}
-			
-			// TODO: resolve other
-			println("TODO: resolve id \(identifier)")
-		}
-		return nil
 	}
 }
 

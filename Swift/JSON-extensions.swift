@@ -55,7 +55,7 @@ extension NSDate {
 }
 
 extension NSURL {
-	public convenience init(json: String) {
+	public convenience init?(json: String) {
 		self.init(string: json)
 	}
 	

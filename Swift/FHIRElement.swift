@@ -18,27 +18,17 @@ public class FHIRElement
 		get { return "FHIRElement" }
 	}
 	
-	/** This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`. */
+	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
 	public var fhirExtension: [Extension]?
 	
-	/** Optional modifier extensions. */
+	/// Optional modifier extensions.
 	public var modifierExtension: [Extension]?
 	
-	/** Contained, inline Resources, indexed by key. */
+	/// Contained, inline Resources, indexed by resource id.
 	public var contained: [String: FHIRContainedResource]?
 	
-	/** Mapping ResourceReference instances to property names (singles).
-	 *  This is needed due to lack of introspection as of beta 3. */
-	var _referenceMap = [String: ResourceReference]()
-
-	/** Mapping ResourceReference instances to property names (multiples). */
-	var _referencesMap = [String: [ResourceReference]]()
-	
-	/** Resolved references (singles). */
+	/// Resolved references.
 	var _resolved: [String: FHIRElement]?
-	
-	/** Resolved references (multiples). */
-	var _resolveds: [String: [FHIRElement]]?
 	
 	
 	// MARK: - JSON Capabilities
@@ -72,59 +62,26 @@ public class FHIRElement
 	
 	// MARK: - Handling References
 	
-	func didSetReference(object: FHIRElement, name: String) {
-		if let obj = object as? ResourceReference {
-			_referenceMap[name] = obj
-		}
+	/** Returns the contained reference with the given id, if it exists. */
+	func containedReference(refid: String) -> FHIRContainedResource? {
+		return contained?[refid]
 	}
 	
-	func didSetReferences(object: [FHIRElement], name: String) {
-		if let obj = object as? [ResourceReference] {
-			_referencesMap[name] = obj
-		}
+	/** Returns the resolved reference with the given id, if it has been resolved already. */
+	func resolvedReference(refid: String) -> FHIRElement? {
+		return _resolved?[refid]
 	}
 	
-	func resolveReference(name: String) -> FHIRElement? {
-		if let resolved = _resolved?[name] {
-			return resolved
+	/** Called by FHIRResource when it resolves a reference. Stores the resolved reference into the `_resolved`
+	 *  dictionary.
+	 */
+	func didResolveReference(refid: String, resolved: FHIRElement) {
+		if nil != _resolved {
+			_resolved![refid] = resolved
 		}
-		
-		// not yet resolved: get the ResourceReference instance for the property name from `_referenceMap`, find the
-		// FHIRContainedResource with the correct id in `contained`, instantiate from cached json and cached the
-		// instance in `_referenceMap`.
-		if let reference = _referenceMap[name] as ResourceReference? {
-			if let refid = FHIRContainedResource.processIdentifier(reference.reference) {
-				if let cont = contained?[refid] {
-					if let resolved = cont.resolve() {
-						var res = _resolved ?? [String: FHIRElement]()
-						res[name] = resolved
-						_resolved = res
-						
-						// TODO: could now throw contained[refid] away to free up RAM
-						
-						return resolved
-					}
-				}
-				else {
-					println("Should resolve \(name) but do NOT have contained item with id \"\(reference.reference)\" in \(contained)")
-				}
-			}
-			else {
-				println("Should resolve \(name) but do NOT have reference for id \"\(reference.reference)\"")
-			}
+		else {
+			_resolved = [refid: resolved]
 		}
-		
-		return nil
-	}
-	
-	func resolveReferences(name: String) -> [FHIRElement]? {
-		if let resolved = _resolveds?[name] {
-			return resolved
-		}
-		
-		// TODO: implement!
-		fatalError("Must implement resource references that reference arrays")
-		return nil
 	}
 }
 
