@@ -10,12 +10,12 @@ import Foundation
 
 
 /**
- *  Subclassing ResourceReference in order to enable reference resolving while keeping the reference's attributes
+ *  A subclass to ResourceReference. This allows reference resolving while keeping the the superclass'es attributes
  *  in place.
  */
 public class FHIRReference<T: FHIRElement>: ResourceReference
 {
-	/// The owner of the reference, used to dereference from contained resources.
+	/// The owner of the reference, used to dereference resources.
 	unowned let owner: FHIRElement
 	
 	
@@ -43,27 +43,43 @@ public class FHIRReference<T: FHIRElement>: ResourceReference
 	
 	/** Resolves the reference and returns an Optional for the instance of the referenced type. */
 	public func resolved() -> T? {
-		if nil == reference {
+		let refid = processedReferenceIdentifier()
+		if nil == refid {
 			println("This reference does not have a reference-id, cannot resolve")
 			return nil
 		}
 		
-		if let resolved = owner.resolvedReference(reference!) {
+		if let resolved = owner.resolvedReference(refid!) {
 			return (resolved as T)
 		}
 		
-		// not yet resolved, look at contained resources
-		if let contained = owner.containedReference(reference!) {
+		// not yet resolved, let's look at contained resources
+		if let contained = owner.containedReference(refid!) {
 			let t = T.self									// getting crashes when using T(...) directly as of 6.1 GM 2
 			let instance = t(json: contained.json)
-			owner.didResolveReference(reference!, resolved: instance)
+			owner.didResolveReference(refid!, resolved: instance)
 			return instance
 		}
 		
 		// TODO: Fetch remote resources
-		println("TODO: must resolve referenced resource \"\(reference!)\" for \(owner)")
+		println("TODO: must resolve referenced resource \"\(refid!)\" for \(owner)")
 		
 		return nil
+	}
+	
+	func processedReferenceIdentifier() -> String? {
+		if nil == reference {
+			return nil
+		}
+		
+		// fragment only: we are looking for a contained resource
+		if "#" == reference![reference!.startIndex] {
+			return reference![advance(reference!.startIndex, 1)..<reference!.endIndex]
+		}
+		
+		// TODO: treat as absolute URL if we find a scheme separator "://"
+		
+		return reference
 	}
 }
 
