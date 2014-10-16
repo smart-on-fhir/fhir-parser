@@ -56,7 +56,7 @@ class {{ klass.className }}({% if klass.superclass in info.imports %}{{ klass.su
             self.{{ prop.name }} = jsondict['{{ prop.name }}']
             {%- else %}{% if prop.isReferenceTo %}
             self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}
-                {{ prop.className }}.with_json_and_class(jsondict['{{ prop.name }}'], {% if prop.isReferenceTo in info.imports %}{{ prop.isReferenceTo }}.{% endif -%}
+                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self, {% if prop.isReferenceTo in info.imports %}{{ prop.isReferenceTo }}.{% endif -%}
                 {{ prop.isReferenceTo }})
             {%- else %}
             self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}

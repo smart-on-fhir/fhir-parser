@@ -34,7 +34,7 @@ public class FHIRContainedResource
 	}
 	
 	public convenience init(json: NSDictionary) {
-		let id = json["_id"] as? String
+		let id = json["id"] as? String
 		let type = json["resourceType"] as? String
 		self.init(id: id, type: type, json: json)
 	}

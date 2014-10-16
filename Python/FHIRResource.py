@@ -17,7 +17,19 @@ class FHIRResource(FHIRElement.FHIRElement):
     def __init__(self, jsondict=None):
         self._remote_id = None
         self._server = None
+        
+        self.language = None
+        """ Human language of the content (BCP-47). """
+        
         super(FHIRResource, self).__init__(jsondict)
+    
+    def update_with_json(self, jsondict):
+        super(FHIRResource, self).update_with_json(jsondict)
+        if 'language' in jsondict:
+            self.language = jsondict['language']
+    
+    
+    # MARK: Server Connection
     
     @classmethod
     def read(cls, rem_id, server):
@@ -40,7 +52,7 @@ class FHIRResource(FHIRElement.FHIRElement):
         return instance
     
     
-    # MARK: search
+    # MARK: Search
     
     def search(self, struct=None):
         """ Search can be started in two ways:
