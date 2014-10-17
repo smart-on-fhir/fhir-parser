@@ -258,7 +258,8 @@ def process_profile(path, info):
     info['imports'] = sorted(imports)
     
     if write_resources:
-        render({'info': info, 'classes': classes}, tpl_resource_source, tpl_resource_target_ptrn.format(main))
+        ptrn = main.lower() if ptrn_filenames_lowercase else main
+        render({'info': info, 'classes': classes}, tpl_resource_source, tpl_resource_target_ptrn.format(ptrn))
     
     # get search params
     search_params = set()
@@ -440,7 +441,8 @@ def process_unittests(path, classes, info):
                 'class': klass,
                 'tests': tests,
             }
-            render(data, tpl_unittest_source, tpl_unittest_target_ptrn.format(klass))
+            ptrn = klass.lower() if ptrn_filenames_lowercase else klass
+            render(data, tpl_unittest_source, tpl_unittest_target_ptrn.format(ptrn))
     else:
         log1('oo>  Not writing unit tests')
 

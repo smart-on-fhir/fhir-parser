@@ -3,10 +3,11 @@
 from Swift.mappings import *
 
 # where to load the specification archive from
-specification_url = 'http://hl7-fhir.github.io/fhir-spec.zip'
+specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
 
 # classes/resources
 write_resources = True
+ptrn_filenames_lowercase = False							# whether all pattern resource paths should be lowercase
 tpl_resource_source = 'Swift/template-resource.swift'       # the template to use as source
 tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern

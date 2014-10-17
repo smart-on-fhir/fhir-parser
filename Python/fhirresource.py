@@ -41,7 +41,11 @@ class FHIRResource(FHIRElement.FHIRElement):
         :param FHIRServer server: An instance of a FHIR server or compatible class
         :returns: An instance of the receiver class
         """
-        assert rem_id and server
+        if not rem_id:
+            raise Exception("Cannot read resource without remote id")
+        if server is None:
+            raise Exception("Cannot read resource without server instance")
+        
         path = '{}/{}'.format(cls.resource_name, rem_id)
         ret = server.request_json(path)
         
