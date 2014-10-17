@@ -14,13 +14,15 @@ if abspath not in sys.path:
     sys.path.insert(0, abspath)
 
 {% for imp in info.imports %}
-import {{ imp }}
+import {% if info.lowercase_import_hack %}{{ imp|lower }}{% else %}{{ imp }}{% endif %}
 {%- endfor %}
 
 {%- for klass in classes %}
 
 
-class {{ klass.className }}({% if klass.superclass in info.imports %}{{ klass.superclass }}.{% endif %}{{ klass.superclass|default('object')}}):
+class {{ klass.className }}({% if klass.superclass in info.imports %}
+    {%- if info.lowercase_import_hack %}{{ klass.superclass|lower }}{% else %}{{ klass.superclass }}{% endif %}.{% endif -%}
+    {{ klass.superclass|default('object')}}):
     """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
 {%- if klass.formal %}
     
@@ -55,11 +57,14 @@ class {{ klass.className }}({% if klass.superclass in info.imports %}{{ klass.su
             {%- if prop.isNative %}
             self.{{ prop.name }} = jsondict['{{ prop.name }}']
             {%- else %}{% if prop.isReferenceTo %}
-            self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}
-                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self, {% if prop.isReferenceTo in info.imports %}{{ prop.isReferenceTo }}.{% endif -%}
+            self.{{ prop.name }} = {% if prop.className in info.imports %}
+                {%- if info.lowercase_import_hack %}{{ prop.className|lower }}{% else %}{{ prop.className }}{% endif %}.{% endif -%}
+                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self, {% if prop.isReferenceTo in info.imports %}
+                    {%- if info.lowercase_import_hack %}{{ prop.isReferenceTo|lower }}{% else %}{{ prop.isReferenceTo }}{% endif %}.{% endif -%}
                 {{ prop.isReferenceTo }})
             {%- else %}
-            self.{{ prop.name }} = {% if prop.className in info.imports %}{{ prop.className }}.{% endif -%}
+            self.{{ prop.name }} = {% if prop.className in info.imports %}
+                {%- if info.lowercase_import_hack %}{{ prop.className|lower }}{% else %}{{ prop.className }}{% endif %}.{% endif -%}
                 {{ prop.className }}.with_json(jsondict['{{ prop.name }}'])
             {%- endif %}{% endif %}
         {%- endfor %}

@@ -256,6 +256,7 @@ def process_profile(path, info):
                     imports.append(refTo)
     
     info['imports'] = sorted(imports)
+    info['lowercase_import_hack'] = ptrn_filenames_lowercase
     
     if write_resources:
         ptrn = main.lower() if ptrn_filenames_lowercase else main

@@ -60,7 +60,7 @@
 
 # some tests, to be removed after development phase
 if '__main__' == __name__:
-    from Patient import Patient
+    from patient import Patient
     print('1 '+Patient.where().name("Willis").name_exact("Bruce").construct())
     print('= Patient?name=Willis&name:exact=Bruce')
     print('')

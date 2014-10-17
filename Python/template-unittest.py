@@ -8,8 +8,8 @@
 import io
 import unittest
 import json
-from {{ class }} import {{ class }}
-from FHIRDate import FHIRDate
+from {% if info.lowercase_import_hack %}{{ class|lower }}{% else %}{{ class }}{% endif %} import {{ class }}
+from fhirdate import FHIRDate
 
 
 class {{ class }}Tests(unittest.TestCase):
