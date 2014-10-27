@@ -39,7 +39,7 @@ class {{ class }}Tests: FHIRModelTestCase
 	{%- else %}{% if "NSDate" == onetest.class %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}")!)
 	{%- else %}{% if "NSURL" == onetest.class %}
-		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}"))
+		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}")!)
 	{%- else %}
 		# Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.class }}
 	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
