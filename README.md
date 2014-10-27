@@ -28,7 +28,8 @@ Swift
 
 [Swift][], Apple's new programming language for OS X and iOS.
 Since the language is still under active development, the repo will be updated when a language change occurrs.
-The current supported "version" corresponds to what's accepted by Xcode 6 GM.
+The current supported "version" corresponds to what's accepted by Xcode 6.1.
+The [Swift-FHIR][] repo contains the latest generated Swift classes.
 
 Python
 ------
@@ -42,7 +43,8 @@ Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 ```text
 [x] Generate Python classes
 [x] Deserialize from JSON
-[ ] Implement reference resolver (FHIRElement._resolveReference() and co.)
+[x] Implement reference resolver (for contained resources)
+[ ] Implement reference resolver (for remote resources)
 [ ] Generate factories if needed
 [ ] Serialize to JSON
 [~] Create a FHIR server class/protocol for easy resource hookup
@@ -60,3 +62,4 @@ isodate
 [fhir]: http://www.hl7.org/implement/standards/fhir/
 [jinja]: http://jinja.pocoo.org
 [swift]: https://developer.apple.com/swift/
+[swift-fhir]: https://github.com/p2/Swift-FHIR
