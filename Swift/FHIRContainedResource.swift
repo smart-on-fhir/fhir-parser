@@ -19,24 +19,26 @@ import Foundation
 public class FHIRContainedResource
 {
 	/** The id of the resource. */
-	public var id: String?
+	public var id: String
 	
 	/** The type of the resource. */
 	public var type: String?
 	
 	/** The complete JSON dictionary. */
-	var json: NSDictionary?
+	var json: NSDictionary
 	
-	public init(id: String?, type: String?, json: NSDictionary?) {
+	public init(id: String, type: String?, json: NSDictionary) {
 		self.id = id
 		self.type = type
 		self.json = json
 	}
 	
-	public convenience init(json: NSDictionary) {
-		let id = json["id"] as? String
-		let type = json["resourceType"] as? String
-		self.init(id: id, type: type, json: json)
+	public convenience init?(json: NSDictionary) {
+		if let id = json["id"] as? String {
+			let type = json["resourceType"] as? String
+			self.init(id: id, type: type, json: json)
+		}
+		return nil
 	}
 }
 

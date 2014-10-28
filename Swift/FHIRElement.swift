@@ -33,30 +33,32 @@ public class FHIRElement
 	
 	// MARK: - JSON Capabilities
 	
-	required public init(json: NSDictionary?) {
-		if let js = json {
-			if let arr = js["contained"] as? [NSDictionary] {
-				var cont = contained ?? [String: FHIRContainedResource]()
-				for dict in arr {
-					let res = FHIRContainedResource(json: dict)
-					if nil != res.id {
-						cont[res.id!] = res
-					}
-					else {
-						println("Contained resource in \(self) without \"_id\" will be ignored")
-					}
+	public init() {
+	}
+	
+	public required init?(json: NSDictionary) {
+		if let arr = json["contained"] as? [NSDictionary] {
+			var cont = contained ?? [String: FHIRContainedResource]()
+			for dict in arr {
+				if let res = FHIRContainedResource(json: dict) {
+					cont[res.id] = res
 				}
-				contained = cont
+				else {
+					println("Failed to initialize contained resource in \(self), possibly missing \"id\"?")
+				}
 			}
+			contained = cont
 		}
 	}
 	
-	final class func from(array: [NSDictionary]) -> [FHIRElement] {
+	public final class func from(array: [NSDictionary]) -> [FHIRElement]? {
 		var arr: [FHIRElement] = []
-		for arrJSON in array {
-			arr.append(self(json: arrJSON))
+		for dict in array {
+			if let instance = self(json: dict) {
+				arr.append(instance)
+			}
 		}
-		return arr
+		return arr.count > 0 ? arr : nil
 	}
 	
 	

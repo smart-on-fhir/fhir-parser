@@ -26,12 +26,17 @@ public class FHIRResource: FHIRElement
 	/** Human language of the content (BCP-47). */
 	public var language: String?
 	
-	public required init(json: NSDictionary?) {
+	
+	// MARK: - Initialization
+	
+	public override init() {
+		super.init()
+	}
+	
+	public required init?(json: NSDictionary) {
 		super.init(json: json)
-		if let js = json {
-			if let val = js["language"] as? String {
-				self.language = val
-			}
+		if let val = json["language"] as? String {
+			self.language = val
 		}
 	}
 	
@@ -54,11 +59,14 @@ public class FHIRResource: FHIRElement
 			if nil != error {
 				callback(resource: nil, error: error)
 			}
-			else {
-				let resource = self(json: json)
+			else if nil != json {
+				let resource = self(json: json!)
 				resource._localId = id
 				resource._server = server
 				callback(resource: resource, error: nil)
+			}
+			else {
+				callback(resource: nil, error: nil)
 			}
 		}
 	}

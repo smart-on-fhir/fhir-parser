@@ -21,11 +21,11 @@ public class FHIRReference<T: FHIRElement>: ResourceReference
 	
 	// MARK: - Initialization
 	
-	public required init(json: NSDictionary?) {
+	public required init?(json: NSDictionary) {
 		fatalError("Must use init(json:owner:)")
 	}
 	
-	public init(json: NSDictionary?, owner: FHIRElement) {
+	public init?(json: NSDictionary, owner: FHIRElement) {
 		self.owner = owner
 		super.init(json: json)
 	}
@@ -33,7 +33,9 @@ public class FHIRReference<T: FHIRElement>: ResourceReference
 	class func from(array: [NSDictionary], owner: FHIRElement) -> [FHIRReference<T>] {
 		var arr: [FHIRReference<T>] = []
 		for arrJSON in array {
-			arr.append(FHIRReference<T>(json: arrJSON, owner: owner))
+			if let instance = FHIRReference<T>(json: arrJSON, owner: owner) {
+				arr.append(instance)
+			}
 		}
 		return arr
 	}
