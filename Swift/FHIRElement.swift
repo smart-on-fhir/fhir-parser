@@ -48,6 +48,12 @@ public class FHIRElement
 				}
 				contained = cont
 			}
+			if let arr = js["extension"] as? [NSDictionary] {
+				self.fhirExtension = Extension.from(arr) as? [Extension]
+			}
+			if let arr = js["modifierExtension"] as? [NSDictionary] {
+				self.modifierExtension = Extension.from(arr) as? [Extension]
+			}
 		}
 	}
 	
