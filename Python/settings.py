@@ -13,6 +13,7 @@ tpl_resource_target_ptrn = '../models/{}.py'            # where to write the gen
 resource_base_target = '../models/'                     # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
 resource_default_base = 'FHIRElement'                   # the default superclass to use
 resource_baseclasses = [                                # all these files should be copied to `resource_base_target`
+    'Python/__init__.py',
     'Python/fhirelement.py',
     'Python/fhirresource.py',
     'Python/fhircontainedresource.py',

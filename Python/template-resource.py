@@ -4,15 +4,6 @@
 #  Generated from FHIR {{ info.version }} ({{ info.filename }}) on {{ info.date }}.
 #  {{ info.year }}, SMART Platforms.
 
-# We need to support importing other generated classes without relying on the
-# models being part of a specific module. To do so we prepend the current
-# directory sys.path - better solutions are welcome!
-import sys
-import os.path
-abspath = os.path.abspath(os.path.dirname(__file__))
-if abspath not in sys.path:
-    sys.path.insert(0, abspath)
-
 {% for imp in info.imports %}
 import {% if info.lowercase_import_hack %}{{ imp|lower }}{% else %}{{ imp }}{% endif %}
 {%- endfor %}

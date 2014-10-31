@@ -4,7 +4,6 @@
 #  Base class for all FHIR elements.
 
 import logging
-import fhircontainedresource
 
 
 class FHIRElement(object):
@@ -25,6 +24,12 @@ class FHIRElement(object):
         """
         if jsondict is None:
             return
+        
+        # extract extensions
+        if 'extension' in jsondict:
+            self.extension = extension.Extension.with_json(jsondict['extension'])
+        if 'modifierExtension' in jsondict:
+            self.modifierExtension = extension.Extension.with_json(jsondict['modifierExtension'])
         
         # extract contained resources
         if 'contained' in jsondict:
@@ -74,3 +79,7 @@ class FHIRElement(object):
         else:
             self._resolved = {refid: resolved}
     
+
+# these are subclasses of FHIRElement, import last
+import extension
+import fhircontainedresource

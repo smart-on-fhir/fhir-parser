@@ -39,18 +39,33 @@ class FHIRResource(fhirelement.FHIRElement):
         
         :param str rem_id: The id of the resource on the remote server
         :param FHIRServer server: An instance of a FHIR server or compatible class
-        :returns: An instance of the receiver class
+        :returns: An instance of the receiving class
         """
         if not rem_id:
             raise Exception("Cannot read resource without remote id")
+        
+        path = '{}/{}'.format(cls.resource_name, rem_id)
+        instance = cls.read_from(path, server)
+        instance._remote_id = rem_id
+        
+        return instance
+    
+    @classmethod
+    def read_from(cls, path, server):
+        """ Requests data from the given REST path on the server and creates
+        an instance of the receiving class.
+        
+        :param str path: The REST path to read from
+        :param FHIRServer server: An instance of a FHIR server or compatible class
+        :returns: An instance of the receiving class
+        """
+        if not path:
+            raise Exception("Cannot read resource without REST path")
         if server is None:
             raise Exception("Cannot read resource without server instance")
         
-        path = '{}/{}'.format(cls.resource_name, rem_id)
         ret = server.request_json(path)
-        
         instance = cls(jsondict=ret)
-        instance._remote_id = rem_id
         instance._server = server
         
         return instance
