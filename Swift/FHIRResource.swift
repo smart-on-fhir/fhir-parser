@@ -50,13 +50,24 @@ public class FHIRResource: FHIRElement
 	 */
 	public class func read(id: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
 		let path = "\(resourceName)/\(id)"
+		readFrom(path, server: server) { resource, error in
+			if let res = resource {
+				res._localId = id
+			}
+			callback(resource: resource, error: error)
+		}
+	}
+	
+	/**
+	 *  Reads the resource from the given path on the given server.
+	 */
+	public class func readFrom(path: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
 		server.requestJSON(path) { json, error in
 			if nil != error {
 				callback(resource: nil, error: error)
 			}
 			else {
 				let resource = self(json: json)
-				resource._localId = id
 				resource._server = server
 				callback(resource: resource, error: nil)
 			}

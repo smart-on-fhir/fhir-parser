@@ -49,7 +49,7 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 		super.init(json: json)
 		if let js = json {
 		{%- for prop in klass.properties %}
-			if let val = js["{{ prop.name }}"] as? {% if prop.isArray %}[{% endif %}{{ prop.jsonClass }}{% if prop.isArray %}]{% endif %} {
+			if let val = js["{{ prop.orig_name }}"] as? {% if prop.isArray %}[{% endif %}{{ prop.jsonClass }}{% if prop.isArray %}]{% endif %} {
 				{%- if prop.isArray %}
 				{%- if "String" == prop.className %}
 				self.{{ prop.name }} = val

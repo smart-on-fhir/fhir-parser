@@ -333,44 +333,53 @@ def parse_elem(path, name, definition, klass):
     # add as properties to class
     if klass is not None:
         for tp, ref in types:
-            myname = name
-            if '*' == tp:
-                tp = 'FHIRElement'
-                myname = name.replace('[x]', '')
-            if '[x]' in myname:
-                # TODO: "MedicationPrescription.reason[x]" can be a
-                # "ResourceReference" but apparently should be called
-                # "reasonResource", NOT "reasonResourceReference". Interesting.
-                kl = 'Resource' if 'ResourceReference' == tp else tp
-                myname = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
-            
-            # reference?
-            if ref is not None:
-                ref = ref.replace('http://hl7.org/fhir/profiles/', '')      # could be cleaner
-                ref = classmap.get(ref, ref)
-            
-            # describe the property
-            mappedClass = classmap.get(tp, tp)
-            prop = {
-                'name': reservedmap.get(myname, myname),
-                'short': short,
-                'className': mappedClass,
-                'jsonClass': jsonmap.get(mappedClass, jsonmap_default),
-                'isArray': True if '*' == n_max else False,
-                'isReferenceTo': ref,
-                'nonoptional': 0 != int(n_min),
-                'isNative': True if mappedClass in natives else False,
-            }
-            
-            klass['properties'].append(prop)
-            if prop['nonoptional']:
-                klass['hasNonoptional'] = True
+            process_elem_type(klass, name, tp, ref, short, formal, n_min, n_max)
         
         # sort properties by name
         if len(klass['properties']) > 0:
             klass['properties'] = sorted(klass['properties'], key=lambda x: x['name'])
     
     return newklass
+
+def process_elem_type(klass, name, tp, ref, short, formal, n_min, n_max):
+    """ Handle one element (property) type and return a dict describing the property.
+    """
+    
+    # The wildcard type, expand to all possible types, as defined in our mapping
+    if '*' == tp:
+        for exp_type in starexpandtypes:
+            process_elem_type(klass, name, exp_type, ref, short, formal, n_min, n_max)
+        return
+    
+    if '[x]' in name:
+        # TODO: "MedicationPrescription.reason[x]" can be a
+        # "ResourceReference" but apparently should be called
+        # "reasonResource", NOT "reasonResourceReference". Interesting.
+        kl = 'Resource' if 'ResourceReference' == tp else tp
+        name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
+    
+    # reference?
+    if ref is not None:
+        ref = ref.replace('http://hl7.org/fhir/profiles/', '')      # could be cleaner
+        ref = classmap.get(ref, ref)
+    
+    # describe the property
+    mappedClass = classmap.get(tp, tp)
+    prop = {
+        'name': reservedmap.get(name, name),
+        'orig_name': name,
+        'short': short,
+        'className': mappedClass,
+        'jsonClass': jsonmap.get(mappedClass, jsonmap_default),
+        'isArray': True if '*' == n_max else False,
+        'isReferenceTo': ref,
+        'nonoptional': 0 != int(n_min),
+        'isNative': True if mappedClass in natives else False,
+    }
+    
+    klass['properties'].append(prop)
+    if prop['nonoptional']:
+        klass['hasNonoptional'] = True
 
 
 def process_factories(factories, info):
