@@ -18,6 +18,9 @@ extension NSDate {
 	public class func dateFromISOString(string: String) -> NSDate? {
 		var date = isoDateTimeFormatter().dateFromString(string)
 		if nil == date {
+			date = isoLocalDateTimeFormatter().dateFromString(string)
+		}
+		if nil == date {
 			date = isoDateFormatter().dateFromString(string)
 		}
 		
@@ -35,6 +38,9 @@ extension NSDate {
 	
 	// MARK: Date Formatter
 	
+	/**
+	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 with timezone.
+	 */
 	public class func isoDateTimeFormatter() -> NSDateFormatter {
 		let formatter = NSDateFormatter()							// class vars are not yet supported
 		formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
@@ -44,10 +50,25 @@ extension NSDate {
 		return formatter
 	}
 	
+	/**
+	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 WITHOUT timezone.
+	 */
+	public class func isoLocalDateTimeFormatter() -> NSDateFormatter {
+		let formatter = NSDateFormatter()							// class vars are not yet supported
+		formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+		formatter.timeZone = NSTimeZone.localTimeZone()
+		formatter.calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)
+		
+		return formatter
+	}
+	
+	/**
+	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 date only.
+	 */
 	public class func isoDateFormatter() -> NSDateFormatter {
 		let formatter = NSDateFormatter()							// class vars are not yet supported
 		formatter.dateFormat = "yyyy-MM-dd"
-		formatter.timeZone = NSTimeZone(forSecondsFromGMT: 0)
+		formatter.timeZone = NSTimeZone.localTimeZone()
 		formatter.calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)
 		
 		return formatter
