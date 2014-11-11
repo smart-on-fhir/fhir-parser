@@ -93,8 +93,8 @@ extension NSURL {
 }
 
 extension NSDecimalNumber {
-	public convenience init(json: Double) {
-		self.init(string: "\(json)")
+	public convenience init(json: NSNumber) {
+		self.init(string: "\(json)")			// there is no "decimalValue" on NSNumber in Swift, so use a String
 	}
 }
 

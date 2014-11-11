@@ -73,7 +73,7 @@ jsonmap = {
 	
 	'String': 'String',
 	'NSDate': 'String',
-	'NSDecimalNumber': 'Double',
+	'NSDecimalNumber': 'NSNumber',
 	'NSURL': 'String',
 }
 jsonmap_default = 'NSDictionary'

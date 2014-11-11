@@ -426,11 +426,11 @@ def process_search(params, in_profiles, info):
 
 def process_unittests(path, classes, info):
     """ Finds all example JSON files and uses them for unit test generation.
-    Test files use the template `tpl_unittest_source` and dump it into
-    ../SwiftFHIRTests/ModelTests.
+    Test files use the template `tpl_unittest_source` and dump it according to
+    `tpl_unittest_target_ptrn`.
     """
     all_tests = {}
-    for utest in glob.glob(os.path.join(path, '*-example-*.json')):
+    for utest in glob.glob(os.path.join(path, '*-example*.json')):
         log0('-->  Parsing unit test {}'.format(os.path.basename(utest)))
         class_name, tests = process_unittest(utest, classes)
         if class_name is not None:
@@ -453,6 +453,14 @@ def process_unittests(path, classes, info):
             }
             ptrn = klass.lower() if ptrn_filenames_lowercase else klass
             render(data, tpl_unittest_source, tpl_unittest_target_ptrn.format(ptrn))
+        
+        # copy unit test files, if any
+        if unittest_copyfiles is not None:
+            for utfile in unittest_copyfiles:
+                if os.path.exists(utfile):
+                    tgt = os.path.join(unittest_copyfiles_base, os.path.basename(utfile))
+                    log0("-->  Copying unittest file {} to {}".format(os.path.basename(utfile), tgt))
+                    shutil.copyfile(utfile, tgt)
     else:
         log1('oo>  Not writing unit tests')
 

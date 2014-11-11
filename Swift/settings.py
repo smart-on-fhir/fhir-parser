@@ -36,6 +36,10 @@ tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
 write_unittests = True
 tpl_unittest_source = 'Swift/template-unittest.swift'
 tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'
+unittest_copyfiles_base = '../SwiftFHIRTests/ModelTests/'	# Where to copy `unittest_copyfiles`
+unittest_copyfiles = [
+    'Swift/FHIRModelTestCase.swift',
+]
 unittest_filename_prefix = ''
 unittest_format_path_prepare = '{}!'            # used to format `path` before appending another path element - one placeholder for `path`
 unittest_format_path_key = '{}.{}'              # used to create property paths by appending `key` to the existing `path` - two placeholders
