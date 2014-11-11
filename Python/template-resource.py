@@ -56,7 +56,7 @@ class {{ klass.className }}({% if klass.superclass in info.imports %}
             {%- else %}
             self.{{ prop.name }} = {% if prop.className in info.imports %}
                 {%- if info.lowercase_import_hack %}{{ prop.className|lower }}{% else %}{{ prop.className }}{% endif %}.{% endif -%}
-                {{ prop.className }}.with_json(jsondict['{{ prop.name }}'])
+                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self)
             {%- endif %}{% endif %}
         {%- endfor %}
     
