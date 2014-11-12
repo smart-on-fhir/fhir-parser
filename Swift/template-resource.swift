@@ -50,24 +50,21 @@ public class {{ klass.className }}: {{ klass.superclass|default('FHIRElement') }
 		if let js = json {
 		{%- for prop in klass.properties %}
 			if let val = js["{{ prop.orig_name }}"] as? {% if prop.isArray %}[{% endif %}{{ prop.jsonClass }}{% if prop.isArray %}]{% endif %} {
-				{%- if prop.isArray %}
-				{%- if "String" == prop.className %}
+				{%- if prop.className == prop.jsonClass %}
 				self.{{ prop.name }} = val
-				{%- else %}{% if prop.isReferenceTo %}
-				self.{{ prop.name }} = {{ prop.className }}.from(val, owner: self)
 				{%- else %}
-				self.{{ prop.name }} = {{ prop.className }}.from(val){% if "NS" != prop.className[:2] %} as? [{{ prop.className }}]{% endif %}
-				{%- endif %}{% endif %}
 				
-				{%- else %}{% if prop.className == prop.jsonClass %}
-				self.{{ prop.name }} = val
-				{%- else %}{% if "Int" == prop.jsonClass %}
-				self.{{ prop.name }} = (1 == val)
-				{%- else %}{% if prop.isReferenceTo %}
-				self.{{ prop.name }} = {{ prop.className }}(json: val, owner: self)
+				{%- if prop.isArray %}{% if prop.isNative %}
+				self.{{ prop.name }} = {{ prop.className }}.from(val)
 				{%- else %}
-				self.{{ prop.name }} = {{ prop.className }}({% if "Double" != prop.className %}json: {% endif %}val)
-				{%- endif %}{% endif %}{% endif %}{% endif %}
+				self.{{ prop.name }} = {{ prop.className }}.from(val, owner: self){% if not prop.isReferenceTo %} as? [{{ prop.className }}]{% endif %}
+				{%- endif %}
+				
+				{%- else %}{% if prop.isNative %}
+				self.{{ prop.name }} = {{ prop.className }}(json: val)
+				{%- else %}
+				self.{{ prop.name }} = {{ prop.className }}(json: val, owner: self)
+				{%- endif %}{% endif %}{% endif %}
 			}
 		{%- endfor %}
 		}

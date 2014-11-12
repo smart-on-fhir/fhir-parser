@@ -15,19 +15,14 @@ import Foundation
  */
 public class FHIRReference<T: FHIRElement>: ResourceReference
 {
-	/// The owner of the reference, used to dereference resources.
-	unowned let owner: FHIRElement
-	
-	
-	// MARK: - Initialization
-	
 	public required init(json: NSDictionary?) {
-		fatalError("Must use init(json:owner:)")
+		super.init(json: json)
 	}
 	
-	public init(json: NSDictionary?, owner: FHIRElement) {
-		self.owner = owner
-		super.init(json: json)
+	// Must override to prevent the Swift compiler from segfaulting (segfault 11). Huh.
+	public convenience init(json: NSDictionary?, owner: FHIRElement?) {
+		self.init(json: json)
+		_owner = owner
 	}
 	
 	class func from(array: [NSDictionary], owner: FHIRElement) -> [FHIRReference<T>] {
@@ -49,20 +44,20 @@ public class FHIRReference<T: FHIRElement>: ResourceReference
 			return nil
 		}
 		
-		if let resolved = owner.resolvedReference(refid!) {
+		if let resolved = resolvedReference(refid!) {
 			return (resolved as T)
 		}
 		
 		// not yet resolved, let's look at contained resources
-		if let contained = owner.containedReference(refid!) {
+		if let contained = containedReference(refid!) {
 			let t = T.self									// getting crashes when using T(...) directly as of 6.1 GM 2
 			let instance = t(json: contained.json)
-			owner.didResolveReference(refid!, resolved: instance)
+			didResolveReference(refid!, resolved: instance)
 			return instance
 		}
 		
 		// TODO: Fetch remote resources
-		println("TODO: must resolve referenced resource \"\(refid!)\" for \(owner)")
+		println("TODO: must resolve referenced resource \"\(refid!)\" for \(_owner)")
 		
 		return nil
 	}

@@ -31,11 +31,7 @@ class {{ class }}Tests: FHIRModelTestCase
 	{%- else %}{% if "Int" == onetest.class or "Double" == onetest.class or "NSDecimalNumber" == onetest.class %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, {{ onetest.value }})
 	{%- else %}{% if "Bool" == onetest.class %}
-		{%- if onetest.value %}
-		XCTAssertTrue(inst!.{{ onetest.path }})
-		{%- else %}
-		XCTAssertFalse(inst!.{{ onetest.path }})
-		{%- endif %}
+		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst!.{{ onetest.path }})
 	{%- else %}{% if "NSDate" == onetest.class %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}")!)
 	{%- else %}{% if "NSURL" == onetest.class %}

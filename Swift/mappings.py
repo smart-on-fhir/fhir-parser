@@ -68,7 +68,7 @@ jsonmap = {
 	'FHIRResource': 'NSDictionary',
 	
 	'Int': 'Int',
-	'Bool': 'Int',
+	'Bool': 'Bool',
 	'Double': 'NSNumber',
 	
 	'String': 'String',
