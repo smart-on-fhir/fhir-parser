@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #  Download and parse FHIR resource definitions
@@ -12,10 +12,13 @@ import glob
 import re
 import json
 import datetime
+import logging
+
 from jinja2 import Environment, PackageLoader
 from jinja2.filters import environmentfilter
 
 from settings import *
+import fhirspec
 
 
 cache = 'downloads'
@@ -65,6 +68,16 @@ def expand(path, target):
 
 
 def parse(path):
+    """ Instantiate FHIRSpec from the given directory. Then parse all profiles
+    and create class objects for profiles to write classes and unit tests.
+    Collect all search params to be able to create a nice search interface.
+    """
+    spec = fhirspec.FHIRSpec(path)
+    print("version:", spec.info.version)
+
+
+
+def parse_DEPRECATED(path):
     """ Parse all JSON profile definitions found in the given expanded
     directory, create classes for all found profiles, collect all search params
     and generate the search param extension.
@@ -622,6 +635,7 @@ jinjaenv.filters['wordwrap'] = do_wordwrap
 
 
 if '__main__' == __name__:
+    logging.basicConfig(level=logging.DEBUG)
     
     # start from scratch?
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
