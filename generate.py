@@ -74,6 +74,7 @@ def parse(path):
     """
     spec = fhirspec.FHIRSpec(path)
     print("version:", spec.info.version)
+    spec.write()
 
 
 
@@ -565,7 +566,7 @@ def handle_unittest_property(path, value, klass, classes):
 
 def render(data, template, filepath):
     """ Render the given class data using the given Jinja2 template, writing
-    the output into 'Models'.
+    the output into the file at `filepath`.
     """
     assert(os.path.exists(template))
     template = jinjaenv.get_template(template)
@@ -577,7 +578,7 @@ def render(data, template, filepath):
         os.makedirs(dirpath)
     
     with io.open(filepath, 'w', encoding='utf-8') as handle:
-        log0('-->  Writing {}'.format(filepath))
+        logging.info('Writing {}'.format(filepath))
         rendered = template.render(data)
         handle.write(rendered)
         # handle.write(rendered.encode('utf-8'))
@@ -641,8 +642,6 @@ if '__main__' == __name__:
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
         if os.path.isdir(cache):
             shutil.rmtree(cache)
-    else:
-        log0('->  Using cached FHIR spec, supply "-f" to re-download')
     
     # download spec if needed and extract
     path_spec = os.path.join(cache, os.path.split(specification_url)[1])
@@ -653,7 +652,9 @@ if '__main__' == __name__:
             os.mkdir(cache)
         download(specification_url, path_spec)
         expand(path_spec, expanded_spec)
-
+    else:
+        logging.info('Using cached FHIR spec, supply "-f" to re-download')
+    
     # parse
     parse(os.path.join(expanded_spec, 'site'))
 

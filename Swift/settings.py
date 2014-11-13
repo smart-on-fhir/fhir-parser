@@ -8,7 +8,7 @@ specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-sp
 # classes/resources
 write_resources = True
 ptrn_filenames_lowercase = False							# whether all pattern resource paths should be lowercase
-tpl_resource_source = 'Swift/template-resource.swift'       # the template to use as source
+tpl_resource_source = 'Swift/template-profile.swift'		# the template to use as source
 tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
 resource_default_base = 'FHIRElement'                       # the default superclass to use
