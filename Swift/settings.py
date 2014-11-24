@@ -3,22 +3,23 @@
 from Swift.mappings import *
 
 # where to load the specification archive from
-specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
+#specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
+specification_url = 'http://hl7-fhir.github.io/fhir-spec.zip'
 
 # classes/resources
 write_resources = True
-ptrn_filenames_lowercase = False							# whether all pattern resource paths should be lowercase
-tpl_resource_source = 'Swift/template-profile.swift'		# the template to use as source
+resource_modules_lowercase = False							# whether all resource paths (i.e. modules) should be lowercase
+tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source when writing resource implementations for profiles
 tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
 resource_default_base = 'FHIRElement'                       # the default superclass to use
-resource_baseclasses = [                                    # all these files should be copied to `resource_base_target`
-    'Swift/FHIRElement.swift',
-    'Swift/FHIRResource.swift',
-    'Swift/FHIRReference.swift',
-    'Swift/FHIRContainedResource.swift',
-    'Swift/FHIRSearchParam.swift',
-    'Swift/JSON-extensions.swift',
+resource_baseclasses = [                                    # all these files should be copied to `resource_base_target`: tuples of (path, module, class-name-list)
+    ('Swift/FHIRElement.swift', None, ['FHIRElement']),
+    ('Swift/FHIRResource.swift', None, ['FHIRResource']),
+    ('Swift/FHIRReference.swift', None, ['FHIRReference']),
+    ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
+    ('Swift/FHIRSearchParam.swift', None, ['FHIRSearchParam']),
+    ('Swift/JSON-extensions.swift', None, []),
 ]
 
 # factory methods

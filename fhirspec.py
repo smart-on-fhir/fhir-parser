@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import io
 import glob
 import json
 import logging
@@ -29,7 +28,14 @@ class FHIRSpec(object):
         self.profiles = {}              # profile-name: FHIRProfile()
         self.classes = {}               # class-name: FHIRClass()
         
+        self.prepare()
         self.read_profiles()
+        self.finalize()
+    
+    def prepare(self):
+        """ Run actions before starting to parse profiles.
+        """
+        self.create_base_classes()
     
     def read_profiles(self):
         """ Find all (JSON) profile files and instantiate into FHIRProfile.
@@ -47,22 +53,48 @@ class FHIRSpec(object):
             else:
                 self.profiles[profile.name] = profile
     
+    def finalize(self):
+        """ Should be called after all profiles have been parsed and allows
+        to perform additional actions, like looking up class implementations
+        from different profiles.
+        """
+        for key, prof in self.profiles.items():
+            prof.finalize()
+    
+    
+    # MARK: Handling Classes
+    
+    def create_base_classes(self):
+        """ Creates in-memory representations for all our base classes.
+        """
+        for filepath, module, contains in _settings.resource_baseclasses:
+            for contained in contains:
+                element = FHIRProfileElement(None, None, True)
+                element.path = '{}.{}'.format(module, contained) if module is not None else contained
+                element.class_path = element.path
+                element.name = contained
+                self.announce_class(element.as_class())
+    
     def announce_class(self, fhir_class):
         assert fhir_class.path
         if fhir_class.path in self.classes:
             logging.warning("Already have class {}".format(fhir_class.name))
         else:
-            logging.info("New class \"{}\" for {}, subclass of {}".format(fhir_class.name, fhir_class.resource_name, fhir_class.superclass))
+            logging.info("New class \"{}\" for {}, subclass of {}".format(fhir_class.name, fhir_class.resource_name, fhir_class.superclass_name))
             self.classes[fhir_class.path] = fhir_class
     
-    def class_announced_as(self, class_announce):
-        if class_announce in self.classes:
-            return self.classes[class_announce]
+    def class_announced_as(self, class_name):
+        if class_name in self.classes:
+            return self.classes[class_name]
         return None
+    
+    
+    # MARK: Writing Data
     
     def write(self):
         if _settings.write_resources:
             renderer = fhirrenderer.FHIRProfileRenderer(self, _settings)
+            renderer.copy_files()
             for pname, profile in self.profiles.items():
                 renderer.render(profile)
 
@@ -84,7 +116,7 @@ class FHIRVersionInfo(object):
     
     def read_version(self, filepath):
         assert os.path.isfile(filepath)
-        with io.open(filepath, 'r', encoding='utf-8') as handle:
+        with open(filepath, 'r', encoding='utf-8') as handle:
             text = handle.read()
             for line in text.split("\n"):
                 if '=' in line:
@@ -115,12 +147,13 @@ class FHIRProfile(object):
         self.structure = None
         self.elements = []
         self.classes = []
+        self._did_finalize = False
         
         self.read_profile()
     
     def read_profile(self):
         profile = None
-        with io.open(self.filepath, 'r', encoding='utf-8') as handle:
+        with open(self.filepath, 'r', encoding='utf-8') as handle:
             profile = json.load(handle)
         assert profile
         assert 'Profile' == profile['resourceType']
@@ -159,12 +192,71 @@ class FHIRProfile(object):
                     
                     klass.add_property(prop)
     
+    def finalize(self):
+        """ Our spec object calls this when all profiles have been parsed.
+        """
+        # assign all super-classes and reference-to-classes as objects
+        for cls in self.classes:
+            for prop in cls.properties:
+                if prop.klass.superclass_name is not None and prop.klass.superclass is None:
+                    super_cls = self.find_class(prop.klass.superclass_name)
+                    if super_cls is None:
+                        raise Exception('There is no class implementation for class name "{}" on property "{}" on "{}"'
+                            .format(prop.klass.superclass_name, prop.name, cls.name))
+                    prop.klass.superclass = super_cls
+                
+                if prop.is_reference_to is not None:
+                    ref_cls = self.find_class(prop.is_reference_to)
+                    if ref_cls is None:
+                        raise Exception('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
+                            .format(prop.is_reference_to, prop.name, cls.name))
+                    prop.reference_to = ref_cls
+        
+        self._did_finalize = True
+    
     def found_class(self, klass):
         self.classes.append(klass)
         self.spec.announce_class(klass)
     
-    def find_class(self, klass):
-        return self.spec.class_announced_as(klass)
+    def find_class(self, class_name):
+        return self.spec.class_announced_as(class_name)
+    
+    def needs_classes(self):
+        """ Returns a unique list of class items that are needed for any of the
+        receiver's classes' properties and are not defined in this profile.
+        
+        :raises: Will raise if called before `finalize` has been called.
+        """
+        if not self._did_finalize:
+            raise Exception('Cannot use `needs_classes` before finalizing')
+        
+        inline = set([c.name for c in self.classes])
+        checked = set()
+        needs = []
+        
+        for klass in self.classes:
+            # are there superclasses that we need to import?
+            sup_cls = klass.superclass
+            if sup_cls is not None and sup_cls.name not in checked:
+                checked.add(sup_cls.name)
+                if sup_cls.name not in inline and not sup_cls.is_native:
+                    needs.append(sup_cls)
+            
+            # look at all properties' classes
+            for prop in klass.properties:
+                prop_cls = prop.klass
+                if prop_cls.name not in checked:
+                    checked.add(prop_cls.name)
+                    if prop_cls.name not in inline and not prop_cls.is_native:
+                        needs.append(prop_cls)
+                
+                # is the property a reference to a certain class?
+                ref_cls = prop.reference_to
+                if ref_cls is not None and ref_cls.name not in checked:
+                    checked.add(ref_cls.name)
+                    if ref_cls.name not in inline and not ref_cls.is_native:
+                        needs.append(ref_cls)
+        return needs
 
 
 class FHIRProfileStructure(object):
@@ -199,17 +291,19 @@ class FHIRProfileElement(object):
     """ An element in a profile's structure.
     """
     
-    def __init__(self, profile, element_dict):
+    def __init__(self, profile, element_dict, force_defines_class=None):
         self.profile = profile
         self.path = None
         self.class_path = None
         self.name = None
         self.definition = None
         self.is_main_profile_resource = False
-        self._defines_class = None
+        self._defines_class = force_defines_class       # will be set to True or False
         
         if element_dict is not None:
             self.parse_from(element_dict)
+        else:
+            self.definition = FHIRElementDefinition(self, None)
     
     def parse_from(self, element_dict):
         self.path = element_dict['path']
@@ -357,8 +451,10 @@ class FHIRClass(object):
         
         self.path = element.path
         self.name = element.name_for_class()
-        self.resource_name = element.path if element.path == element.profile.name else None
-        self.superclass = _settings.classmap.get(tps[0].code, _settings.resource_default_base) if len(tps) > 0 else _settings.resource_default_base
+        self.module = self.name.lower() if _settings.resource_modules_lowercase else self.name
+        self.resource_name = element.path if element.profile and element.path == element.profile.name else None
+        self.superclass = None
+        self.superclass_name = _settings.classmap.get(tps[0].code, _settings.resource_default_base) if len(tps) > 0 else _settings.resource_default_base
         self.short = element.definition.short
         if element.is_main_profile_resource:
             self.formal = element.profile.requirements
@@ -373,6 +469,10 @@ class FHIRClass(object):
         self.properties = sorted(self.properties, key=lambda x: x.name)
     
     @property
+    def is_native(self):
+        return True if self.name in _settings.natives else False
+    
+    @property
     def has_nonoptional(self):
         for prop in self.properties:
             if prop.nonoptional:
@@ -381,7 +481,7 @@ class FHIRClass(object):
 
 
 class FHIRClassProperty(object):
-    """ An element describing a class property.
+    """ An element describing an instance property.
     """
     
     @classmethod
@@ -432,6 +532,7 @@ class FHIRClassProperty(object):
         self.is_array = True if '*' == type_obj.definition.n_max else False
         self.nonoptional = True if 0 != int(type_obj.definition.n_min) else False
         self.reference = type_obj.profile
+        self.reference_to = None
         self.short = type_obj.definition.short
     
     @property

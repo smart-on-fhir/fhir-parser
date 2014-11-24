@@ -3,23 +3,24 @@
 from Python.mappings import *
 
 # where to load the specification archive from
-specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
+#specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
+specification_url = 'http://hl7-fhir.github.io/fhir-spec.zip'
 
 # classes/resources
 write_resources = True
-ptrn_filenames_lowercase = True                         # whether all pattern resource paths should be lowercase
-tpl_resource_source = 'Python/template-resource.py'     # the template to use as source
+resource_modules_lowercase = True                       # whether all resource paths (i.e. modules) should be lowercase
+tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
 tpl_resource_target_ptrn = '../models/{}.py'            # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../models/'                     # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
 resource_default_base = 'FHIRElement'                   # the default superclass to use
 resource_baseclasses = [                                # all these files should be copied to `resource_base_target`
-    'Python/__init__.py',
-    'Python/fhirelement.py',
-    'Python/fhirresource.py',
-    'Python/fhircontainedresource.py',
-    'Python/fhirreference.py',
-    'Python/fhirdate.py',
-    'Python/fhirsearch.py',
+    ('Python/__init__.py', None, []),
+    ('Python/fhirelement.py', 'fhirelement', ['FHIRElement']),
+    ('Python/fhirresource.py', 'fhirresource', ['FHIRResource']),
+    ('Python/fhircontainedresource.py', 'fhircontainedresource', ['FHIRContainedResource']),
+    ('Python/fhirreference.py', 'fhirreference', ['FHIRReference']),
+    ('Python/fhirdate.py', 'fhirdate', ['FHIRDate']),
+    ('Python/fhirsearch.py', 'fhirsearch', ['FHIRSearch']),
 ]
 
 # factory methods
@@ -37,7 +38,7 @@ tpl_searchparams_target = '../models/fhirsearchelement.py'
 write_unittests = True
 tpl_unittest_source = 'Python/template-unittest.py'
 tpl_unittest_target_ptrn = '../models/{}_tests.py'
-unittest_copyfiles_base = '../models/'			# Where to copy `unittest_copyfiles`
+unittest_copyfiles_base = '../models/'          # Where to copy `unittest_copyfiles`
 unittest_copyfiles = []
 unittest_filename_prefix = '../fhir-parser/downloads/site'
 unittest_format_path_prepare = '{}'             # used to format `path` before appending another path element - one placeholder for `path`

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import io
 import re
+import shutil
 import logging
 import textwrap
 
@@ -18,11 +18,18 @@ class FHIRRenderer(object):
         self.spec = spec
         self.settings = settings
     
+    def copy_files(self):
+        for filepath, module, contains in self.settings.resource_baseclasses:
+            if os.path.exists(filepath):
+                tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
+                logging.info("Copying base class {} to {}".format(os.path.basename(filepath), tgt))
+                shutil.copyfile(filepath, tgt)
+    
     def do_render(self, data, source_path, target_path):
         """ Render the given data using the source Jinja2 template, writing
         the output into the file at the target location.
         """
-        assert(os.path.exists(source_path))
+        assert os.path.exists(source_path)
         template = jinjaenv.get_template(source_path)
         
         if not target_path:
@@ -31,7 +38,7 @@ class FHIRRenderer(object):
         if not os.path.isdir(dirpath):
             os.makedirs(dirpath)
         
-        with io.open(target_path, 'w', encoding='utf-8') as handle:
+        with open(target_path, 'w', encoding='utf-8') as handle:
             logging.info('Writing {}'.format(target_path))
             rendered = template.render(data)
             handle.write(rendered)
@@ -43,46 +50,14 @@ class FHIRProfileRenderer(FHIRRenderer):
     """
     
     def render(self, profile):
-        inline = set()
-        checked = set()
-        imports = []
-        
-        # classes defined in the profile
-        for klass in profile.classes:
-            inline.add(klass.name)
-        
-        for klass in profile.classes:
-            # are there superclasses that we need to import?
-            sup = klass.superclass
-            if sup is not None and sup not in checked:
-                checked.add(sup)
-                if sup not in self.settings.natives and sup not in inline:
-                    imports.append(sup)
-            
-            # look at all properties' classes
-            for prop in klass.properties:
-                prop_class = prop.klass.name
-                if prop_class not in checked:
-                    checked.add(prop_class)
-                    if prop_class not in self.settings.natives and prop_class not in inline:
-                        imports.append(prop_class)
-                
-                # is the property a reference to a certain class?
-                refTo = prop.is_reference_to
-                if refTo is not None and refTo not in checked:
-                    checked.add(refTo)
-                    if refTo not in self.settings.natives and refTo not in inline:
-                        imports.append(refTo)
-        
-        # info['lowercase_import_hack'] = self.settings.ptrn_filenames_lowercase
         # classes = sorted(profile.classes, key=lambda x: x.name)
         classes = profile.classes
+        imports = profile.needs_classes()
         
-        ptrn = profile.name.lower() if self.settings.ptrn_filenames_lowercase else profile.name
+        ptrn = profile.name.lower() if self.settings.resource_modules_lowercase else profile.name
         source_path = self.settings.tpl_resource_source
         target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
         self.do_render({'profile': profile, 'info': self.spec.info, 'imports': imports, 'classes': classes}, source_path, target_path)
-	
 
 
 
