@@ -22,7 +22,7 @@ class FHIRRenderer(object):
         for filepath, module, contains in self.settings.resource_baseclasses:
             if os.path.exists(filepath):
                 tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
-                logging.info("Copying base class {} to {}".format(os.path.basename(filepath), tgt))
+                logging.info("Copying baseclasses in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
     
     def do_render(self, data, source_path, target_path):
