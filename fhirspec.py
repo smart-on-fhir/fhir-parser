@@ -13,9 +13,9 @@ import settings as _settings
 
 skip_because_unsupported = [
     'observation-device-metric-devicemetricobservation.profile.json',       # has typo "Speciment"
+    'dr-uslab-uslabdr.profile.json',                                        # invalid property name
+    'encounter-daf-encounter-daf.profile.json',                             # invalid property path?
 ]
-#fhir_namespace = 'http://hl7.org/fhir/profiles/'    # < v0.3
-fhir_namespace = 'http://hl7.org/fhir/Profile/'     # v0.3
 
 
 class FHIRSpec(object):
@@ -145,6 +145,7 @@ class FHIRProfile(object):
         assert os.path.exists(filepath)
         self.filepath = filepath
         self.filename = os.path.basename(self.filepath)
+        self.targetname = None
         self.structure = None
         self._element_map = {}
         self._class_map = {}
@@ -179,24 +180,34 @@ class FHIRProfile(object):
         
         # create classes and class properties
         for epath, element in self._element_map.items():
+            if element.is_main_profile_resource:
+                self.class_for_element(element)         # to ensure we have the main class
+            
             properties = element.as_properties()
             if properties is not None:
                 for prop in properties:
                     klass = self.class_for_parent_of(element)
                     klass.add_property(prop)
+            
+            if element.is_main_profile_resource:
+                self.targetname = element.name
+
     
     def class_for_parent_of(self, element):
         if not element.parent_name:
             return None
         
-        other = self._element_map.get(element.parent_name)
-        if other is None:
+        parent = self._element_map.get(element.parent_name)
+        if parent is None:
             raise Exception('Need element "{}" for property "{}", but don\'t have it'.format(element.parent_name, element.path))
         
-        assert element.parent_name == other.path
-        klass = self._class_map.get(other.path)
+        assert element.parent_name == parent.path
+        return self.class_for_element(parent)
+    
+    def class_for_element(self, element):
+        klass = self._class_map.get(element.path)
         if klass is None:
-            klass = FHIRClass(other)
+            klass = FHIRClass(element)
             self.found_class(klass)
         
         return klass
@@ -204,13 +215,12 @@ class FHIRProfile(object):
     def finalize(self):
         """ Our spec object calls this when all profiles have been parsed.
         """
-        self.classes = sorted(self.classes, key=lambda x: x.name)
         
         # assign all super-classes and reference-to-classes as objects
         for cls in self.classes:
             for prop in cls.properties:
                 if prop.klass.superclass_name is not None and prop.klass.superclass is None:
-                    super_cls = self.find_class(prop.klass.superclass_name)
+                    super_cls = self.spec.class_announced_as(prop.klass.superclass_name)
                     if super_cls is None:
                         logging.error('There is no class implementation for class name "{}" on property "{}" on "{}"'
                             .format(prop.klass.superclass_name, prop.name, cls.name))
@@ -218,7 +228,7 @@ class FHIRProfile(object):
                         prop.klass.superclass = super_cls
                 
                 if prop.is_reference_to is not None:
-                    ref_cls = self.find_class(prop.is_reference_to)
+                    ref_cls = self.spec.class_announced_as(prop.is_reference_to)
                     if ref_cls is None:
                         logging.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
                             .format(prop.is_reference_to, prop.name, cls.name))
@@ -231,9 +241,6 @@ class FHIRProfile(object):
         self._class_map[klass.path] = klass
         self.classes.append(klass)
         self.spec.announce_class(klass)
-    
-    def find_class(self, class_name):
-        return self.spec.class_announced_as(class_name)
     
     def needs_classes(self):
         """ Returns a unique list of class items that are needed for any of the
@@ -253,7 +260,7 @@ class FHIRProfile(object):
             sup_cls = klass.superclass
             if sup_cls is not None and sup_cls.name not in checked:
                 checked.add(sup_cls.name)
-                if sup_cls.name not in inline and not sup_cls.is_native:
+                if sup_cls.name not in inline:
                     needs.append(sup_cls)
             
             # look at all properties' classes
@@ -261,16 +268,23 @@ class FHIRProfile(object):
                 prop_cls = prop.klass
                 if prop_cls.name not in checked:
                     checked.add(prop_cls.name)
-                    if prop_cls.name not in inline and not prop_cls.is_native:
+                    if prop_cls.name not in inline:
                         needs.append(prop_cls)
                 
                 # is the property a reference to a certain class?
                 ref_cls = prop.reference_to
                 if ref_cls is not None and ref_cls.name not in checked:
                     checked.add(ref_cls.name)
-                    if ref_cls.name not in inline and not ref_cls.is_native:
+                    if ref_cls.name not in inline:
                         needs.append(ref_cls)
         return needs
+    
+    def writable_classes(self):
+        classes = []
+        for klass in self.classes:
+            if klass.should_write():
+                classes.append(klass)
+        return classes
 
 
 class FHIRProfileStructure(object):
@@ -299,7 +313,7 @@ class FHIRProfileStructure(object):
             self.name = self.type
         self.base = json_dict.get('base')
         if self.base:
-            self.subclass_of = self.base.replace(fhir_namespace, '')
+            self.subclass_of = self.base.replace(_settings.fhir_namespace, '')
         
         # find element definitions
         if self.base:
@@ -330,17 +344,26 @@ class FHIRProfileElement(object):
     
     def parse_from(self, element_dict):
         self.path = element_dict['path']
+        if self.path == self.profile.structure.type:
+            self.is_main_profile_resource = True
+        
         parts = self.path.split('.')
         self.parent_name = '.'.join(parts[:-1]) if len(parts) > 0 else None
-        self.name = element_dict.get('name') or parts[-1]
+        self.name = element_dict.get('name')
         
+        # find the definition
         if 'definition' in element_dict:        # < v0.3
             self.definition = FHIRElementDefinition(self, element_dict['definition'])
+            if self.is_main_profile_resource:
+                self.name = self.profile.name
         else:                                   # v0.3
             self.definition = FHIRElementDefinition(self, element_dict)
         
-        if self.path == self.profile.structure.type:
-            self.is_main_profile_resource = True
+        # handle the name
+        if not self.name:
+            self.name = parts[-1]
+        if '-' in self.name:
+            self.name = ''.join([n[:1].upper() + n[1:] for n in self.name.split('-')])
     
     def as_properties(self):
         """ If the element describes a *class property*, returns a list of
@@ -374,11 +397,10 @@ class FHIRProfileElement(object):
         assert len(tps) < 2
         type_code = None
         
-        if self.is_main_profile_resource:
-            if self.profile.structure.subclass_of is not None:
-                type_code = self.profile.structure.subclass_of
-            else:
-                type_code = 'DomainResource'
+        if self.is_main_profile_resource and self.profile.structure.subclass_of is not None:
+            type_code = self.profile.structure.subclass_of
+        elif self.is_main_profile_resource and self.name != self.path:
+            type_code = self.path
         elif len(tps) > 0:
             type_code = tps[0].code
         else:
@@ -402,7 +424,7 @@ class FHIRElementDefinition(object):
         self.constraint = None
         self.mapping = None
         self.representation = None
-        # TODO: extract "fixed[x]"
+        # TODO: extract "defaultValue[x]", "fixed[x]", "pattern[x]"
         
         if definition_dict is not None:
             self.parse_from(definition_dict)
@@ -412,14 +434,14 @@ class FHIRElementDefinition(object):
         for type_dict in definition_dict.get('type', []):
             self.types.append(FHIRElementType(self, type_dict))
         
-        self.short = definition_dict['short']
+        self.short = definition_dict.get('short')
         self.formal = definition_dict.get('formal')
         if self.formal and self.short == self.formal[:-1]:     # formal adds a trailing period
             self.formal = None
         self.comment = definition_dict.get('comments')
         
-        self.n_min = definition_dict['min']
-        self.n_max = definition_dict['max']
+        self.n_min = definition_dict.get('min')
+        self.n_max = definition_dict.get('max')
         if 'constraint' in definition_dict:
             self.constraint = FHIRElementConstraint(definition_dict['constraint'])
         if 'mapping' in definition_dict:
@@ -490,20 +512,22 @@ class FHIRClass(object):
         assert isinstance(prop, FHIRClassProperty)
         
         # do we already have a property with this name?
-        # TODO: this happens with properties that are references to different
-        # resources. Solve!
+        # if we do and it's a specific reference, make it a reference to a
+        # generic resource
         for existing in self.properties:
             if existing.name == prop.name:
-                logging.warning('Already have property "{}" on {}'.format(prop.name, self.name))
+                if not existing.reference:
+                    raise Exception('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
+                
+                existing.reference = 'Resource'
                 return
         
         prop.klass = self
         self.properties.append(prop)
         self.properties = sorted(self.properties, key=lambda x: x.name)
     
-    @property
-    def is_native(self):
-        return True if self.name in _settings.natives else False
+    def should_write(self):
+        return True if len(self.properties) > 0 else False
     
     @property
     def has_nonoptional(self):
@@ -552,7 +576,7 @@ class FHIRClassProperty(object):
             # "ResourceReference" but apparently should be called
             # "reasonResource", NOT "reasonResourceReference". This will be
             # changed in a later FHIR version.
-            kl = 'Resource' if 'ResourceReference' == type_name else type_name
+            kl = 'Resource' if 'ResourceReference' == type_name else type_name  # < v0.3
             name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
         
         self.orig_name = name
@@ -571,7 +595,7 @@ class FHIRClassProperty(object):
     @property
     def is_reference_to(self):
         if self.reference:
-            ref = self.reference.replace(fhir_namespace, '')
+            ref = self.reference.replace(_settings.fhir_namespace, '')
             return _settings.classmap.get(ref, ref)
         return None
 

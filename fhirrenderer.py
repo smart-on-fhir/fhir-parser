@@ -50,11 +50,14 @@ class FHIRProfileRenderer(FHIRRenderer):
     """
     
     def render(self, profile):
-        # classes = sorted(profile.classes, key=lambda x: x.name)
-        classes = profile.classes
+        classes = sorted(profile.writable_classes(), key=lambda x: x.name)
+        if 0 == len(classes):
+            logging.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
+            return
+        
         imports = profile.needs_classes()
         
-        ptrn = profile.name.lower() if self.settings.resource_modules_lowercase else profile.name
+        ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
         source_path = self.settings.tpl_resource_source
         target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
         self.do_render({'profile': profile, 'info': self.spec.info, 'imports': imports, 'classes': classes}, source_path, target_path)
