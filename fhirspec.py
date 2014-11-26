@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import io
 import os
 import glob
 import json
@@ -160,7 +161,7 @@ class FHIRVersionInfo(object):
     
     def read_version(self, filepath):
         assert os.path.isfile(filepath)
-        with open(filepath, 'r', encoding='utf-8') as handle:
+        with io.open(filepath, 'r', encoding='utf-8') as handle:
             text = handle.read()
             for line in text.split("\n"):
                 if '=' in line:
@@ -202,7 +203,7 @@ class FHIRProfile(object):
     
     def read_profile(self):
         profile = None
-        with open(self.filepath, 'r', encoding='utf-8') as handle:
+        with io.open(self.filepath, 'r', encoding='utf-8') as handle:
             profile = json.load(handle)
         assert profile
         assert 'Profile' == profile['resourceType']
@@ -282,10 +283,16 @@ class FHIRProfile(object):
             
             # look at all properties' classes
             for prop in klass.properties:
-                prop_cls = prop.klass
-                if prop_cls.name not in checked:
-                    checked.add(prop_cls.name)
-                    needs.append(prop_cls)
+                prop_cls_name = prop.class_name
+                if prop_cls_name not in checked and not self.spec.class_name_is_native(prop_cls_name):
+                    prop_cls = self.spec.class_announced_as(prop_cls_name)
+                    checked.add(prop_cls_name)
+                    if prop_cls is None:
+                        # TODO: turn into exception once `nameReference` on element definition is implemented
+                        logging.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
+                    else:
+                        prop.module_name = prop_cls.module
+                        needs.append(prop_cls)
                 
                 # is the property a reference to a certain class?
                 ref_cls = prop.reference_to
@@ -293,7 +300,7 @@ class FHIRProfile(object):
                     checked.add(ref_cls.name)
                     needs.append(ref_cls)
         
-        return needs
+        return sorted(needs, key=lambda n: n.module)
     
     def writable_classes(self):
         classes = []
@@ -311,23 +318,16 @@ class FHIRProfile(object):
         
         # assign all super-classes and reference-to-classes as objects
         for cls in self.classes:
-            if cls.superclass_name and cls.superclass is None:
+            if cls.superclass is None:
                 super_cls = self.spec.class_announced_as(cls.superclass_name)
                 if super_cls is None:
+                    # TODO: turn into exception once we have all basic types and can parse all special cases (like "#class")
                     logging.error('There is no class implementation for class named "{}" in profile "{}"'
                         .format(cls.superclass_name, self.name))
                 else:
                     cls.superclass = super_cls
             
             for prop in cls.properties:
-                if prop.klass.superclass_name is not None and prop.klass.superclass is None:
-                    super_cls = self.spec.class_announced_as(prop.klass.superclass_name)
-                    if super_cls is None:
-                        logging.error('There is no class implementation for class named "{}" on property "{}" on "{}"'
-                            .format(prop.klass.superclass_name, prop.name, cls.name))
-                    else:
-                        prop.klass.superclass = super_cls
-                
                 if prop.reference_to_profile is not None:
                     ref_cls = self.spec.class_announced_as(prop.reference_to_name)
                     if ref_cls is None:
@@ -499,6 +499,7 @@ class FHIRElementDefinition(object):
         self.mapping = None
         self.representation = None
         # TODO: extract "defaultValue[x]", "fixed[x]", "pattern[x]"
+        # TODO: extract "nameReference"
         
         if definition_dict is not None:
             self.parse_from(definition_dict)

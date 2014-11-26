@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import io
 import os
 import re
 import shutil
@@ -38,7 +39,7 @@ class FHIRRenderer(object):
         if not os.path.isdir(dirpath):
             os.makedirs(dirpath)
         
-        with open(target_path, 'w', encoding='utf-8') as handle:
+        with io.open(target_path, 'w', encoding='utf-8') as handle:
             logging.info('Writing {}'.format(target_path))
             rendered = template.render(data)
             handle.write(rendered)
@@ -56,11 +57,18 @@ class FHIRProfileRenderer(FHIRRenderer):
             return
         
         imports = profile.needs_classes()
+        data = {
+            'profile': profile,
+            'info': self.spec.info,
+            'imports': imports,
+            'classes': classes
+        }
         
         ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
         source_path = self.settings.tpl_resource_source
         target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
-        self.do_render({'profile': profile, 'info': self.spec.info, 'imports': imports, 'classes': classes}, source_path, target_path)
+        
+        self.do_render(data, source_path, target_path)
 
 
 

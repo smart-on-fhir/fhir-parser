@@ -34,7 +34,6 @@ class FHIRClass(object):
                 existing.reference_to_profile = 'Resource'
                 return
         
-        prop.klass = self
         self.properties.append(prop)
         self.properties = sorted(self.properties, key=lambda x: x.name)
     
@@ -73,7 +72,7 @@ class FHIRClassProperty(object):
         self.name = spec.safe_property_name(name)
         self.parent_name = type_obj.elements_parent_name()
         self.class_name = spec.class_name_for_type(type_name)
-        self.klass = None       # will be set when adding to class
+        self.module_name = None             # should only be set if it's an external module (think Python)
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == type_obj.definition.n_max else False
