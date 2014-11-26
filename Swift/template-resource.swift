@@ -1,5 +1,5 @@
 //
-//  {{ profile.name }}.swift
+//  {{ profile.targetname }}.swift
 //  SMART-on-FHIR
 //
 //  Generated from FHIR {{ info.version }} ({{ profile.filename }}) on {{ info.date }}.

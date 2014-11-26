@@ -14,7 +14,7 @@ import settings as _settings
 skip_because_unsupported = [
     'observation-device-metric-devicemetricobservation.profile.json',       # has typo "Speciment"
     'dr-uslab-uslabdr.profile.json',                                        # invalid property name
-    'encounter-daf-encounter-daf.profile.json',                             # invalid property path?
+    'encounter-daf-encounter-daf.profile.json',                             # invalid property path
 ]
 
 
@@ -190,8 +190,10 @@ class FHIRProfile(object):
                     klass.add_property(prop)
             
             if element.is_main_profile_resource:
-                self.targetname = element.name
+                self.targetname = element.name_for_class()
 
+    
+    # MARK: Class Handling
     
     def class_for_parent_of(self, element):
         if not element.parent_name:
@@ -212,31 +214,6 @@ class FHIRProfile(object):
         
         return klass
     
-    def finalize(self):
-        """ Our spec object calls this when all profiles have been parsed.
-        """
-        
-        # assign all super-classes and reference-to-classes as objects
-        for cls in self.classes:
-            for prop in cls.properties:
-                if prop.klass.superclass_name is not None and prop.klass.superclass is None:
-                    super_cls = self.spec.class_announced_as(prop.klass.superclass_name)
-                    if super_cls is None:
-                        logging.error('There is no class implementation for class name "{}" on property "{}" on "{}"'
-                            .format(prop.klass.superclass_name, prop.name, cls.name))
-                    else:
-                        prop.klass.superclass = super_cls
-                
-                if prop.is_reference_to is not None:
-                    ref_cls = self.spec.class_announced_as(prop.is_reference_to)
-                    if ref_cls is None:
-                        logging.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
-                            .format(prop.is_reference_to, prop.name, cls.name))
-                    else:
-                        prop.reference_to = ref_cls
-        
-        self._did_finalize = True
-    
     def found_class(self, klass):
         self._class_map[klass.path] = klass
         self.classes.append(klass)
@@ -251,8 +228,7 @@ class FHIRProfile(object):
         if not self._did_finalize:
             raise Exception('Cannot use `needs_classes` before finalizing')
         
-        inline = set([c.name for c in self.classes])
-        checked = set()
+        checked = set([c.name for c in self.classes])
         needs = []
         
         for klass in self.classes:
@@ -260,23 +236,21 @@ class FHIRProfile(object):
             sup_cls = klass.superclass
             if sup_cls is not None and sup_cls.name not in checked:
                 checked.add(sup_cls.name)
-                if sup_cls.name not in inline:
-                    needs.append(sup_cls)
+                needs.append(sup_cls)
             
             # look at all properties' classes
             for prop in klass.properties:
                 prop_cls = prop.klass
                 if prop_cls.name not in checked:
                     checked.add(prop_cls.name)
-                    if prop_cls.name not in inline:
-                        needs.append(prop_cls)
+                    needs.append(prop_cls)
                 
                 # is the property a reference to a certain class?
                 ref_cls = prop.reference_to
                 if ref_cls is not None and ref_cls.name not in checked:
                     checked.add(ref_cls.name)
-                    if ref_cls.name not in inline:
-                        needs.append(ref_cls)
+                    needs.append(ref_cls)
+        
         return needs
     
     def writable_classes(self):
@@ -285,13 +259,49 @@ class FHIRProfile(object):
             if klass.should_write():
                 classes.append(klass)
         return classes
+    
+    
+    # MARK: Finalizing
+    
+    def finalize(self):
+        """ Our spec object calls this when all profiles have been parsed.
+        """
+        
+        # assign all super-classes and reference-to-classes as objects
+        for cls in self.classes:
+            if cls.superclass_name and cls.superclass is None:
+                super_cls = self.spec.class_announced_as(cls.superclass_name)
+                if super_cls is None:
+                    logging.error('There is no class implementation for class named "{}" in profile "{}"'
+                        .format(cls.superclass_name, self.name))
+                else:
+                    cls.superclass = super_cls
+            
+            for prop in cls.properties:
+                if prop.klass.superclass_name is not None and prop.klass.superclass is None:
+                    super_cls = self.spec.class_announced_as(prop.klass.superclass_name)
+                    if super_cls is None:
+                        logging.error('There is no class implementation for class named "{}" on property "{}" on "{}"'
+                            .format(prop.klass.superclass_name, prop.name, cls.name))
+                    else:
+                        prop.klass.superclass = super_cls
+                
+                if prop.reference_to_profile is not None:
+                    ref_cls = self.spec.class_announced_as(prop.reference_to_name)
+                    if ref_cls is None:
+                        logging.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
+                            .format(prop.reference_to_name, prop.name, cls.name))
+                    else:
+                        prop.reference_to = ref_cls
+        
+        self._did_finalize = True
 
 
 class FHIRProfileStructure(object):
     """ The actual structure of a complete profile.
     """
     
-    def __init__(self, profile, structure_dict):
+    def __init__(self, profile, profile_dict):
         self.profile = profile
         self.type = None
         self.name = None
@@ -299,13 +309,12 @@ class FHIRProfileStructure(object):
         self.subclass_of = None
         self.raw_elements = None
         
-        self.parse_from(structure_dict)
+        self.parse_from(profile_dict)
     
     def parse_from(self, json_dict):
         # support < 0.3
-        structure_arr = json_dict.get('structure')
-        if structure_arr is not None:
-            json_dict = structure_arr[0]
+        if 'structure' in json_dict:
+            json_dict = json_dict['structure'][0]
         
         self.type = json_dict.get('type')
         self.name = json_dict.get('name')
@@ -317,8 +326,9 @@ class FHIRProfileStructure(object):
         
         # find element definitions
         if self.base:
-            self.raw_elements = json_dict['differential']
-        if 'snapshot' in json_dict:
+            logging.debug('Using "differential" for {}'.format(self.name))
+            self.raw_elements = json_dict['differential'].get('element', [])
+        elif 'snapshot' in json_dict:
             self.raw_elements = json_dict['snapshot'].get('element', [])     # v0.3
         else:
             self.raw_elements = json_dict.get('element', [])                 # < v0.3
@@ -376,11 +386,30 @@ class FHIRProfileElement(object):
             logging.debug('Skipping property "{}"'.format(self.name))
             return None
         
+        if self.definition is None:
+            logging.warning("Element {} does not have a definition, skipping".format(self.path))
+            return None
+        
         if self.definition.representation:
             logging.debug('Omitting property "{}" for representation {}'.format(self.name, self.definition.representation))
             return None
         
-        return FHIRClassProperty.for_element(self)
+        # create a list of FHIRClassProperty instances (usually with only 1 item)
+        if len(self.definition.types) > 0:
+            props = []
+            for type_obj in self.definition.types:
+                # the wildcard type: expand to all possible types, as defined in our mapping
+                if '*' == type_obj.code:
+                    for exp_type in _settings.starexpandtypes:
+                        props.append(FHIRClassProperty(exp_type, type_obj))
+                else:
+                    props.append(FHIRClassProperty(type_obj.code, type_obj))
+            return props
+        
+        # no `type` definition in the element: it's an inline class definition
+        type_obj = FHIRElementType(self.definition, None)
+        return [FHIRClassProperty(self.name_for_class(), type_obj)]
+        
     
     def name_of_resource(self):
         return self.path if self.profile and self.path == self.profile.name else None
@@ -388,11 +417,14 @@ class FHIRProfileElement(object):
     def name_for_class(self):
         if self.parent is None and '.' in self.path:
             raise Exception('Must have a parent FHIRProfileElement for "{}"'.format(self.path))
+        uppercased = self.name[:1].upper() + self.name[1:]
         if self.parent is not None:
-            return self.parent.name_for_class() + self.name[:1].upper() + self.name[1:]
-        return self.name        # main profile resource, because we don't have a parent and no '.' in the path
+            return self.parent.name_for_class() + uppercased
+        return uppercased
     
     def name_for_superclass(self):
+        """ Determine the superclass for the element (used for class elements).
+        """
         tps = self.definition.types
         assert len(tps) < 2
         type_code = None
@@ -410,7 +442,7 @@ class FHIRProfileElement(object):
 
 
 class FHIRElementDefinition(object):
-    """ The definition part of a FHIR element.
+    """ The definition of a FHIR element.
     """
     
     def __init__(self, element, definition_dict):
@@ -450,7 +482,7 @@ class FHIRElementDefinition(object):
 
 
 class FHIRElementType(object):
-    """ The type(s) of an element.
+    """ Representing a type of an element.
     """
     
     def __init__(self, definition, type_dict):
@@ -516,10 +548,10 @@ class FHIRClass(object):
         # generic resource
         for existing in self.properties:
             if existing.name == prop.name:
-                if not existing.reference:
+                if not existing.reference_to_profile:
                     raise Exception('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
                 
-                existing.reference = 'Resource'
+                existing.reference_to_profile = 'Resource'
                 return
         
         prop.klass = self
@@ -527,6 +559,8 @@ class FHIRClass(object):
         self.properties = sorted(self.properties, key=lambda x: x.name)
     
     def should_write(self):
+        if self.superclass is not None:
+            return True
         return True if len(self.properties) > 0 else False
     
     @property
@@ -541,41 +575,15 @@ class FHIRClassProperty(object):
     """ An element describing an instance property.
     """
     
-    @classmethod
-    def for_element(cls, element):
-        """ Returns a list of instances (usually only one) that are represented
-        by an element.
-        """
-        props = []
-        if element.definition is None:
-            logging.warning("Element {} does not have a definition, skipping".format(element.path))
-            return props
-        
-        if len(element.definition.types) > 0:
-            for type_obj in element.definition.types:
-                # the wildcard type: expand to all possible types, as defined in our mapping
-                if '*' == type_obj.code:
-                    for exp_type in _settings.starexpandtypes:
-                        props.append(cls(exp_type, type_obj))
-                else:
-                    props.append(cls(type_obj.code, type_obj))
-        # no `type` definition in the element, it's an inline definition
-        else:
-            type_obj = FHIRElementType(element.definition, None)
-            props.append(cls(element.name_for_class(), type_obj))
-        
-        return props
-    
     def __init__(self, type_name, type_obj):
         assert isinstance(type_obj, FHIRElementType)
         
         self.path = type_obj.definition.element.path
         name = type_obj.definition.element.name
         if '[x]' in name:
-            # TODO: "MedicationPrescription.reason[x]" can be a
+            # < v0.3: "MedicationPrescription.reason[x]" can be a
             # "ResourceReference" but apparently should be called
-            # "reasonResource", NOT "reasonResourceReference". This will be
-            # changed in a later FHIR version.
+            # "reasonResource", NOT "reasonResourceReference".
             kl = 'Resource' if 'ResourceReference' == type_name else type_name  # < v0.3
             name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
         
@@ -587,15 +595,15 @@ class FHIRClassProperty(object):
         self.json_class = _settings.jsonmap.get(self.class_name, _settings.jsonmap_default)
         self.is_native = True if self.class_name in _settings.natives else False
         self.is_array = True if '*' == type_obj.definition.n_max else False
-        self.nonoptional = True if 0 != int(type_obj.definition.n_min) else False
-        self.reference = type_obj.profile
+        self.nonoptional = True if type_obj.definition.n_min is not None and 0 != int(type_obj.definition.n_min) else False
+        self.reference_to_profile = type_obj.profile
         self.reference_to = None
         self.short = type_obj.definition.short
     
     @property
-    def is_reference_to(self):
-        if self.reference:
-            ref = self.reference.replace(_settings.fhir_namespace, '')
+    def reference_to_name(self):
+        if self.reference_to_profile:
+            ref = self.reference_to_profile.replace(_settings.fhir_namespace, '')
             return _settings.classmap.get(ref, ref)
         return None
 
