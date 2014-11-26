@@ -17,19 +17,11 @@ import logging
 from jinja2 import Environment, PackageLoader
 from jinja2.filters import environmentfilter
 
-from settings import *
 import fhirspec
 
 
-cache = 'downloads'
+_cache = 'downloads'
 loglevel = 0
-
-skip_properties = [
-    'extension',
-    'modifierExtension',
-    'language',
-    'contained',
-]
 
 jinjaenv = Environment(loader=PackageLoader('generate', '.'))
 
@@ -48,7 +40,6 @@ def download(url, path):
     """
     import requests     # import here as we can bypass its use with a manual download
     
-    log0('->  Downloading {}'.format(url))
     ret = requests.get(url)
     assert(ret.ok)
     with io.open(path, 'wb') as handle:
@@ -62,20 +53,17 @@ def expand(path, target):
     assert(os.path.exists(path))
     import zipfile      # import here as we can bypass its use with a manual unzip
     
-    log0('->  Extracting to {}'.format(target))
     with zipfile.ZipFile(path) as z:
         z.extractall(target)
 
 
-def parse(path):
+def run(path, settings):
     """ Instantiate FHIRSpec from the given directory. Then parse all profiles
     and create class objects for profiles to write classes and unit tests.
     Collect all search params to be able to create a nice search interface.
     """
-    spec = fhirspec.FHIRSpec(path)
-    print("version:", spec.info.version)
+    spec = fhirspec.FHIRSpec(path, settings)
     spec.write()
-
 
 
 def parse_DEPRECATED(path):
@@ -357,26 +345,29 @@ jinjaenv.filters['wordwrap'] = do_wordwrap
 
 
 if '__main__' == __name__:
+    import settings as _settings
     logging.basicConfig(level=logging.DEBUG)
     
     # start from scratch?
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
-        if os.path.isdir(cache):
-            shutil.rmtree(cache)
+        if os.path.isdir(_cache):
+            shutil.rmtree(_cache)
     
     # download spec if needed and extract
-    path_spec = os.path.join(cache, os.path.split(specification_url)[1])
-    expanded_spec = os.path.dirname(path_spec)
-    source_dir = os.path.join(expanded_spec, 'site')
+    spec_url = _settings.specification_url
+    spec_path = os.path.join(_cache, spec_url.split('/')[-1])
+    spec_source = os.path.join(_cache, 'site')
     
-    if not os.path.exists(source_dir):
-        if not os.path.isdir(cache):
-            os.mkdir(cache)
-        download(specification_url, path_spec)
-        expand(path_spec, expanded_spec)
+    if not os.path.exists(spec_path):
+        if not os.path.isdir(_cache):
+            os.mkdir(_cache)
+        logging.info('Downloading FHIR spec')
+        download(spec_url, spec_path)
+        logging.info('Extracting to {}'.format(_cache))
+        expand(spec_path, _cache)
     else:
         logging.info('Using cached FHIR spec, supply "-f" to re-download')
     
     # parse
-    parse(source_dir)
+    run(spec_source, _settings)
 

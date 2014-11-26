@@ -9,8 +9,6 @@ import datetime
 
 import fhirrenderer
 
-import settings as _settings
-
 skip_because_unsupported = [
     'observation-device-metric-devicemetricobservation.profile.json',       # has typo "Speciment"
     'dr-uslab-uslabdr.profile.json',                                        # invalid property name
@@ -22,9 +20,11 @@ class FHIRSpec(object):
     """ The FHIR specification.
     """
     
-    def __init__(self, directory):
+    def __init__(self, directory, settings):
         assert os.path.isdir(directory)
+        assert settings is not None
         self.directory = directory
+        self.settings = settings
         self.info = FHIRVersionInfo(self, directory)
         self.profiles = {}              # profile-name: FHIRProfile()
         self.classes = {}               # class-name: FHIRClass()
@@ -68,9 +68,10 @@ class FHIRSpec(object):
     def create_base_classes(self):
         """ Creates in-memory representations for all our base classes.
         """
-        for filepath, module, contains in _settings.resource_baseclasses:
+        fake = FHIRProfile(self, None)
+        for filepath, module, contains in self.settings.resource_baseclasses:
             for contained in contains:
-                element = FHIRProfileElement(None, None)
+                element = FHIRProfileElement(fake, None)
                 element.path = contained
                 element.name = contained
                 self.announce_class(FHIRClass(element))
@@ -92,11 +93,41 @@ class FHIRSpec(object):
         return None
     
     
+    # MARK: Naming Utilities
+    
+    def module_name_for(self, name):
+        return name.lower() if name and self.settings.resource_modules_lowercase else name
+    
+    def class_name_for_type(self, type_name):
+        if type_name is None:
+            return self.settings.resource_default_base
+        return self.settings.classmap.get(type_name, type_name)
+    
+    def class_name_for_profile(self, profile_name):
+        if not profile_name:
+            return None
+        type_name = profile_name.replace(self.settings.fhir_namespace, '')
+        return self.class_name_for_type(type_name)
+    
+    def class_name_is_native(self, class_name):
+        return True if class_name in self.settings.natives else False
+    
+    def safe_property_name(self, prop_name):
+        return self.settings.reservedmap.get(prop_name, prop_name)
+    
+    def json_class_for_class_name(self, class_name):
+        return self.settings.jsonmap.get(class_name, self.settings.jsonmap_default)
+    
+    @property
+    def star_expand_types(self):
+        return self.settings.starexpandtypes
+    
+    
     # MARK: Writing Data
     
     def write(self):
-        if _settings.write_resources:
-            renderer = fhirrenderer.FHIRProfileRenderer(self, _settings)
+        if self.settings.write_resources:
+            renderer = fhirrenderer.FHIRProfileRenderer(self, self.settings)
             renderer.copy_files()
             for pname, profile in self.profiles.items():
                 renderer.render(profile)
@@ -142,9 +173,6 @@ class FHIRProfile(object):
     
     def __init__(self, spec, filepath):
         self.spec = spec
-        assert os.path.exists(filepath)
-        self.filepath = filepath
-        self.filename = os.path.basename(self.filepath)
         self.targetname = None
         self.structure = None
         self._element_map = {}
@@ -152,7 +180,11 @@ class FHIRProfile(object):
         self.classes = []
         self._did_finalize = False
         
-        self.read_profile()
+        if filepath is not None:
+            assert os.path.exists(filepath)
+            self.filepath = filepath
+            self.filename = os.path.basename(self.filepath)
+            self.read_profile()
     
     @property
     def name(self):
@@ -191,7 +223,7 @@ class FHIRProfile(object):
             
             if element.is_main_profile_resource:
                 self.targetname = element.name_for_class()
-
+    
     
     # MARK: Class Handling
     
@@ -322,7 +354,7 @@ class FHIRProfileStructure(object):
             self.name = self.type
         self.base = json_dict.get('base')
         if self.base:
-            self.subclass_of = self.base.replace(_settings.fhir_namespace, '')
+            self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
         
         # find element definitions
         if self.base:
@@ -339,6 +371,7 @@ class FHIRProfileElement(object):
     """
     
     def __init__(self, profile, element_dict):
+        assert isinstance(profile, FHIRProfile)
         self.profile = profile
         self.path = None
         self.parent = None
@@ -400,7 +433,7 @@ class FHIRProfileElement(object):
             for type_obj in self.definition.types:
                 # the wildcard type: expand to all possible types, as defined in our mapping
                 if '*' == type_obj.code:
-                    for exp_type in _settings.starexpandtypes:
+                    for exp_type in self.profile.spec.star_expand_types:
                         props.append(FHIRClassProperty(exp_type, type_obj))
                 else:
                     props.append(FHIRClassProperty(type_obj.code, type_obj))
@@ -435,10 +468,9 @@ class FHIRProfileElement(object):
             type_code = self.path
         elif len(tps) > 0:
             type_code = tps[0].code
-        else:
-            type_code = _settings.resource_default_base
+        # else type stays None, which will apply the default class name
         
-        return _settings.classmap.get(type_code, type_code)
+        return self.profile.spec.class_name_for_type(type_code)
 
 
 class FHIRElementDefinition(object):
@@ -527,10 +559,9 @@ class FHIRClass(object):
     
     def __init__(self, element):
         assert isinstance(element, FHIRProfileElement)
-        
         self.path = element.path
         self.name = element.name_for_class()
-        self.module = self.name.lower() if _settings.resource_modules_lowercase else self.name
+        self.module = element.profile.spec.module_name_for(self.name)
         self.resource_name = element.name_of_resource()
         self.superclass = None
         self.superclass_name = element.name_for_superclass()
@@ -577,9 +608,11 @@ class FHIRClassProperty(object):
     
     def __init__(self, type_name, type_obj):
         assert isinstance(type_obj, FHIRElementType)
+        elem = type_obj.definition.element
+        spec = elem.profile.spec
         
-        self.path = type_obj.definition.element.path
-        name = type_obj.definition.element.name
+        self.path = elem.path
+        name = elem.name
         if '[x]' in name:
             # < v0.3: "MedicationPrescription.reason[x]" can be a
             # "ResourceReference" but apparently should be called
@@ -588,25 +621,18 @@ class FHIRClassProperty(object):
             name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
         
         self.orig_name = name
-        self.name = _settings.reservedmap.get(name, name)
+        self.name = spec.safe_property_name(name)
         self.parent_name = type_obj.elements_parent_name()
-        self.class_name = _settings.classmap.get(type_name, type_name)
+        self.class_name = spec.class_name_for_type(type_name)
         self.klass = None       # will be set when adding to class
-        self.json_class = _settings.jsonmap.get(self.class_name, _settings.jsonmap_default)
-        self.is_native = True if self.class_name in _settings.natives else False
+        self.json_class = spec.json_class_for_class_name(self.class_name)
+        self.is_native = spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == type_obj.definition.n_max else False
         self.nonoptional = True if type_obj.definition.n_min is not None and 0 != int(type_obj.definition.n_min) else False
         self.reference_to_profile = type_obj.profile
+        self.reference_to_name = spec.class_name_for_profile(self.reference_to_profile)
         self.reference_to = None
         self.short = type_obj.definition.short
-    
-    @property
-    def reference_to_name(self):
-        if self.reference_to_profile:
-            ref = self.reference_to_profile.replace(_settings.fhir_namespace, '')
-            return _settings.classmap.get(ref, ref)
-        return None
-
 
 
 class FHIRSearchParam(object):
