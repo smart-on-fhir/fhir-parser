@@ -5,8 +5,6 @@ from Swift.mappings import *
 # where to load the specification archive from
 #specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR/fhir-spec.zip'
 specification_url = 'http://hl7-fhir.github.io/fhir-spec.zip'
-#fhir_namespace = 'http://hl7.org/fhir/profiles/'    # < v0.3
-fhir_namespace = 'http://hl7.org/fhir/Profile/'     # v0.3
 
 # classes/resources
 write_resources = True

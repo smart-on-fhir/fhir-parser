@@ -7,12 +7,20 @@ import json
 import logging
 import datetime
 
+import fhirclass
 import fhirrenderer
 
 skip_because_unsupported = [
     'observation-device-metric-devicemetricobservation.profile.json',       # has typo "Speciment"
     'dr-uslab-uslabdr.profile.json',                                        # invalid property name
     'encounter-daf-encounter-daf.profile.json',                             # invalid property path
+    'cda-clinicaldocument.profile.json',                # does not specify its name, overwriting its base profile
+    'cda-inFulFillmentOf.profile.json',                 # does not specify its name, overwriting its base profile
+    'cda-location.profile.json',                        # does not specify its name, overwriting its base profile
+    'cda-organization.profile.json',                    # does not specify its name, overwriting its base profile
+    'cda-patient-role.profile.json',                    # does not specify its name, overwriting its base profile
+    'xds-documentmanifest.profile.json',                # does not specify its name, overwriting its base profile
+    'xds-documentreference.profile.json',               # does not specify its name, overwriting its base profile
 ]
 
 
@@ -74,10 +82,12 @@ class FHIRSpec(object):
                 element = FHIRProfileElement(fake, None)
                 element.path = contained
                 element.name = contained
-                self.announce_class(FHIRClass(element))
+                self.announce_class(fhirclass.FHIRClass(element))
     
     def announce_class(self, fhir_class):
         assert fhir_class.name
+        if fhir_class.name == fhir_class.superclass_name and fhir_class.name != self.settings.resource_default_base:
+            raise Exception('Trying to announce class "{}" with itself as superclass'.format(fhir_class.name))
         if fhir_class.name in self.classes:
             logging.warning("Already have class {}".format(fhir_class.name))
         else:
@@ -106,7 +116,7 @@ class FHIRSpec(object):
     def class_name_for_profile(self, profile_name):
         if not profile_name:
             return None
-        type_name = profile_name.replace(self.settings.fhir_namespace, '')
+        type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
         return self.class_name_for_type(type_name)
     
     def class_name_is_native(self, class_name):
@@ -241,7 +251,7 @@ class FHIRProfile(object):
     def class_for_element(self, element):
         klass = self._class_map.get(element.path)
         if klass is None:
-            klass = FHIRClass(element)
+            klass = fhirclass.FHIRClass(element)
             self.found_class(klass)
         
         return klass
@@ -434,14 +444,14 @@ class FHIRProfileElement(object):
                 # the wildcard type: expand to all possible types, as defined in our mapping
                 if '*' == type_obj.code:
                     for exp_type in self.profile.spec.star_expand_types:
-                        props.append(FHIRClassProperty(exp_type, type_obj))
+                        props.append(fhirclass.FHIRClassProperty(exp_type, type_obj))
                 else:
-                    props.append(FHIRClassProperty(type_obj.code, type_obj))
+                    props.append(fhirclass.FHIRClassProperty(type_obj.code, type_obj))
             return props
         
         # no `type` definition in the element: it's an inline class definition
         type_obj = FHIRElementType(self.definition, None)
-        return [FHIRClassProperty(self.name_for_class(), type_obj)]
+        return [fhirclass.FHIRClassProperty(self.name_for_class(), type_obj)]
         
     
     def name_of_resource(self):
@@ -550,89 +560,6 @@ class FHIRElementMapping(object):
     """
     def __init__(self, mapping_arr):
         pass
-
-
-
-class FHIRClass(object):
-    """ An element/resource that should become its own class.
-    """
-    
-    def __init__(self, element):
-        assert isinstance(element, FHIRProfileElement)
-        self.path = element.path
-        self.name = element.name_for_class()
-        self.module = element.profile.spec.module_name_for(self.name)
-        self.resource_name = element.name_of_resource()
-        self.superclass = None
-        self.superclass_name = element.name_for_superclass()
-        self.short = element.definition.short
-        self.formal = element.definition.formal
-        self.properties = []
-    
-    def add_property(self, prop):
-        """ Add a property to the receiver.
-        """
-        assert isinstance(prop, FHIRClassProperty)
-        
-        # do we already have a property with this name?
-        # if we do and it's a specific reference, make it a reference to a
-        # generic resource
-        for existing in self.properties:
-            if existing.name == prop.name:
-                if not existing.reference_to_profile:
-                    raise Exception('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
-                
-                existing.reference_to_profile = 'Resource'
-                return
-        
-        prop.klass = self
-        self.properties.append(prop)
-        self.properties = sorted(self.properties, key=lambda x: x.name)
-    
-    def should_write(self):
-        if self.superclass is not None:
-            return True
-        return True if len(self.properties) > 0 else False
-    
-    @property
-    def has_nonoptional(self):
-        for prop in self.properties:
-            if prop.nonoptional:
-                return True
-        return False
-
-
-class FHIRClassProperty(object):
-    """ An element describing an instance property.
-    """
-    
-    def __init__(self, type_name, type_obj):
-        assert isinstance(type_obj, FHIRElementType)
-        elem = type_obj.definition.element
-        spec = elem.profile.spec
-        
-        self.path = elem.path
-        name = elem.name
-        if '[x]' in name:
-            # < v0.3: "MedicationPrescription.reason[x]" can be a
-            # "ResourceReference" but apparently should be called
-            # "reasonResource", NOT "reasonResourceReference".
-            kl = 'Resource' if 'ResourceReference' == type_name else type_name  # < v0.3
-            name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
-        
-        self.orig_name = name
-        self.name = spec.safe_property_name(name)
-        self.parent_name = type_obj.elements_parent_name()
-        self.class_name = spec.class_name_for_type(type_name)
-        self.klass = None       # will be set when adding to class
-        self.json_class = spec.json_class_for_class_name(self.class_name)
-        self.is_native = spec.class_name_is_native(self.class_name)
-        self.is_array = True if '*' == type_obj.definition.n_max else False
-        self.nonoptional = True if type_obj.definition.n_min is not None and 0 != int(type_obj.definition.n_min) else False
-        self.reference_to_profile = type_obj.profile
-        self.reference_to_name = spec.class_name_for_profile(self.reference_to_profile)
-        self.reference_to = None
-        self.short = type_obj.definition.short
 
 
 class FHIRSearchParam(object):
