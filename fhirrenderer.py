@@ -19,19 +19,20 @@ class FHIRRenderer(object):
         self.spec = spec
         self.settings = settings
     
-    def copy_files(self):
-        for filepath, module, contains in self.settings.resource_baseclasses:
-            if os.path.exists(filepath):
-                tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
-                logging.info("Copying baseclasses in {} to {}".format(os.path.basename(filepath), tgt))
-                shutil.copyfile(filepath, tgt)
-    
-    def do_render(self, data, source_path, target_path):
-        """ Render the given data using the source Jinja2 template, writing
-        the output into the file at the target location.
+    def render():
+        """ The main rendering start point, for subclasses to override.
         """
-        assert os.path.exists(source_path)
-        template = jinjaenv.get_template(source_path)
+        raise Exception("Cannot use abstract superclass' `render` method")
+    
+    def do_render(self, data, template_path, target_path):
+        """ Render the given data using a Jinja2 template, writing to the file
+        at the target path.
+        
+        :param template_path: Path to the Jinja2 template to render
+        :param target_path: Output path
+        """
+        assert os.path.exists(template_path)
+        template = jinjaenv.get_template(template_path)
         
         if not target_path:
             raise Exception("No target filepath provided")
@@ -48,27 +49,51 @@ class FHIRRenderer(object):
 
 class FHIRProfileRenderer(FHIRRenderer):
     """ Write classes for a profile.
-    """
+    """    
+    def copy_files(self):
+        """ Copy base resources to the target location, according to settings.
+        """
+        for filepath, module, contains in self.settings.resource_baseclasses:
+            if os.path.exists(filepath):
+                tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
+                logging.info("Copying baseclasses in {} to {}".format(os.path.basename(filepath), tgt))
+                shutil.copyfile(filepath, tgt)
     
-    def render(self, profile):
-        classes = sorted(profile.writable_classes(), key=lambda x: x.name)
-        if 0 == len(classes):
-            logging.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
-            return
+    def render(self):
+        for pname, profile in self.spec.profiles.items():
+            classes = sorted(profile.writable_classes(), key=lambda x: x.name)
+            if 0 == len(classes):
+                logging.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
+                return
+            
+            imports = profile.needed_external_classes()
+            data = {
+                'profile': profile,
+                'info': self.spec.info,
+                'imports': imports,
+                'classes': classes
+            }
+            
+            ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
+            source_path = self.settings.tpl_resource_source
+            target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
+            
+            self.do_render(data, source_path, target_path)
+
+
+class FHIRFactoryRenderer(FHIRRenderer):
+    """ Write factories for FHIR classes.
+    """
+    def render(self):
+        classes = []
+        for pname, profile in self.spec.profiles.items():
+            classes.extend(profile.writable_classes())
         
-        imports = profile.needs_classes()
         data = {
-            'profile': profile,
             'info': self.spec.info,
-            'imports': imports,
-            'classes': classes
+            'classes': sorted(classes, key=lambda x: x.name),
         }
-        
-        ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
-        source_path = self.settings.tpl_resource_source
-        target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
-        
-        self.do_render(data, source_path, target_path)
+        self.do_render(data, self.settings.tpl_factory_source, self.settings.tpl_factory_target)
 
 
 

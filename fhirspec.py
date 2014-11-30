@@ -140,8 +140,11 @@ class FHIRSpec(object):
         if self.settings.write_resources:
             renderer = fhirrenderer.FHIRProfileRenderer(self, self.settings)
             renderer.copy_files()
-            for pname, profile in self.profiles.items():
-                renderer.render(profile)
+            renderer.render()
+        
+        if self.settings.write_factory:
+            renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
+            renderer.render()
 
 
 class FHIRVersionInfo(object):
@@ -262,14 +265,14 @@ class FHIRProfile(object):
         self.classes.append(klass)
         self.spec.announce_class(klass)
     
-    def needs_classes(self):
+    def needed_external_classes(self):
         """ Returns a unique list of class items that are needed for any of the
         receiver's classes' properties and are not defined in this profile.
         
         :raises: Will raise if called before `finalize` has been called.
         """
         if not self._did_finalize:
-            raise Exception('Cannot use `needs_classes` before finalizing')
+            raise Exception('Cannot use `needed_external_classes` before finalizing')
         
         checked = set([c.name for c in self.classes])
         needs = []
@@ -455,6 +458,10 @@ class FHIRProfileElement(object):
         
     
     def name_of_resource(self):
+        """ Returns the name of the resource this element defines, if it does
+        so, `None` otherwise.
+        """
+        # TODO: also returns true for value types, which we don't want
         return self.path if self.profile and self.path == self.profile.name else None
     
     def name_for_class(self):
@@ -563,7 +570,3 @@ class FHIRElementMapping(object):
         pass
 
 
-class FHIRSearchParam(object):
-    """ A FHIR search param, belonging to a profile.
-    """
-    pass

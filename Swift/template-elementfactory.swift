@@ -16,10 +16,12 @@ extension FHIRElement
 {
 	public class func factory(className: String, json: NSDictionary) -> FHIRElement {
 		switch className {
-		{%- for klass in classes|sort %}
-			case "{{ klass }}":	return {{ klass }}(json: json)
-		{%- endfor %}
-			default:	return FHIRElement(json: json)
+		{%- for klass in classes %}{% if klass.resource_name %}
+			case "{{ klass.resource_name }}":
+				return {{ klass.name }}(json: json)
+		{%- endif %}{% endfor %}
+			default:
+				return FHIRElement(json: json)
 		}
 	}
 }

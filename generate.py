@@ -26,10 +26,12 @@ loglevel = 0
 jinjaenv = Environment(loader=PackageLoader('generate', '.'))
 
 
+# deprecated, going away when FHIRSpec is done
 def log0(*logstring):
     if loglevel >= 0:
         print(' '.join(str(s) for s in logstring))
 
+# deprecated, going away when FHIRSpec is done
 def log1(*logstring):
     if loglevel > 0:
         print(' '.join(str(s) for s in logstring))
@@ -66,6 +68,7 @@ def run(path, settings):
     spec.write()
 
 
+# deprecated, going away when FHIRSpec is done
 def parse_DEPRECATED(path):
     """ Parse all JSON profile definitions found in the given expanded
     directory, create classes for all found profiles, collect all search params
@@ -96,7 +99,7 @@ def parse_DEPRECATED(path):
     ## IMPLEMENTED in FHIRSpec()
     
     # process element factory
-    process_factories(factories, info)
+    ## IMPLEMENTED in FHIRSpec()
     
     # process search parameters
     process_search(search_params, in_profiles, info)
@@ -105,21 +108,7 @@ def parse_DEPRECATED(path):
     process_unittests(path, all_classes, info)
 
 
-def process_factories(factories, info):
-    """ Renders a template which creates an extension to FHIRElement that has
-    a factory method with all FHIR resource types.
-    """
-    if not write_factory:
-        log1("oo>  Skipping factory")
-        return
-    
-    data = {
-        'info': info,
-        'classes': factories,
-    }
-    render(data, tpl_factory_source, tpl_factory_target)
-
-
+# deprecated, going away when FHIRSpec is done
 def process_search(params, in_profiles, info):
     """ Processes and renders the FHIR search params extension.
     """
@@ -147,6 +136,7 @@ def process_search(params, in_profiles, info):
     render(data, tpl_searchparams_source, tpl_searchparams_target)
 
 
+# deprecated, going away when FHIRSpec is done
 def process_unittests(path, classes, info):
     """ Finds all example JSON files and uses them for unit test generation.
     Test files use the template `tpl_unittest_source` and dump it according to
@@ -188,6 +178,7 @@ def process_unittests(path, classes, info):
         log1('oo>  Not writing unit tests')
 
 
+# deprecated, going away when FHIRSpec is done
 def process_unittest(path, classes):
     """ Process a unit test file at the given path, determining class structure
     from the given classes dict.
@@ -217,6 +208,7 @@ def process_unittest(path, classes):
     return className, sorted(tests, key=lambda x: x['path'])
 
 
+# deprecated, going away when FHIRSpec is done
 def process_unittest_properties(utest, klass, classes, prefix=None):
     """ Process one level of unit test properties interpreted for the given
     class.
@@ -250,6 +242,7 @@ def process_unittest_properties(utest, klass, classes, prefix=None):
     return tests
 
 
+# deprecated, going away when FHIRSpec is done
 def handle_unittest_property(path, value, klass, classes):
     assert(path is not None)
     assert(value is not None)
@@ -273,6 +266,7 @@ def handle_unittest_property(path, value, klass, classes):
     return tests
 
 
+# deprecated, going away when FHIRSpec is done
 def render(data, template, filepath):
     """ Render the given class data using the given Jinja2 template, writing
     the output into the file at `filepath`.
@@ -293,6 +287,7 @@ def render(data, template, filepath):
         # handle.write(rendered.encode('utf-8'))
 
 
+# deprecated, going away when FHIRSpec is done
 def _camelCase(string, splitter='_'):
     """ Turns a string into CamelCase form without changing the first part's
     case.
@@ -310,6 +305,9 @@ def _camelCase(string, splitter='_'):
         i += 1
     
     return name
+
+
+# deprecated, going away when FHIRSpec is done
 
 # There is a bug in Jinja's wordwrap (inherited from `textwrap`) in that it
 # ignores existing linebreaks when applying the wrap:
