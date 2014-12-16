@@ -1,6 +1,6 @@
 # Mappings for the FHIR class generator
 
-# Which class names to map to resources and properties
+# Which class names to map to resources and elements
 classmap = {
     'Structure': 'FHIRElement',
     'Resource': 'FHIRResource',
@@ -17,16 +17,10 @@ classmap = {
     'string': 'str',
     'id': 'str',
     'oid': 'str',
-    'idref': 'str',
     'uri': 'str',
     'base64Binary': 'str',
     'xhtml': 'str',
     'code': 'str',      # for now we're not generating enums for these
-}
-
-# Which mapped class is a subclass of a profile (used for FHIRReference)
-subclassmap = {
-    'FHIRReference': 'ResourceReference',
 }
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be

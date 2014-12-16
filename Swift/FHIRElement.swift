@@ -14,10 +14,6 @@ import Foundation
  */
 public class FHIRElement
 {
-	public class var resourceName: String {
-		get { return "FHIRElement" }
-	}
-	
 	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
 	public var fhirExtension: [Extension]?
 	

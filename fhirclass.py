@@ -9,8 +9,8 @@ class FHIRClass(object):
     def __init__(self, element):
         assert element is not None      # and must be instance of FHIRElement
         self.path = element.path
-        self.name = element.name_for_class()
-        self.module = element.profile.spec.module_name_for(self.name)
+        self.name = element.name_if_class()
+        self.module = element.profile.spec.as_module_name(self.name)
         self.resource_name = element.name_of_resource()
         self.superclass = None
         self.superclass_name = element.name_for_superclass()
@@ -20,6 +20,8 @@ class FHIRClass(object):
     
     def add_property(self, prop):
         """ Add a property to the receiver.
+        
+        :param FHIRClassProperty prop: A FHIRClassProperty instance
         """
         assert isinstance(prop, FHIRClassProperty)
         

@@ -1,13 +1,12 @@
 # Mappings for the FHIR class generator
 
-# Which class names to map to resources and properties
+# Which class names to map to resources and elements
 classmap = {
     'Element': 'FHIRElement',
     'Structure': 'FHIRElement',
-    'Resource': 'FHIRResource',                 # < v0.3
-    'ResourceReference': 'FHIRReference',       # < v0.3
-    'DomainResource': 'FHIRResource',           # v0.3
-    'Reference': 'FHIRReference',               # v0.3
+    'Resource': 'FHIRResource',
+    'DomainResource': 'FHIRResource',
+    'Reference': 'FHIRReference',
     'Any': 'FHIRResource',
     
     'boolean': 'Bool',
@@ -19,17 +18,12 @@ classmap = {
     
     'string': 'String',
     'id': 'String',
-    'oid': 'String',
-    'idref': 'String',
-    'uri': 'NSURL',
-    'base64Binary': 'String',
-    'xhtml': 'String',
     'code': 'String',       # for now we're not generating enums for these
-}
-
-# Which mapped class is a subclass of a profile (used for FHIRReference)
-subclassmap = {
-    'FHIRReference': 'ResourceReference',
+    'uri': 'NSURL',
+    'oid': 'String',
+    'uuid': 'String',
+    'xhtml': 'String',
+    'base64Binary': 'Base64Binary',
 }
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
@@ -63,7 +57,7 @@ starexpandtypes = {
 }
 
 # Which class names are native to the lannguage
-natives = ['Bool', 'Int', 'String', 'NSNumber', 'NSDecimalNumber', 'NSDate', 'NSURL']
+natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'NSDate', 'NSURL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -78,6 +72,7 @@ jsonmap = {
     'NSDate': 'String',
     'NSDecimalNumber': 'NSNumber',
     'NSURL': 'String',
+    'Base64Binary': 'String',
 }
 jsonmap_default = 'NSDictionary'
 

@@ -98,3 +98,9 @@ extension NSDecimalNumber {
 	}
 }
 
+extension Base64Binary {
+	public init(json: String) {
+		self.init(value: json)
+	}
+}
+

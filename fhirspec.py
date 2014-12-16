@@ -12,9 +12,6 @@ import fhirclass
 import fhirrenderer
 
 skip_because_unsupported = [
-    'observation-device-metric-devicemetricobservation.profile.json',       # has typo "Speciment"
-    'dr-uslab-uslabdr.profile.json',                                        # invalid property name
-    'encounter-daf-encounter-daf.profile.json',                             # invalid property path
     'cda-clinicaldocument.profile.json',                # does not specify its name, overwriting its base profile
     'cda-inFulFillmentOf.profile.json',                 # does not specify its name, overwriting its base profile
     'cda-location.profile.json',                        # does not specify its name, overwriting its base profile
@@ -45,23 +42,44 @@ class FHIRSpec(object):
     def prepare(self):
         """ Run actions before starting to parse profiles.
         """
-        self.create_base_classes()
+        self.handle_manual_profiles()
     
     def read_profiles(self):
         """ Find all (JSON) profile files and instantiate into FHIRProfile.
         """
-        assert 0 == len(self.profiles)
         for prof in glob.glob(os.path.join(self.directory, '*.profile.json')):
             if os.path.basename(prof) in skip_because_unsupported:
                 continue
             
             profile = FHIRProfile(self, prof)
-            if not profile.name:
-                logging.warning("No name for profile {}".format(prof))
+            self.found_profile(profile)
+    
+    def found_profile(self, profile):
+            if not profile or not profile.name:
+                raise Exception("No name for profile {}".format(prof))
             elif profile.name in self.profiles:
                 logging.warning("Already have profile {}".format(profile.name))
             else:
                 self.profiles[profile.name] = profile
+    
+    def has_profile(self, profile_name):
+        return profile_name in self.profiles
+    
+    def handle_manual_profiles(self):
+        """ Creates in-memory representations for all our manually defined
+        profiles.
+        """
+        for filepath, module, contains in self.settings.manual_profiles:
+            for contained in contains:
+                profile = FHIRProfile(self, None)
+                profile.structure = FHIRProfileStructure(profile, {'type': contained})
+                self.found_profile(profile)
+                
+                element = FHIRProfileElement(profile, {'path': contained})
+                manual_class = fhirclass.FHIRClass(element)
+                manual_class.superclass_name = 'foo'
+                self.announce_class(manual_class)
+                # TODO: handle module name
     
     def finalize(self):
         """ Should be called after all profiles have been parsed and allows
@@ -74,20 +92,9 @@ class FHIRSpec(object):
     
     # MARK: Handling Classes
     
-    def create_base_classes(self):
-        """ Creates in-memory representations for all our base classes.
-        """
-        fake = FHIRProfile(self, None)
-        for filepath, module, contains in self.settings.resource_baseclasses:
-            for contained in contains:
-                element = FHIRProfileElement(fake, None)
-                element.path = contained
-                element.name = contained
-                self.announce_class(fhirclass.FHIRClass(element))
-    
     def announce_class(self, fhir_class):
         assert fhir_class.name
-        if fhir_class.name == fhir_class.superclass_name and fhir_class.name != self.settings.resource_default_base:
+        if fhir_class.name == fhir_class.superclass_name:
             raise Exception('Trying to announce class "{}" with itself as superclass'.format(fhir_class.name))
         if fhir_class.name in self.classes:
             logging.warning("Already have class {}".format(fhir_class.name))
@@ -106,13 +113,22 @@ class FHIRSpec(object):
     
     # MARK: Naming Utilities
     
-    def module_name_for(self, name):
+    def as_module_name(self, name):
         return name.lower() if name and self.settings.resource_modules_lowercase else name
     
-    def class_name_for_type(self, type_name):
+    def as_class_name(self, classname):
+        if not classname or len(classname) < 2:
+            raise Exception('Class names should at least be 2 chars long, have "{}"'.format(classname))
+        uppercased = classname[:1].upper() + classname[1:]
+        return uppercased
+    
+    def class_name_for_type(self, type_name, main_resource=False):
         if type_name is None:
-            return self.settings.resource_default_base
-        return self.settings.classmap.get(type_name, type_name)
+            if main_resource:
+                return self.settings.resource_default_base
+            return self.settings.contained_default_base
+        mapped = self.settings.classmap.get(type_name, type_name)
+        return self.as_class_name(mapped)
     
     def class_name_for_profile(self, profile_name):
         if not profile_name:
@@ -194,10 +210,11 @@ class FHIRProfile(object):
         self.classes = []
         self._did_finalize = False
         
+        self.filepath = filepath
+        self.filename = os.path.basename(filepath) if filepath else None
+        
         if filepath is not None:
             assert os.path.exists(filepath)
-            self.filepath = filepath
-            self.filename = os.path.basename(self.filepath)
             self.read_profile()
     
     @property
@@ -205,6 +222,8 @@ class FHIRProfile(object):
         return self.structure.name if self.structure is not None else None
     
     def read_profile(self):
+        """ Read the JSON definition of a profile from disk.
+        """
         profile = None
         with io.open(self.filepath, 'r', encoding='utf-8') as handle:
             profile = json.load(handle)
@@ -213,9 +232,11 @@ class FHIRProfile(object):
         
         # parse structure
         self.structure = FHIRProfileStructure(self, profile)
+        logging.info('Parsing profile {}  -->  {}'.format(self.filename, self.name))
+        if self.spec.has_profile(self.name):
+            return
         
         # extract all elements
-        logging.info('Parsing profile {}  -->  {}'.format(self.filename, self.name))
         self._element_map = {}
         for elem_dict in self.structure.raw_elements:
             element = FHIRProfileElement(self, elem_dict)
@@ -236,7 +257,7 @@ class FHIRProfile(object):
                     klass.add_property(prop)
             
             if element.is_main_profile_resource:
-                self.targetname = element.name_for_class()
+                self.targetname = element.name_if_class()
     
     
     # MARK: Class Handling
@@ -357,10 +378,6 @@ class FHIRProfileStructure(object):
         self.parse_from(profile_dict)
     
     def parse_from(self, json_dict):
-        # support < 0.3
-        if 'structure' in json_dict:
-            json_dict = json_dict['structure'][0]
-        
         self.type = json_dict.get('type')
         self.name = json_dict.get('name')
         if self.name is None:
@@ -371,12 +388,9 @@ class FHIRProfileStructure(object):
         
         # find element definitions
         if self.base:
-            logging.debug('Using "differential" for {}'.format(self.name))
             self.raw_elements = json_dict['differential'].get('element', [])
         elif 'snapshot' in json_dict:
-            self.raw_elements = json_dict['snapshot'].get('element', [])     # v0.3
-        else:
-            self.raw_elements = json_dict.get('element', [])                 # < v0.3
+            self.raw_elements = json_dict['snapshot'].get('element', [])
 
 
 class FHIRProfileElement(object):
@@ -392,6 +406,7 @@ class FHIRProfileElement(object):
         self.name = None
         self.definition = None
         self.is_main_profile_resource = False
+        self.is_resource = False
         
         if element_dict is not None:
             self.parse_from(element_dict)
@@ -402,6 +417,8 @@ class FHIRProfileElement(object):
         self.path = element_dict['path']
         if self.path == self.profile.structure.type:
             self.is_main_profile_resource = True
+            if not self.profile.structure.base or 'resource' in self.profile.structure.base.lower():
+                self.is_resource = True
         
         parts = self.path.split('.')
         self.parent_name = '.'.join(parts[:-1]) if len(parts) > 0 else None
@@ -433,7 +450,7 @@ class FHIRProfileElement(object):
             return None
         
         if self.definition is None:
-            logging.warning("Element {} does not have a definition, skipping".format(self.path))
+            logging.warning('Element {} does not have a definition, skipping'.format(self.path))
             return None
         
         if self.definition.representation:
@@ -454,23 +471,27 @@ class FHIRProfileElement(object):
         
         # no `type` definition in the element: it's an inline class definition
         type_obj = FHIRElementType(self.definition, None)
-        return [fhirclass.FHIRClassProperty(self.name_for_class(), type_obj)]
+        return [fhirclass.FHIRClassProperty(self.name_if_class(), type_obj)]
         
+    
+    # MARK: Name Utils
     
     def name_of_resource(self):
         """ Returns the name of the resource this element defines, if it does
         so, `None` otherwise.
         """
-        # TODO: also returns true for value types, which we don't want
+        if not self.is_resource:
+            return None
         return self.path if self.profile and self.path == self.profile.name else None
     
-    def name_for_class(self):
+    def name_if_class(self):
         if self.parent is None and '.' in self.path:
             raise Exception('Must have a parent FHIRProfileElement for "{}"'.format(self.path))
-        uppercased = self.name[:1].upper() + self.name[1:]
+        
+        classname = self.profile.spec.class_name_for_type(self.name)
         if self.parent is not None:
-            return self.parent.name_for_class() + uppercased
-        return uppercased
+            return self.parent.name_if_class() + classname
+        return classname
     
     def name_for_superclass(self):
         """ Determine the superclass for the element (used for class elements).
@@ -487,7 +508,7 @@ class FHIRProfileElement(object):
             type_code = tps[0].code
         # else type stays None, which will apply the default class name
         
-        return self.profile.spec.class_name_for_type(type_code)
+        return self.profile.spec.class_name_for_type(type_code, self.is_main_profile_resource)
 
 
 class FHIRElementDefinition(object):

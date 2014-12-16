@@ -19,7 +19,7 @@ class FHIRRenderer(object):
         self.spec = spec
         self.settings = settings
     
-    def render():
+    def render(self):
         """ The main rendering start point, for subclasses to override.
         """
         raise Exception("Cannot use abstract superclass' `render` method")
@@ -53,10 +53,10 @@ class FHIRProfileRenderer(FHIRRenderer):
     def copy_files(self):
         """ Copy base resources to the target location, according to settings.
         """
-        for filepath, module, contains in self.settings.resource_baseclasses:
+        for filepath, module, contains in self.settings.manual_profiles:
             if os.path.exists(filepath):
                 tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
-                logging.info("Copying baseclasses in {} to {}".format(os.path.basename(filepath), tgt))
+                logging.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
     
     def render(self):
@@ -64,7 +64,7 @@ class FHIRProfileRenderer(FHIRRenderer):
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
                 logging.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
-                return
+                continue
             
             imports = profile.needed_external_classes()
             data = {

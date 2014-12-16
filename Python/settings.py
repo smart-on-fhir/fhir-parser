@@ -12,8 +12,9 @@ resource_modules_lowercase = True                       # whether all resource p
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
 tpl_resource_target_ptrn = '../models/{}.py'            # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../models/'                     # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
-resource_default_base = 'FHIRElement'                   # the default superclass to use
-resource_baseclasses = [                                # all these files should be copied to `resource_base_target`
+resource_default_base = 'FHIRResource'                      # the default superclass to use for main profile models
+contained_default_base = 'FHIRElement'                      # the default superclass to use for inline-defined (backbone) models
+manual_profiles = [                                         # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
     ('Python/__init__.py', None, []),
     ('Python/fhirelement.py', 'fhirelement', ['FHIRElement']),
     ('Python/fhirresource.py', 'fhirresource', ['FHIRResource']),

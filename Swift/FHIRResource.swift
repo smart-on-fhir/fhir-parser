@@ -14,6 +14,10 @@ import Foundation
  */
 public class FHIRResource: FHIRElement
 {
+	public class var resourceName: String {
+		get { return "Resource" }
+	}
+	
 	/** If this instance was read from a server, this is the identifier that was used. */
 	public var _localId: String?
 	
