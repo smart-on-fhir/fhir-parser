@@ -10,10 +10,10 @@ import Foundation
 
 
 /**
- *  A subclass to ResourceReference. This allows reference resolving while keeping the the superclass'es attributes
+ *  A subclass to DocumentReference. This allows reference resolving while keeping the superclass'es attributes
  *  in place.
  */
-public class FHIRReference<T: FHIRElement>: ResourceReference
+public class FHIRReference<T: FHIRElement>: DocumentReference
 {
 	public required init(json: NSDictionary?) {
 		super.init(json: json)

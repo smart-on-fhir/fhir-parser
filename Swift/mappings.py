@@ -14,6 +14,7 @@ classmap = {
     'date': 'NSDate',
     'dateTime': 'NSDate',
     'instant': 'NSDate',
+    'time': 'NSDate',
     'decimal': 'NSDecimalNumber',
     
     'string': 'String',
@@ -35,6 +36,7 @@ starexpandtypes = {
     'dateTime',
     'date',
     'instant',
+    'time',
     'string',
     'uri',
     'boolean',
@@ -51,9 +53,9 @@ starexpandtypes = {
     'Ratio',
     'HumanName',
     'Address',
-    'Contact',
-    'Schedule',
-    'Resource',
+    'ContactPoint',
+    'Timing',
+    'Reference',
 }
 
 # Which class names are native to the lannguage

@@ -8,9 +8,7 @@ import io
 import sys
 import os.path
 import shutil
-import glob
 import re
-import json
 import datetime
 import logging
 
@@ -19,22 +17,11 @@ from jinja2.filters import environmentfilter
 
 import fhirspec
 
-
 _cache = 'downloads'
-loglevel = 0
 
+
+# deprecated, going away when FHIRSpec is done
 jinjaenv = Environment(loader=PackageLoader('generate', '.'))
-
-
-# deprecated, going away when FHIRSpec is done
-def log0(*logstring):
-    if loglevel >= 0:
-        print(' '.join(str(s) for s in logstring))
-
-# deprecated, going away when FHIRSpec is done
-def log1(*logstring):
-    if loglevel > 0:
-        print(' '.join(str(s) for s in logstring))
 
 
 def download(url, path):
@@ -59,15 +46,6 @@ def expand(path, target):
         z.extractall(target)
 
 
-def run(path, settings):
-    """ Instantiate FHIRSpec from the given directory. Then parse all profiles
-    and create class objects for profiles to write classes and unit tests.
-    Collect all search params to be able to create a nice search interface.
-    """
-    spec = fhirspec.FHIRSpec(path, settings)
-    spec.write()
-
-
 # deprecated, going away when FHIRSpec is done
 def parse_DEPRECATED(path):
     """ Parse all JSON profile definitions found in the given expanded
@@ -87,7 +65,7 @@ def parse_DEPRECATED(path):
                     version = v
     
     assert(version is not None)
-    log0("->  This is FHIR version {}".format(version))
+    print("->  This is FHIR version {}".format(version))
     now = datetime.date.today()
     info = {
         'version': version.strip() if version else 'X',
@@ -105,7 +83,7 @@ def parse_DEPRECATED(path):
     process_search(search_params, in_profiles, info)
     
     # detect and process unit tests
-    process_unittests(path, all_classes, info)
+    ## IMPLEMENTED in FHIRSpec()/FHIRUnitTest()
 
 
 # deprecated, going away when FHIRSpec is done
@@ -113,7 +91,7 @@ def process_search(params, in_profiles, info):
     """ Processes and renders the FHIR search params extension.
     """
     if not write_searchparams:
-        log1("oo>  Skipping search parameters")
+        print("oo>  Skipping search parameters")
         return
     
     extensions = []
@@ -137,136 +115,6 @@ def process_search(params, in_profiles, info):
 
 
 # deprecated, going away when FHIRSpec is done
-def process_unittests(path, classes, info):
-    """ Finds all example JSON files and uses them for unit test generation.
-    Test files use the template `tpl_unittest_source` and dump it according to
-    `tpl_unittest_target_ptrn`.
-    """
-    all_tests = {}
-    for utest in glob.glob(os.path.join(path, '*-example*.json')):
-        log0('-->  Parsing unit test {}'.format(os.path.basename(utest)))
-        class_name, tests = process_unittest(utest, classes)
-        if class_name is not None:
-            test = {
-                'filename': os.path.join(unittest_filename_prefix, os.path.basename(utest)),
-                'tests': tests,
-            }
-            
-            if class_name in all_tests:
-                all_tests[class_name].append(test)
-            else:
-                all_tests[class_name] = [test]
-    
-    if write_unittests:
-        for klass, tests in all_tests.items():
-            data = {
-                'info': info,
-                'class': klass,
-                'tests': tests,
-            }
-            ptrn = klass.lower() if ptrn_filenames_lowercase else klass
-            render(data, tpl_unittest_source, tpl_unittest_target_ptrn.format(ptrn))
-        
-        # copy unit test files, if any
-        if unittest_copyfiles is not None:
-            for utfile in unittest_copyfiles:
-                if os.path.exists(utfile):
-                    tgt = os.path.join(unittest_copyfiles_base, os.path.basename(utfile))
-                    log0("-->  Copying unittest file {} to {}".format(os.path.basename(utfile), tgt))
-                    shutil.copyfile(utfile, tgt)
-    else:
-        log1('oo>  Not writing unit tests')
-
-
-# deprecated, going away when FHIRSpec is done
-def process_unittest(path, classes):
-    """ Process a unit test file at the given path, determining class structure
-    from the given classes dict.
-    
-    :returns: A tuple with (top-class-name, [test-dictionaries])
-    """
-    utest = None
-    assert(os.path.exists(path))
-    with io.open(path, 'r', encoding='utf-8') as handle:
-        utest = json.load(handle)
-    assert(utest != None)
-    
-    # find the class
-    className = utest.get('resourceType')
-    assert(className != None)
-    del utest['resourceType']
-    klass = classes.get(className)
-    if klass is None:
-        log0('xx>  There is no class for "{}"'.format(className))
-        return None, None
-    
-    # TODO: some "subclasses" like Age are empty because all their definitons are in their parent (Quantity). This
-    # means that later on, the property lookup fails to find the properties for "Age", so fix this please.
-    
-    # gather testable properties
-    tests = process_unittest_properties(utest, klass, classes)
-    return className, sorted(tests, key=lambda x: x['path'])
-
-
-# deprecated, going away when FHIRSpec is done
-def process_unittest_properties(utest, klass, classes, prefix=None):
-    """ Process one level of unit test properties interpreted for the given
-    class.
-    """
-    assert(klass != None)
-    
-    props = {}
-    for cp in klass.get('properties', []):      # could cache this, but... lazy
-        props[cp['name']] = cp
-    
-    # loop item's properties
-    tests = []
-    for key, val in utest.items():
-        prop = props.get(key)
-        if prop is None:
-            log1('xxx>  Unknown property "{}" in unit test on {}'.format(key, klass.get('className')))
-        else:
-            propClass = prop['className']
-            path = unittest_format_path_key.format(prefix, key) if prefix else key
-            
-            # property is an array
-            if list == type(val):
-                i = 0
-                for v in val:
-                    mypath = unittest_format_path_index.format(path, i)
-                    tests.extend(handle_unittest_property(mypath, v, propClass, classes))
-                    i += 1
-            else:
-                tests.extend(handle_unittest_property(unittest_format_path_prepare.format(path), val, propClass, classes))
-    
-    return tests
-
-
-# deprecated, going away when FHIRSpec is done
-def handle_unittest_property(path, value, klass, classes):
-    assert(path is not None)
-    assert(value is not None)
-    assert(klass is not None)
-    tests = []
-    
-    # property is another element, recurse
-    if dict == type(value):
-        subklass = classes.get(subclassmap[klass] if klass in subclassmap else klass)
-        if subklass is None:
-            log1('xxx>  No class {} found for "{}"'.format(klass, path))
-        else:
-            tests.extend(process_unittest_properties(value, subklass, classes, path))
-    else:
-        isstr = isinstance(value, str)
-        if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
-            isstr = isinstance(value, basestring)
-            
-        tests.append({'path': path, 'class': klass, 'value': value.replace("\n", "\\n") if isstr else value})
-    
-    return tests
-
-
-# deprecated, going away when FHIRSpec is done
 def render(data, template, filepath):
     """ Render the given class data using the given Jinja2 template, writing
     the output into the file at `filepath`.
@@ -285,26 +133,6 @@ def render(data, template, filepath):
         rendered = template.render(data)
         handle.write(rendered)
         # handle.write(rendered.encode('utf-8'))
-
-
-# deprecated, going away when FHIRSpec is done
-def _camelCase(string, splitter='_'):
-    """ Turns a string into CamelCase form without changing the first part's
-    case.
-    """
-    if not string:
-        return None
-    
-    name = ''
-    i = 0
-    for n in string.split(splitter):
-        if i > 0:
-            name += n[0].upper() + n[1:]
-        else:
-            name = n
-        i += 1
-    
-    return name
 
 
 # deprecated, going away when FHIRSpec is done
@@ -367,5 +195,6 @@ if '__main__' == __name__:
         logging.info('Using cached FHIR spec, supply "-f" to re-download')
     
     # parse
-    run(spec_source, _settings)
+    spec = fhirspec.FHIRSpec(spec_source, _settings)
+    spec.write()
 

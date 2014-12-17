@@ -39,6 +39,12 @@ class FHIRClass(object):
         self.properties.append(prop)
         self.properties = sorted(self.properties, key=lambda x: x.name)
     
+    def property_for(self, prop_name):
+        for prop in self.properties:
+            if prop.name == prop_name:
+                return prop
+        return None
+    
     def should_write(self):
         if self.superclass is not None:
             return True

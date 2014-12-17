@@ -9,6 +9,7 @@ import logging
 import datetime
 
 import fhirclass
+import fhirunittest
 import fhirrenderer
 
 skip_because_unsupported = [
@@ -34,6 +35,7 @@ class FHIRSpec(object):
         self.info = FHIRVersionInfo(self, directory)
         self.profiles = {}              # profile-name: FHIRProfile()
         self.classes = {}               # class-name: FHIRClass()
+        self.unit_tests = None          # FHIRUnitTestCollection()
         
         self.prepare()
         self.read_profiles()
@@ -43,6 +45,9 @@ class FHIRSpec(object):
         """ Run actions before starting to parse profiles.
         """
         self.handle_manual_profiles()
+    
+    
+    # MARK: Handling Profiles
     
     def read_profiles(self):
         """ Find all (JSON) profile files and instantiate into FHIRProfile.
@@ -150,6 +155,14 @@ class FHIRSpec(object):
         return self.settings.starexpandtypes
     
     
+    # MARK: Unit Tests
+    
+    def parse_unit_tests(self):
+        controller = fhirunittest.FHIRUnitTestController(self, self.settings)
+        controller.find_and_parse_tests(self.directory)
+        self.unit_tests = controller.collections
+    
+    
     # MARK: Writing Data
     
     def write(self):
@@ -160,6 +173,11 @@ class FHIRSpec(object):
         
         if self.settings.write_factory:
             renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
+            renderer.render()
+        
+        if self.settings.write_unittests:
+            self.parse_unit_tests()
+            renderer = fhirrenderer.FHIRUnitTestRenderer(self, self.settings)
             renderer.render()
 
 
@@ -192,14 +210,6 @@ class FHIRVersionInfo(object):
 class FHIRProfile(object):
     """ One FHIR profile.
     """
-    
-    # properties with these names will be skipped as we implement them in our base classes
-    skip_properties = [
-        'extension',
-        'modifierExtension',
-        'language',
-        'contained',
-    ]
     
     def __init__(self, spec, filepath):
         self.spec = spec
@@ -397,6 +407,14 @@ class FHIRProfileElement(object):
     """ An element in a profile's structure.
     """
     
+    # properties with these names will be skipped as we implement them in our base classes
+    skip_properties = [
+        'extension',
+        'modifierExtension',
+        'language',
+        'contained',
+    ]
+    
     def __init__(self, profile, element_dict):
         assert isinstance(profile, FHIRProfile)
         self.profile = profile
@@ -445,7 +463,7 @@ class FHIRProfileElement(object):
         if self.is_main_profile_resource or self.definition is None:
             return None
         
-        if self.name in self.profile.skip_properties:
+        if self.name in self.skip_properties:
             logging.debug('Skipping property "{}"'.format(self.name))
             return None
         

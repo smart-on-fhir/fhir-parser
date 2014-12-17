@@ -96,6 +96,36 @@ class FHIRFactoryRenderer(FHIRRenderer):
         self.do_render(data, self.settings.tpl_factory_source, self.settings.tpl_factory_target)
 
 
+class FHIRUnitTestRenderer(FHIRRenderer):
+    """ Write unit tests.
+    """
+    def render(self):
+        if self.spec.unit_tests is None:
+            return
+        
+        # render all unit test collections
+        for coll in self.spec.unit_tests:
+            data = {
+                'info': self.spec.info,
+                'class': coll.klass,
+                'tests': coll.tests,
+            }
+            
+            file_pattern = coll.klass.name
+            if self.settings.resource_modules_lowercase:
+                file_pattern = file_pattern.lower()
+            file_path = self.settings.tpl_unittest_target_ptrn.format(file_pattern)
+            
+            self.do_render(data, self.settings.tpl_unittest_source, file_path)
+        
+        # copy unit test files, if any
+        if self.settings.unittest_copyfiles is not None:
+            for utfile in self.settings.unittest_copyfiles:
+                if os.path.exists(utfile):
+                    target = os.path.join(self.settings.unittest_copyfiles_base, os.path.basename(utfile))
+                    logging.info('Copying unittest file {} to {}'.format(os.path.basename(utfile), target))
+                    shutil.copyfile(utfile, target)
+
 
 # There is a bug in Jinja's wordwrap (inherited from `textwrap`) in that it
 # ignores existing linebreaks when applying the wrap:
