@@ -13,7 +13,7 @@ class FHIRClass(object):
         self.module = element.profile.spec.as_module_name(self.name)
         self.resource_name = element.name_of_resource()
         self.superclass = None
-        self.superclass_name = element.name_for_superclass()
+        self.superclass_name = element.superclass_name
         self.short = element.definition.short
         self.formal = element.definition.formal
         self.properties = []
@@ -68,7 +68,7 @@ class FHIRClassProperty(object):
         spec = elem.profile.spec
         
         self.path = elem.path
-        name = elem.name
+        name = elem.prop_name
         if '[x]' in name:
             # < v0.3: "MedicationPrescription.reason[x]" can be a
             # "ResourceReference" but apparently should be called
