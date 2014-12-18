@@ -6,6 +6,26 @@ class FHIRClass(object):
     """ An element/resource that should become its own class.
     """
     
+    known = {}
+    
+    @classmethod
+    def for_element(cls, element):
+        assert element.represents_class
+        
+        if element.path in cls.known:
+            return cls.known[element.path]
+        
+        klass = cls(element)
+        cls.known[element.path] = klass
+        return klass
+    
+    @classmethod
+    def with_name(cls, class_name):
+        for path, klass in cls.known.items():
+            if klass.name == class_name:
+                return klass
+        return None
+    
     def __init__(self, element):
         assert element is not None      # and must be instance of FHIRElement
         self.path = element.path
@@ -70,11 +90,7 @@ class FHIRClassProperty(object):
         self.path = elem.path
         name = elem.prop_name
         if '[x]' in name:
-            # < v0.3: "MedicationPrescription.reason[x]" can be a
-            # "ResourceReference" but apparently should be called
-            # "reasonResource", NOT "reasonResourceReference".
-            kl = 'Resource' if 'ResourceReference' == type_name else type_name  # < v0.3
-            name = name.replace('[x]', '{}{}'.format(kl[:1].upper(), kl[1:]))
+            name = name.replace('[x]', '{}{}'.format(type_name[:1].upper(), type_name[1:]))
         
         self.orig_name = name
         self.name = spec.safe_property_name(name)
