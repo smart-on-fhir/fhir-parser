@@ -10,14 +10,17 @@ class FHIRClass(object):
     
     @classmethod
     def for_element(cls, element):
+        """ Returns an existing class or creates one for the given element.
+        Returns a tuple with the class and a bool indicating creation.
+        """
         assert element.represents_class
         
-        if element.path in cls.known:
-            return cls.known[element.path]
+        if element.real_path in cls.known:
+            return cls.known[element.real_path], False
         
         klass = cls(element)
-        cls.known[element.path] = klass
-        return klass
+        cls.known[element.real_path] = klass
+        return klass, True
     
     @classmethod
     def with_name(cls, class_name):

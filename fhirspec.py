@@ -81,7 +81,7 @@ class FHIRSpec(object):
                 
                 element = FHIRProfileElement(profile, {'path': contained})
                 element.represents_class = True
-                klass = fhirclass.FHIRClass.for_element(element)
+                klass, did_create = fhirclass.FHIRClass.for_element(element)
     
     def finalize(self):
         """ Should be called after all profiles have been parsed and allows
@@ -239,7 +239,6 @@ class FHIRProfile(object):
                     parent.add_child(element)
         
         # create classes and class properties
-        snap_class = None
         if self.snapshot_main is not None:
             snap_class, subs = self.snapshot_main.create_class()
             if snap_class is None:
@@ -367,9 +366,8 @@ class FHIRProfileElement(object):
     
     # properties with these names will be skipped as we implement them in our base classes
     skip_properties = [
-        'extension',
-        'modifierExtension',
-        'meta',
+        'extension', 'modifierExtension',
+        'id', 'meta',
         'language',
         'contained',
     ]
@@ -387,6 +385,7 @@ class FHIRProfileElement(object):
         self.is_resource = False
         self.represents_class = False
         
+        self._real_path = None
         self._superclass_name = None
         
         if element_dict is not None:
@@ -410,6 +409,18 @@ class FHIRProfileElement(object):
         if '-' in self.prop_name:
             self.prop_name = ''.join([n[:1].upper() + n[1:] for n in self.prop_name.split('-')])
     
+    @property
+    def real_path(self):
+        if self._real_path is None:
+            name = self.definition.name or self.path
+            if self.parent:
+                name = self.parent.real_path + '.' + name
+            self._real_path = name
+        return self._real_path
+    
+    
+    # MARK: Hierarchy
+    
     def add_child(self, element):
         element.parent = self
         if self.children is None:
@@ -428,7 +439,7 @@ class FHIRProfileElement(object):
         
         class_name = self.name_if_class()
         subs = []
-        cls = fhirclass.FHIRClass.for_element(self)
+        cls, did_create = fhirclass.FHIRClass.for_element(self)
         for child in self.children:
             properties = child.as_properties()
             if properties is not None:    
@@ -441,8 +452,9 @@ class FHIRProfileElement(object):
                     subs.extend(subsubs)
                 
                 # add properties to class
-                for prop in properties:
-                    cls.add_property(prop)
+                if did_create:
+                    for prop in properties:
+                        cls.add_property(prop)
         
         return cls, subs
     
@@ -453,11 +465,15 @@ class FHIRProfileElement(object):
         if self.prop_name in self.skip_properties:
             return None
         
-        if self.is_main_profile_element or self.definition is None:
+        if self.is_main_profile_element or self.represents_class or self.definition is None:
             return None
         
         if self.definition.representation:
             logging.debug('Omitting property "{}" for representation {}'.format(self.prop_name, self.definition.representation))
+            return None
+        
+        if self.definition.slicing:
+            logging.debug('Omitting property "{}" for slicing'.format(self.prop_name))
             return None
         
         # this must be a property
@@ -539,9 +555,11 @@ class FHIRElementDefinition(object):
         self.n_max = None
         self.constraint = None
         self.mapping = None
+        self.slicing = None
         self.representation = None
         # TODO: extract "defaultValue[x]", "fixed[x]", "pattern[x]"
         # TODO: extract "nameReference"
+        # TODO: handle  "slicing"
         
         if definition_dict is not None:
             self.parse_from(definition_dict)
@@ -564,6 +582,8 @@ class FHIRElementDefinition(object):
             self.constraint = FHIRElementConstraint(definition_dict['constraint'])
         if 'mapping' in definition_dict:
             self.mapping = FHIRElementMapping(definition_dict['mapping'])
+        if 'slicing' in definition_dict:
+            self.slicing = definition_dict['slicing']
         self.representation = definition_dict.get('representation')
 
 
