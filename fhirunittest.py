@@ -78,7 +78,8 @@ class FHIRUnitTestCollection(object):
     
     def add_test(self, test):
         if test is not None:
-            self.tests.append(test)
+            if len(self.tests) < 10:
+                self.tests.append(test)      # let's assume we don't need 100s of unit tests
 
 
 class FHIRUnitTest(object):
@@ -127,8 +128,8 @@ class FHIRUnitTest(object):
                             item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass)
                             tests.extend(item.create_tests(self.controller))
                             i += 1
-                            if i > 10:
-                                break;      # let's assume we don't need 100s of unit tests
+                            if i >= 10:     # let's assume we don't need 100s of unit tests
+                                break
                     else:
                         keypath = self.controller.settings.unittest_format_path_prepare.format(path)
                         item = FHIRUnitTestItem(self.filepath, keypath, val, propclass)
