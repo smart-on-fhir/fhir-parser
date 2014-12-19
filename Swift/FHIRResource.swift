@@ -46,7 +46,7 @@ public class FHIRResource: FHIRElement
 	}
 	
 	/**
-	 *  Reads the resource with the given id from the given server.
+		Reads the resource with the given id from the given server.
 	 */
 	public class func read(id: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
 		let path = "\(resourceName)/\(id)"
@@ -59,7 +59,7 @@ public class FHIRResource: FHIRElement
 	}
 	
 	/**
-	 *  Reads the resource from the given path on the given server.
+		Reads the resource from the given path on the given server.
 	 */
 	public class func readFrom(path: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
 		server.requestJSON(path) { json, error in
@@ -100,8 +100,11 @@ public protocol FHIRServer
 	var baseURL: NSURL { get }
 	
 	/**
-	 *  Instance method that needs to take a path, which is relative to `baseURL`, retrieve data from that URL and
-	 *  return a decoded NSDictionary or an error in a callback.
+		Instance method that takes a path, which is relative to `baseURL`, retrieves data from that URL and returns a
+		decoded NSDictionary - or an error - in the callback.
+	
+		:param: path The REST path to request, relative to the server's base URL
+		:param: callback The callback to call when the request ends (success or failure)
 	 */
 	func requestJSON(path: String, callback: ((json: NSDictionary?, error: NSError?) -> Void))
 }

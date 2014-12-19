@@ -26,13 +26,13 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	
 {%- for prop in klass.properties %}	
 	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}
-	public var {{ prop.name }}: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.reference_to %}<{{ prop.reference_to.name }}>{% endif %}{% if prop.is_array %}]{% endif %}?
+	public var {{ prop.name }}: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.is_array %}]{% endif %}?
 {% endfor -%}
 {% if klass.has_nonoptional %}	
 	public convenience init(
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
 		{%- if past_first_item %}, {% endif -%}
-		{{ nonop.name }}: {% if nonop.is_array %}[{% endif %}{{ nonop.class_name }}{% if nonop.reference_to %}<{{ nonop.reference_to.name }}>{% endif %}{% if nonop.is_array %}]{% endif %}?
+		{{ nonop.name }}: {% if nonop.is_array %}[{% endif %}{{ nonop.class_name }}{% if nonop.is_array %}]{% endif %}?
 		{%- set past_first_item = True %}
 	{%- endif %}{% endfor -%}
 	) {
@@ -57,7 +57,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 				{%- if prop.is_array %}{% if prop.is_native %}
 				self.{{ prop.name }} = {{ prop.class_name }}.from(val)
 				{%- else %}
-				self.{{ prop.name }} = {{ prop.class_name }}.from(val, owner: self){% if not prop.reference_to %} as? [{{ prop.class_name }}]{% endif %}
+				self.{{ prop.name }} = {{ prop.class_name }}.from(val, owner: self) as? [{{ prop.class_name }}]
 				{%- endif %}
 				
 				{%- else %}{% if prop.is_native %}

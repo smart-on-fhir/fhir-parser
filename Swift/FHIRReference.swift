@@ -10,34 +10,16 @@ import Foundation
 
 
 /**
- *  A subclass to DocumentReference. This allows reference resolving while keeping the superclass'es attributes
- *  in place.
+ *  An extension to Reference. This allows reference resolving while keeping the superclass'es attributes in place.
  */
-public class FHIRReference<T: FHIRElement>: DocumentReference
+extension Reference
 {
-	public required init(json: NSDictionary?) {
-		super.init(json: json)
-	}
+	/**
+		Resolves the reference and returns an Optional for the instance of the referenced type.
 	
-	// Must override to prevent the Swift compiler from segfaulting (segfault 11). Huh.
-	public convenience init(json: NSDictionary?, owner: FHIRElement?) {
-		self.init(json: json)
-		_owner = owner
-	}
-	
-	class func from(array: [NSDictionary], owner: FHIRElement) -> [FHIRReference<T>] {
-		var arr: [FHIRReference<T>] = []
-		for arrJSON in array {
-			arr.append(FHIRReference<T>(json: arrJSON, owner: owner))
-		}
-		return arr
-	}
-	
-	
-	// MARK: - Reference Resolving
-	
-	/** Resolves the reference and returns an Optional for the instance of the referenced type. */
-	public func resolved() -> T? {
+		:param: type The resource type that should be dereferenced
+	 */
+	public func resolved<T: FHIRElement>(type: T) -> T? {
 		let refid = processedReferenceIdentifier()
 		if nil == refid {
 			println("This reference does not have a reference-id, cannot resolve")
@@ -45,7 +27,7 @@ public class FHIRReference<T: FHIRElement>: DocumentReference
 		}
 		
 		if let resolved = resolvedReference(refid!) {
-			return (resolved as T)
+			return resolved as? T
 		}
 		
 		// not yet resolved, let's look at contained resources

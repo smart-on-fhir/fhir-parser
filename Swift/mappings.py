@@ -6,7 +6,6 @@ classmap = {
     'Structure': 'FHIRElement',
     'Resource': 'FHIRResource',
     'DomainResource': 'FHIRResource',
-    'Reference': 'FHIRReference',
     'Any': 'FHIRResource',
     
     'boolean': 'Bool',

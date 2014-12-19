@@ -17,7 +17,7 @@ contained_default_base = 'Element'                          # the default superc
 manual_profiles = [                                         # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
     ('Swift/FHIRElement.swift', None, ['Element', 'BackboneElement']),
     ('Swift/FHIRResource.swift', None, ['Resource', 'DomainResource']),
-    ('Swift/FHIRReference.swift', None, ['Reference']),
+    ('Swift/FHIRReference.swift', None, []),
     ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
     ('Swift/FHIRSearchParam.swift', None, ['FHIRSearchParam']),
     ('Swift/FHIRTypes.swift', None, [

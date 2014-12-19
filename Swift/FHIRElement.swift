@@ -19,6 +19,15 @@ public class FHIRElement
 		get { return "Element" }
 	}
 	
+	/// Logical id of this artefact.
+	public var id: String?
+	
+	/// Metadata about the resource.
+	public var meta: FHIRElement?
+	
+	/// A set of rules under which this content was created.
+	public var implicitRules: NSURL?
+	
 	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
 	public var fhirExtension: [Extension]?
 	
@@ -39,6 +48,15 @@ public class FHIRElement
 	
 	public required init(json: NSDictionary?) {
 		if let js = json {
+			if let val = js["id"] as? String {
+				id = val
+			}
+			if let val = js["meta"] as? NSDictionary {
+				meta = FHIRElement(json: val, owner: self)
+			}
+			if let val = js["implicitRules"] as? String {
+				implicitRules = NSURL(json: val)
+			}
 			if let arr = js["contained"] as? [NSDictionary] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
@@ -53,10 +71,10 @@ public class FHIRElement
 				contained = cont
 			}
 			if let arr = js["extension"] as? [NSDictionary] {
-				self.fhirExtension = Extension.from(arr) as? [Extension]
+				fhirExtension = Extension.from(arr) as? [Extension]
 			}
 			if let arr = js["modifierExtension"] as? [NSDictionary] {
-				self.modifierExtension = Extension.from(arr) as? [Extension]
+				modifierExtension = Extension.from(arr) as? [Extension]
 			}
 		}
 	}
@@ -66,6 +84,9 @@ public class FHIRElement
 		self._owner = owner
 	}
 	
+	/**
+		Instantiates an array of the receiver's type and returns it.
+	 */
 	final class func from(array: [NSDictionary]) -> [FHIRElement] {
 		var arr: [FHIRElement] = []
 		for arrJSON in array {
@@ -74,6 +95,9 @@ public class FHIRElement
 		return arr
 	}
 	
+	/**
+		Instantiates an array of the receiver's type and returns it.
+	 */
 	final class func from(array: [NSDictionary], owner: FHIRElement?) -> [FHIRElement] {
 		let arr = from(array)
 		for elem in arr {
@@ -101,8 +125,13 @@ public class FHIRElement
 		return _owner?.resolvedReference(refid)
 	}
 	
-	/** Called by FHIRResource when it resolves a reference. Stores the resolved reference into the `_resolved`
-	 *  dictionary.
+	/**
+		Stores the resolved reference into the `_resolved` dictionary.
+	
+		Called by FHIRResource when it resolves a reference.
+	
+		:param: refid The reference identifier as String
+		:param: resolved The element that was resolved
 	 */
 	func didResolveReference(refid: String, resolved: FHIRElement) {
 		if let owner = _owner {

@@ -37,7 +37,7 @@ class {{ class.name }}Tests: FHIRModelTestCase
 	{%- else %}{% if "NSURL" == onetest.klass.name %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}")!)
 	{%- else %}
-		# Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
+		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
 	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
 	{%- endfor %}
 	}

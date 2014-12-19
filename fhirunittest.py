@@ -8,6 +8,8 @@ import json
 import os.path
 import logging
 
+import fhirclass
+
 
 class FHIRUnitTestController(object):
     """ Can create unit tests from example files.
@@ -49,7 +51,7 @@ class FHIRUnitTestController(object):
         """
         classname = resource.content.get('resourceType')
         assert classname
-        klass = self.spec.class_announced_as(classname)
+        klass = fhirclass.FHIRClass.with_name(classname)
         if klass is None:
             logging.error('There is no class for "{}"'.format(classname))
             return None
@@ -110,7 +112,7 @@ class FHIRUnitTest(object):
                 logging.warning('Unknown property "{}" in unit test on {} in {}'
                     .format(path, self.klass.name, self.filepath))
             else:
-                propclass = self.controller.spec.class_announced_as(prop.class_name)
+                propclass = fhirclass.FHIRClass.with_name(prop.class_name)
                 if propclass is None:
                     path = "{}.{}".format(self.prefix, key) if self.prefix else key
                     logging.error('There is no class "{}" for property "{}" in {}'

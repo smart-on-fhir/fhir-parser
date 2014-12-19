@@ -14,23 +14,20 @@ class FHIRClass(object):
         Returns a tuple with the class and a bool indicating creation.
         """
         assert element.represents_class
-        
-        if element.real_path in cls.known:
-            return cls.known[element.real_path], False
+        class_name = element.name_if_class()
+        if class_name in cls.known:
+            return cls.known[class_name], False
         
         klass = cls(element)
-        cls.known[element.real_path] = klass
+        cls.known[class_name] = klass
         return klass, True
     
     @classmethod
     def with_name(cls, class_name):
-        for path, klass in cls.known.items():
-            if klass.name == class_name:
-                return klass
-        return None
+        return cls.known.get(class_name)
     
     def __init__(self, element):
-        assert element is not None      # and must be instance of FHIRElement
+        assert element.represents_class
         self.path = element.path
         self.name = element.name_if_class()
         self.module = element.profile.spec.as_module_name(self.name)
@@ -54,7 +51,7 @@ class FHIRClass(object):
         for existing in self.properties:
             if existing.name == prop.name:
                 if not existing.reference_to_profile:
-                    raise Exception('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
+                    print('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
                 
                 existing.reference_to_profile = 'Resource'
                 return
@@ -85,27 +82,28 @@ class FHIRClassProperty(object):
     """ An element describing an instance property.
     """
     
-    def __init__(self, type_name, type_obj):
-        assert type_obj is not None     # and must be instance of FHIRElementType
-        elem = type_obj.definition.element
-        spec = elem.profile.spec
+    def __init__(self, element, type_obj, type_name=None):
+        assert element and type_obj     # and must be instances of FHIRElement and FHIRElementType
+        spec = element.profile.spec
         
-        self.path = elem.path
-        name = elem.prop_name
+        self.path = element.path
+        if not type_name:
+            type_name = type_obj.code
+        name = element.definition.prop_name
         if '[x]' in name:
             name = name.replace('[x]', '{}{}'.format(type_name[:1].upper(), type_name[1:]))
         
         self.orig_name = name
         self.name = spec.safe_property_name(name)
-        self.parent_name = type_obj.elements_parent_name()
+        self.parent_name = element.parent_name
         self.class_name = spec.class_name_for_type(type_name)
         self.module_name = None             # should only be set if it's an external module (think Python)
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = spec.class_name_is_native(self.class_name)
-        self.is_array = True if '*' == type_obj.definition.n_max else False
-        self.nonoptional = True if type_obj.definition.n_min is not None and 0 != int(type_obj.definition.n_min) else False
+        self.is_array = True if '*' == element.n_max else False
+        self.nonoptional = True if element.n_min is not None and 0 != int(element.n_min) else False
         self.reference_to_profile = type_obj.profile
         self.reference_to_name = spec.class_name_for_profile(self.reference_to_profile)
         self.reference_to = None
-        self.short = type_obj.definition.short
+        self.short = element.definition.short
 
