@@ -98,25 +98,32 @@ class FHIRSpec(object):
         return name.lower() if name and self.settings.resource_modules_lowercase else name
     
     def as_class_name(self, classname):
-        if not classname or len(classname) < 2:
-            raise Exception('Class names should at least be 2 chars long, have "{}"'.format(classname))
+        if not classname or 0 == len(classname):
+            return None
         mapped = self.settings.classmap.get(classname, classname)
         uppercased = mapped[:1].upper() + mapped[1:]
         return uppercased
     
-    def class_name_for_type(self, type_name, main_resource=False):
+    def mapped_name_for_type(self, type_name, main_resource=False):
         if type_name is None:
             if main_resource:
-                type_name = self.settings.resource_default_base
-            else:
-                type_name = self.settings.contained_default_base
-        return self.as_class_name(type_name)
+                return self.settings.resource_default_base
+            return self.settings.contained_default_base
+        return type_name
     
-    def class_name_for_profile(self, profile_name):
+    def class_name_for_type(self, type_name, main_resource=False):
+        mappedname = self.mapped_name_for_type(type_name, main_resource)
+        return self.as_class_name(mappedname)
+    
+    def mapped_name_for_profile(self, profile_name):
         if not profile_name:
             return None
         type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
-        return self.class_name_for_type(type_name)
+        return self.mapped_name_for_type(type_name)
+    
+    def class_name_for_profile(self, profile_name):
+        mappedname = self.mapped_name_for_profile(profile_name)
+        return self.as_class_name(mappedname)
     
     def class_name_is_native(self, class_name):
         return True if class_name in self.settings.natives else False
@@ -193,7 +200,7 @@ class FHIRProfile(object):
         self.targetname = None
         self.structure = None
         self._element_map = None
-        self.snapshot_main = None
+        self.main_element = None
         self._class_map = {}
         self.classes = []
         self._did_finalize = False
@@ -225,22 +232,23 @@ class FHIRProfile(object):
             return
         
         # extract all snapshot elements
-        if self.structure.snapshot is not None:
+        struct = self.structure.differential or self.structure.snapshot
+        if struct is not None:
             self._element_map = {}
-            for elem_dict in self.structure.snapshot:
+            for elem_dict in struct:
                 element = FHIRProfileElement(self, elem_dict)
                 self._element_map[element.path] = element
                 
                 # establish hierarchy (may move to extra loop in case elements are no longer in order)
-                if self.snapshot_main is None:
-                    self.snapshot_main = element
+                if self.main_element is None:
+                    self.main_element = element
                 parent = self._element_map.get(element.parent_name)
                 if parent:
                     parent.add_child(element)
         
         # create classes and class properties
-        if self.snapshot_main is not None:
-            snap_class, subs = self.snapshot_main.create_class()
+        if self.main_element is not None:
+            snap_class, subs = self.main_element.create_class()
             if snap_class is None:
                 raise Exception('The main snapshot element did not create a class')
             
@@ -343,6 +351,7 @@ class FHIRProfileStructure(object):
         self.base = None
         self.subclass_of = None
         self.snapshot = None
+        self.differential = None
         
         self.parse_from(profile_dict)
     
@@ -358,6 +367,8 @@ class FHIRProfileStructure(object):
         # find element definitions
         if 'snapshot' in json_dict:
             self.snapshot = json_dict['snapshot'].get('element', [])
+        if 'differential' in json_dict:
+            self.differential = json_dict['differential'].get('element', [])
 
 
 class FHIRProfileElement(object):
@@ -382,9 +393,9 @@ class FHIRProfileElement(object):
         self.parent_name = None
         self.definition = None
         self.is_main_profile_element = False
-        self.is_resource = False
         self.represents_class = False
         
+        self._real_name = None
         self._real_path = None
         self._superclass_name = None
         
@@ -398,8 +409,6 @@ class FHIRProfileElement(object):
         if self.path == self.profile.structure.type:
             self.represents_class = True
             self.is_main_profile_element = True
-            if not self.profile.structure.base or '/Element' != self.profile.structure.base[-8:]:
-                self.is_resource = True
         
         self.definition = FHIRElementDefinition(self, element_dict)
         
@@ -410,9 +419,15 @@ class FHIRProfileElement(object):
             self.prop_name = ''.join([n[:1].upper() + n[1:] for n in self.prop_name.split('-')])
     
     @property
+    def real_name(self):
+        if self._real_name is None:
+            self._real_name = self.definition.name or self.path
+        return self._real_name
+    
+    @property
     def real_path(self):
         if self._real_path is None:
-            name = self.definition.name or self.path
+            name = self.real_name
             if self.parent:
                 name = self.parent.real_path + '.' + name
             self._real_path = name
@@ -440,21 +455,22 @@ class FHIRProfileElement(object):
         class_name = self.name_if_class()
         subs = []
         cls, did_create = fhirclass.FHIRClass.for_element(self)
-        for child in self.children:
-            properties = child.as_properties()
-            if properties is not None:    
-                
-                # collect subclasses
-                sub, subsubs = child.create_class()
-                if sub is not None:
-                    subs.append(sub)
-                if subsubs is not None:
-                    subs.extend(subsubs)
-                
-                # add properties to class
-                if did_create:
-                    for prop in properties:
-                        cls.add_property(prop)
+        if self.children is not None:
+            for child in self.children:
+                properties = child.as_properties()
+                if properties is not None:    
+                    
+                    # collect subclasses
+                    sub, subsubs = child.create_class()
+                    if sub is not None:
+                        subs.append(sub)
+                    if subsubs is not None:
+                        subs.extend(subsubs)
+                    
+                    # add properties to class
+                    if did_create:
+                        for prop in properties:
+                            cls.add_property(prop)
         
         return cls, subs
     
@@ -501,9 +517,7 @@ class FHIRProfileElement(object):
     # MARK: Name Utils
     
     def name_of_resource(self):
-        if self.is_resource:
-            return self.profile.spec.class_name_for_type(self.prop_name)
-        return None
+        return self.profile.spec.mapped_name_for_type(self.real_name)
     
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was
@@ -528,13 +542,10 @@ class FHIRProfileElement(object):
             type_code = None
             
             if self.is_main_profile_element and self.profile.structure.subclass_of is not None:
-                # print(self.path, 'SUB', self.profile.structure.subclass_of)
                 type_code = self.profile.structure.subclass_of
             elif len(tps) > 0:
-                # print(self.path, 'TYP', tps[0].code)
                 type_code = tps[0].code
-            # else:   # type stays None, which will apply the default class name
-                # print(self.path, 'ELS', self.is_main_profile_element, self.is_resource, self.profile.spec.class_name_for_type(type_code, self.is_main_profile_element))
+            # else type stays None, which will apply the default class name
             self._superclass_name = self.profile.spec.class_name_for_type(type_code, self.is_main_profile_element)
         
         return self._superclass_name
