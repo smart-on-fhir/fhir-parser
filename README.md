@@ -2,10 +2,13 @@ Python FHIR Parser
 ==================
 
 A Python FHIR specification parser for model class generation.
-The `generate.py` script downloads the latest [FHIR specification][fhir], parses resources and their search parameters and puts them into Python dictionaries.
-These dictionaries are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
+The `generate.py` script downloads the latest [FHIR specification][fhir], parses the profiles and represents them in Python.
+These representations are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
 
 This script does its job for the most part, but it doesn't yet handle all FHIR pecularities and there's no guarantee the output is correct or complete.
+
+The `master` branch is currently on _DSTU 1_.  
+The `develop` branch is currently on _DSTU 2_.
 
 ### Use ###
 
@@ -28,7 +31,7 @@ Swift
 
 [Swift][], Apple's new programming language for OS X and iOS.
 Since the language is still under active development, the repo will be updated when a language change occurrs.
-The current supported "version" corresponds to what's accepted by Xcode 6.1.
+The current supported "version" corresponds to what's accepted by Xcode 6.2.
 The [Swift-FHIR][] repo contains the latest generated Swift classes.
 
 Python
@@ -45,11 +48,9 @@ Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 [x] Deserialize from JSON
 [x] Implement reference resolver (for contained resources)
 [ ] Implement reference resolver (for remote resources)
-[ ] Generate factories if needed
 [ ] Serialize to JSON
-[~] Create a FHIR server class/protocol for easy resource hookup
-[x] Generate search parameter builder
-[x] Generate unit tests from JSON example files
+[ ] Generate search parameter builder
+[ ] Generate unit tests from JSON example files
 ```
 
 ### Requirements ###
