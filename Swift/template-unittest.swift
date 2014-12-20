@@ -26,9 +26,11 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		let inst = instantiateFrom("{{ tcase.filename }}")
 		XCTAssertNotNil(inst, "Must have instantiated a {{ class.name }} instance")
 	{% for onetest in tcase.tests %}	
-	{%- if "String" == onetest.klass.name %}	
+	{%- if "String" == onetest.klass.name %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
-	{%- else %}{% if "Int" == onetest.klass.name or "Double" == onetest.klass.name or "NSDecimalNumber" == onetest.klass.name %}
+	{%- else %}{% if "NSDecimalNumber" == onetest.klass.name %}
+		XCTAssertEqual(inst!.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
+	{%- else %}{% if "Int" == onetest.klass.name or "Double" == onetest.klass.name %}
 		XCTAssertEqual(inst!.{{ onetest.path }}, {{ onetest.value }})
 	{%- else %}{% if "Bool" == onetest.klass.name %}
 		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst!.{{ onetest.path }})
@@ -38,7 +40,7 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}")!)
 	{%- else %}
 		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
-	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
+	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
 	{%- endfor %}
 	}
 {%- endfor %}

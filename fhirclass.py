@@ -63,6 +63,8 @@ class FHIRClass(object):
         for prop in self.properties:
             if prop.name == prop_name:
                 return prop
+        if self.superclass:
+            return self.superclass.property_for(prop_name)
         return None
     
     def should_write(self):

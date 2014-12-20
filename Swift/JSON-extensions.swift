@@ -45,9 +45,24 @@ extension NSURL {
 	}
 }
 
-extension NSDecimalNumber {
+extension NSDecimalNumber
+{
+	/*
+		Takes an NSNumber, usually decoded from JSON, and creates an NSDecimalNumber instance
+	
+		We're using a string format approach using "%.15g" since NSJSONFormatting returns NSNumber objects instantiated
+		with Double() or Int(). In the former case this causes precision issues (e.g. try 8.7). Unfortunately, some
+		doubles with 16 and 17 significant digits will be truncated (e.g. a longitude of "4.844614000123024").
+	
+		TODO: improve to avoid double precision issues
+	 */
 	public convenience init(json: NSNumber) {
-		self.init(string: "\(json)")			// there is no "decimalValue" on NSNumber in Swift, so use a String
+		if let periodIdx = find(json.stringValue, ".") {
+			self.init(string: NSString(format: "%.15g", json.doubleValue))
+		}
+		else {
+			self.init(string: "\(json)")
+		}
 	}
 }
 
