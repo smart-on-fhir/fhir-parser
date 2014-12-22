@@ -5,11 +5,11 @@ import io
 import os
 import re
 import shutil
-import logging
 import textwrap
 
 from jinja2 import Environment, PackageLoader
 from jinja2.filters import environmentfilter
+from logger import logger
 
 jinjaenv = Environment(loader=PackageLoader('generate', '.'))
 
@@ -41,7 +41,7 @@ class FHIRRenderer(object):
             os.makedirs(dirpath)
         
         with io.open(target_path, 'w', encoding='utf-8') as handle:
-            logging.info('Writing {}'.format(target_path))
+            logger.info('Writing {}'.format(target_path))
             rendered = template.render(data)
             handle.write(rendered)
             # handle.write(rendered.encode('utf-8'))
@@ -56,7 +56,7 @@ class FHIRProfileRenderer(FHIRRenderer):
         for filepath, module, contains in self.settings.manual_profiles:
             if os.path.exists(filepath):
                 tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
-                logging.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
+                logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
     
     def render(self):
@@ -64,7 +64,7 @@ class FHIRProfileRenderer(FHIRRenderer):
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
                 if profile.filename is not None:        # manual profiles have no filename and usually write no classes
-                    logging.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
+                    logger.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
                 continue
             
             imports = profile.needed_external_classes()
@@ -124,7 +124,7 @@ class FHIRUnitTestRenderer(FHIRRenderer):
             for utfile in self.settings.unittest_copyfiles:
                 if os.path.exists(utfile):
                     target = os.path.join(self.settings.unittest_copyfiles_base, os.path.basename(utfile))
-                    logging.info('Copying unittest file {} to {}'.format(os.path.basename(utfile), target))
+                    logger.info('Copying unittest file {} to {}'.format(os.path.basename(utfile), target))
                     shutil.copyfile(utfile, target)
 
 

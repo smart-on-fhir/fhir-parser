@@ -6,8 +6,8 @@ import sys
 import glob
 import json
 import os.path
-import logging
 
+from logger import logger
 import fhirclass
 
 
@@ -53,7 +53,7 @@ class FHIRUnitTestController(object):
         assert classname
         klass = fhirclass.FHIRClass.with_name(classname)
         if klass is None:
-            logging.error('There is no class for "{}"'.format(classname))
+            logger.error('There is no class for "{}"'.format(classname))
             return None
         
         return FHIRUnitTest(self, resource.filepath, resource.content, klass)
@@ -110,13 +110,13 @@ class FHIRUnitTest(object):
             # means that later on, the property lookup fails to find the properties for "Age", so fix this please.
             if prop is None:
                 path = "{}.{}".format(self.prefix, key) if self.prefix else key
-                logging.warning('Unknown property "{}" in unit test on {} in {}'
+                logger.warning('Unknown property "{}" in unit test on {} in {}'
                     .format(path, self.klass.name, self.filepath))
             else:
                 propclass = fhirclass.FHIRClass.with_name(prop.class_name)
                 if propclass is None:
                     path = "{}.{}".format(self.prefix, key) if self.prefix else key
-                    logging.error('There is no class "{}" for property "{}" in {}'
+                    logger.error('There is no class "{}" for property "{}" in {}'
                         .format(prop.class_name, path, self.filepath))
                 else:
                     path = self.controller.make_path(self.prefix, key)
@@ -211,7 +211,7 @@ class FHIRResourceFile(object):
         :returns: A tuple with (top-class-name, [test-dictionaries])
         """
         if self._content is None:
-            logging.info('Parsing unit test {}'.format(os.path.basename(self.filepath)))
+            logger.info('Parsing unit test {}'.format(os.path.basename(self.filepath)))
             utest = None
             assert os.path.exists(self.filepath)
             with io.open(self.filepath, 'r', encoding='utf-8') as handle:

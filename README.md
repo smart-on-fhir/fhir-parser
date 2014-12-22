@@ -8,7 +8,7 @@ These representations are then used by [Jinja][] templates to create classes in 
 This script does its job for the most part, but it doesn't yet handle all FHIR pecularities and there's no guarantee the output is correct or complete.
 
 The `master` branch is currently on _DSTU 1_.  
-The `develop` branch is currently on _DSTU 2_.
+The `develop` branch is currently on _DSTU 2_ and WiP.
 
 ### Use ###
 

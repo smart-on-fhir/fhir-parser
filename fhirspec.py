@@ -6,9 +6,9 @@ import os
 import re
 import glob
 import json
-import logging
 import datetime
 
+from logger import logger
 import fhirclass
 import fhirunittest
 import fhirrenderer
@@ -60,7 +60,7 @@ class FHIRSpec(object):
             basename = os.path.basename(prof)
             for pattern in skip_because_unsupported:
                 if re.search(pattern, basename) is not None:
-                    logging.info('Skipping "{}"'.format(basename))
+                    logger.info('Skipping "{}"'.format(basename))
                     basename = None
                     break
             
@@ -72,7 +72,7 @@ class FHIRSpec(object):
             if not profile or not profile.name:
                 raise Exception("No name for profile {}".format(prof))
             elif profile.name in self.profiles:
-                logging.warning('Already have profile "{}", discarding'.format(profile.name))
+                logger.warning('Already have profile "{}", discarding'.format(profile.name))
             else:
                 self.profiles[profile.name] = profile
     
@@ -236,7 +236,7 @@ class FHIRProfile(object):
         
         # parse structure
         self.structure = FHIRProfileStructure(self, profile)
-        logging.info('Parsing profile "{}"  -->  {}'.format(self.filename, self.name))
+        logger.info('Parsing profile "{}"  -->  {}'.format(self.filename, self.name))
         if self.spec.has_profile(self.name):
             return
         
@@ -312,7 +312,7 @@ class FHIRProfile(object):
                     checked.add(prop_cls_name)
                     if prop_cls is None:
                         # TODO: turn into exception once `nameReference` on element definition is implemented
-                        logging.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
+                        logger.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
                     else:
                         prop.module_name = prop_cls.module
                         needs.append(prop_cls)
@@ -345,7 +345,7 @@ class FHIRProfile(object):
                 super_cls = fhirclass.FHIRClass.with_name(cls.superclass_name)
                 if super_cls is None:
                     # TODO: turn into exception once we have all basic types and can parse all special cases (like "#class")
-                    logging.error('There is no class implementation for class named "{}" in profile "{}"'
+                    logger.error('There is no class implementation for class named "{}" in profile "{}"'
                         .format(cls.superclass_name, self.name))
                 else:
                     cls.superclass = super_cls
@@ -354,7 +354,7 @@ class FHIRProfile(object):
                 if prop.reference_to_profile is not None:
                     ref_cls = fhirclass.FHIRClass.with_name(prop.reference_to_name)
                     if ref_cls is None:
-                        logging.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
+                        logger.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
                             .format(prop.reference_to_name, prop.name, cls.name))
                     else:
                         prop.reference_to = ref_cls
@@ -485,7 +485,7 @@ class FHIRProfileElement(object):
         subs = []
         cls, did_create = fhirclass.FHIRClass.for_element(self)
         if did_create:
-            logging.debug('Created class "{}"'.format(cls.name))
+            logger.debug('Created class "{}"'.format(cls.name))
         if self.children is not None:
             for child in self.children:
                 properties = child.as_properties()
@@ -517,12 +517,12 @@ class FHIRProfileElement(object):
             return None
         
         if self.definition.representation:
-            logging.debug('Omitting property "{}" for representation {}'
+            logger.debug('Omitting property "{}" for representation {}'
                 .format(self.definition.prop_name, self.definition.representation))
             return None
         
         if self.definition.slicing:
-            logging.debug('Omitting property "{}" for slicing'.format(self.definition.prop_name))
+            logger.debug('Omitting property "{}" for slicing'.format(self.definition.prop_name))
             return None
         
         # this must be a property

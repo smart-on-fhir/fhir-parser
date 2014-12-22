@@ -172,7 +172,7 @@ jinjaenv.filters['wordwrap'] = do_wordwrap
 
 if '__main__' == __name__:
     import settings as _settings
-    logging.basicConfig(level=logging.DEBUG)
+    from logger import logger
     
     # start from scratch?
     if len(sys.argv) > 1 and '-f' == sys.argv[1]:
@@ -187,12 +187,12 @@ if '__main__' == __name__:
     if not os.path.exists(spec_path):
         if not os.path.isdir(_cache):
             os.mkdir(_cache)
-        logging.info('Downloading FHIR spec')
+        logger.info('Downloading FHIR spec')
         download(spec_url, spec_path)
-        logging.info('Extracting to {}'.format(_cache))
+        logger.info('Extracting to {}'.format(_cache))
         expand(spec_path, _cache)
     else:
-        logging.info('Using cached FHIR spec, supply "-f" to re-download')
+        logger.info('Using cached FHIR spec, supply "-f" to re-download')
     
     # parse
     spec = fhirspec.FHIRSpec(spec_source, _settings)
