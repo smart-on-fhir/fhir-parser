@@ -254,53 +254,26 @@ public class FHIRSearchParam
 	// MARK: - Running Search
 	
 	/**
-	 *  Usually called on the **last** search param in a chain; creates the search URL from itself and its preceding
-	 *  siblings, then performs a GET on the server, returning an error or an array of resources in the callback.
-	 *
-	 *  TODO: it would be nice to have the callback's `results` type be the expected type instead of the FHIRResource
-	 *  superclass, I'm not sure how to achieve that elegantly.
+		Usually called on the **last** search param in a chain; creates the search URL from itself and its preceding
+		siblings, then performs a GET on the server, returning an error or an array of resources in the callback.
+	
+		:param: server The FHIRServer instance on which to perform the search
+		:param: callback The callback, receives the response Bundle or an NSError message describing what went wrong
 	 */
-	public func perform(server: FHIRServer, callback: ((results: [FHIRResource]?, error: NSError?) -> Void)) {
+	public func perform(server: FHIRServer, callback: ((bundle: Bundle?, error: NSError?) -> Void)) {
 		let type = first().profileType
 		if nil == type {
 			let err = NSError(domain: FHIRSearchErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: "Cannot find the profile type against which to run the search"])
-			callback(results: nil, error: err)
+			callback(bundle: nil, error: err)
 			return
 		}
 		
 		server.requestJSON(construct()) { json, error in
 			if nil != error {
-				callback(results: nil, error: error)
+				callback(bundle: nil, error: error)
 			}
 			else {
-				var results: [FHIRResource]?
-				var error: NSError?
-				
-				// instantiate results
-				if let entries = json?["entry"] as? NSArray {
-					println("JSON response: \(json)")
-					var res: [FHIRResource] = []
-					for dict in entries {
-						if let dc = dict as? NSDictionary {
-							if let content = dc["content"] as? NSDictionary {
-								res.append(type!(json: content))
-							}
-						}
-					}
-					results = res
-				}
-					
-				// there's no "entry" array, should there be?
-				else if let total = json?["totalResults"] as? NSNumber {
-					if total.integerValue > 0 {
-						error = NSError(domain: FHIRSearchErrorDomain,
-						                  code: 0,
-							          userInfo: [NSLocalizedDescriptionKey: "There are \(total) results but no \"entry\" dictionary in the JSON response, cannot create \(type!.resourceName) instances"])
-					}
-				}
-				
-				// additional top level items: "id" (URL), "link" (array of dicts), "author" (array of dicts), "resourceType" (string), "title" (string), "updated" (isodate)
-				callback(results: results, error: error)
+				callback(bundle: Bundle(json: json), error: nil)
 			}
 		}
 	}

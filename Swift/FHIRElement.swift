@@ -79,13 +79,37 @@ public class FHIRElement
 		}
 	}
 	
+	/**
+		Convenience allocator to be used when allocating an element as part of another element.
+	 */
 	public convenience init(json: NSDictionary?, owner: FHIRElement?) {
 		self.init(json: json)
 		self._owner = owner
 	}
 	
+	
+	// MARK: - Factories
+	
+	/**
+		Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
+		specified resource type, or instantiates the receiver's class otherwise.
+		
+		:param: json An NSDictionary decoded from a JSON response
+		:param: owner The FHIRElement owning the new instance, if appropriate
+		:returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
+	 */
+	final class func instantiateFrom(json: NSDictionary?, owner: FHIRElement?) -> FHIRElement {
+		if let type = json?["resourceType"] as? String {
+			return factory(type, json: json!, owner: owner)
+		}
+		let instance = self(json: json)		// must use 'required' init with dynamic type
+		instance._owner = owner
+		return instance
+	}
+	
 	/**
 		Instantiates an array of the receiver's type and returns it.
+		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
 	 */
 	final class func from(array: [NSDictionary]) -> [FHIRElement] {
 		var arr: [FHIRElement] = []

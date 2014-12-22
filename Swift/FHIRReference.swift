@@ -19,7 +19,7 @@ extension Reference
 	
 		:param: type The resource type that should be dereferenced
 	 */
-	public func resolved<T: FHIRElement>(type: T) -> T? {
+	public func resolved<T: FHIRElement>(type: T.Type) -> T? {
 		let refid = processedReferenceIdentifier()
 		if nil == refid {
 			println("This reference does not have a reference-id, cannot resolve")
@@ -27,7 +27,10 @@ extension Reference
 		}
 		
 		if let resolved = resolvedReference(refid!) {
-			return resolved as? T
+			if let res = resolved as? T {
+				return res
+			}
+			NSLog("Reference \(refid) was dereferenced to \(resolved), which is not of the expected type \(T.self)")
 		}
 		
 		// not yet resolved, let's look at contained resources

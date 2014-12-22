@@ -31,7 +31,7 @@ manual_profiles = [                                         # all these profiles
 ]
 
 # factory methods
-write_factory = False
+write_factory = write_resources        # required in Swift
 tpl_factory_source = 'Swift/template-elementfactory.swift'
 tpl_factory_target = '../Models/FHIRElement+Factory.swift'
 

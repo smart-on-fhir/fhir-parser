@@ -43,8 +43,8 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		}
 	{%- endif %}{% endfor %}
 	}
-{%- endif %}	
-{% if klass.properties %}
+{% endif -%}
+{% if klass.properties %}	
 	public required init(json: NSDictionary?) {
 		super.init(json: json)
 		if let js = json {
@@ -62,9 +62,11 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 				
 				{%- else %}{% if prop.is_native %}
 				self.{{ prop.name }} = {{ prop.class_name }}(json: val)
+				{%- else %}{% if "FHIRResource" == prop.class_name %}
+				self.{{ prop.name }} = FHIRResource.instantiateFrom(val, owner: self) as? FHIRResource
 				{%- else %}
 				self.{{ prop.name }} = {{ prop.class_name }}(json: val, owner: self)
-				{%- endif %}{% endif %}{% endif %}
+				{%- endif %}{% endif %}{% endif %}{% endif %}
 			}
 		{%- endfor %}
 		}

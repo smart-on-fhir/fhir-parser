@@ -14,23 +14,29 @@ import Foundation
  */
 public class FHIRResource: FHIRElement
 {
-	/** If this instance was read from a server, this is the identifier that was used. */
+	/// If this instance was read from a server, this is the identifier that was used, likely the same as `id`.
 	public var _localId: String?
 	
-	/** A specific version id, if the instance was created using `vread`. */
+	/// A specific version id, if the instance was created using `vread`.
 	public var _versionId: String?
 	
-	/** If this instance lives on a server, this property represents that server. */
+	/// If this instance lives on a server, this property represents that server.
 	public var _server: FHIRServer?
 	
-	/** Human language of the content (BCP-47). */
+	/// Human language of the content (BCP-47).
 	public var language: String?
+	
+	/// A human-readable narrative.
+	public var text: Narrative?
 	
 	public required init(json: NSDictionary?) {
 		super.init(json: json)
 		if let js = json {
 			if let val = js["language"] as? String {
 				self.language = val
+			}
+			if let val = js["text"] as? NSDictionary {
+				text = Narrative(json: val, owner: self)
 			}
 		}
 	}

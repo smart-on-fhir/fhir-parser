@@ -16,6 +16,9 @@ import fhirrenderer
 # skip some profiles, mostly because they are WIP and our parser is not smart enough
 skip_because_unsupported = [
     r'composition-measurereport',
+    r'consentdirective-consentdirective',
+    r'devicemetricobservation',
+    r'geneticpedigreefamilyhistory',
     r'valueset-shareable-definition',
     r'cda-.+\.profile\.json',
     r'xds-document\w+\.profile\.json',
