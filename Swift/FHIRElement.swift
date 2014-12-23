@@ -19,15 +19,6 @@ public class FHIRElement
 		get { return "Element" }
 	}
 	
-	/// Logical id of this artefact.
-	public var id: String?
-	
-	/// Metadata about the resource.
-	public var meta: FHIRElement?
-	
-	/// A set of rules under which this content was created.
-	public var implicitRules: NSURL?
-	
 	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
 	public var fhirExtension: [Extension]?
 	
@@ -48,15 +39,6 @@ public class FHIRElement
 	
 	public required init(json: NSDictionary?) {
 		if let js = json {
-			if let val = js["id"] as? String {
-				id = val
-			}
-			if let val = js["meta"] as? NSDictionary {
-				meta = FHIRElement(json: val, owner: self)
-			}
-			if let val = js["implicitRules"] as? String {
-				implicitRules = NSURL(json: val)
-			}
 			if let arr = js["contained"] as? [NSDictionary] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {

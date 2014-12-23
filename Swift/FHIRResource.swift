@@ -23,6 +23,15 @@ public class FHIRResource: FHIRElement
 	/// If this instance lives on a server, this property represents that server.
 	public var _server: FHIRServer?
 	
+	/// Logical id of this artefact.
+	public var id: String?
+	
+	/// Metadata about the resource.
+	public var meta: FHIResourceMeta?
+	
+	/// A set of rules under which this content was created.
+	public var implicitRules: NSURL?
+	
 	/// Human language of the content (BCP-47).
 	public var language: String?
 	
@@ -32,6 +41,15 @@ public class FHIRResource: FHIRElement
 	public required init(json: NSDictionary?) {
 		super.init(json: json)
 		if let js = json {
+			if let val = js["id"] as? String {
+				id = val
+			}
+			if let val = js["meta"] as? NSDictionary {
+				meta = FHIResourceMeta(json: val, owner: self)
+			}
+			if let val = js["implicitRules"] as? String {
+				implicitRules = NSURL(json: val)
+			}
 			if let val = js["language"] as? String {
 				self.language = val
 			}
@@ -95,6 +113,48 @@ public class FHIRResource: FHIRElement
 	}
 }
 
+
+/**
+Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
+*/
+public class FHIResourceMeta: FHIRElement
+{
+	/// Version specific identifier.
+	public var versionId: String?
+	
+	/// When the resource version last changed.
+	public var lastUpdated: NSDate?
+	
+	/// Profiles this resource claims to conform to.
+	public var profiles: [NSURL]?
+	
+	/// Security Labels applied to this resource.
+	public var security: [Coding]?
+	
+	/// Tags applied.
+	public var tags: [Coding]?
+	
+	public required init(json: NSDictionary?) {
+		super.init(json: json)
+		if let js = json {
+			if let val = js["versionId"] as? String {
+				self.versionId = val
+			}
+			if let val = js["lastUpdated"] as? String {
+				self.lastUpdated = NSDate(json: val)
+			}
+			if let val = js["profiles"] as? [String] {
+				self.profiles = NSURL.from(val)
+			}
+			if let val = js["security"] as? [NSDictionary] {
+				self.security = Coding.from(val) as? [Coding]
+			}
+			if let val = js["tags"] as? [NSDictionary] {
+				self.tags = Coding.from(val) as? [Coding]
+			}
+		}
+	}
+}
 
 
 /**
