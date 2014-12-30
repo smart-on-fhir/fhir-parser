@@ -101,22 +101,23 @@ public class FHIRResource: FHIRElement
 	
 	// MARK: - Search
 	
-	public func search() -> FHIRSearchParam {
+	public func search(query: AnyObject) -> FHIRSearch {
 		if nil != _localId {
-			return FHIRSearchParam(subject: "_id", reference: _localId!, type: self.dynamicType)
+			NSLog("UNFINISHED, must add '_id' reference to search expression")
+			//return FHIRSearch(subject: "_id", reference: _localId!, type: self.dynamicType)
 		}
-		return FHIRSearchParam(profileType: self.dynamicType)
+		return FHIRSearch(type: self.dynamicType, query: query)
 	}
 	
-	public class func search() -> FHIRSearchParam {
-		return FHIRSearchParam(profileType: self)
+	public class func search(query: AnyObject) -> FHIRSearch {
+		return FHIRSearch(type: self, query: query)
 	}
 }
 
 
 /**
-Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
-*/
+	Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
+ */
 public class FHIResourceMeta: FHIRElement
 {
 	/// Version specific identifier.

@@ -14,7 +14,7 @@ let FHIRSearchErrorDomain = "FHIRSearchErrorDomain"
 /**
 	Instances of this class can perform searches on a server.
 
-	Searches are instantiated from MongoDB-like constructs, like:
+	Searches are instantiated from MongoDB-like query constructs, like:
 
 	    let srch = Patient.search(["address": "Boston", "gender": "male", "given": ["$exact": "Willis"]])
 
@@ -27,13 +27,20 @@ public class FHIRSearch
 	/// The first search parameter must define a profile type to which the search is applied.
 	public var profileType: FHIRResource.Type?
 	
-	/// The construct used to describe the search
+	/// The query construct used to describe the search
 	let construct: FHIRSearchConstruct
 	
 	/** Designated initializer. */
-	init(construct: AnyObject) {
-		self.construct = FHIRSearchConstruct(construct: construct)
+	init(query: AnyObject) {
+		self.construct = FHIRSearchConstruct(construct: query)
 	}
+	
+	/** Convenience initializer. */
+	convenience init(type: FHIRResource.Type, query: AnyObject) {
+		self.init(query: query)
+		profileType = type
+	}
+	
 	
 	// MARK: - Running Search
 	

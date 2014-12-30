@@ -519,11 +519,6 @@ class FHIRProfileElement(object):
         if self.is_main_profile_element or self.definition is None:
             return None
         
-        if self.definition.representation:
-            logger.debug('Omitting property "{}" for representation {}'
-                .format(self.definition.prop_name, self.definition.representation))
-            return None
-        
         if self.definition.slicing:
             logger.debug('Omitting property "{}" for slicing'.format(self.definition.prop_name))
             return None
