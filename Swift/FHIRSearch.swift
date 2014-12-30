@@ -52,14 +52,14 @@ public class FHIRSearch
 		:param: callback The callback, receives the response Bundle or an NSError message describing what went wrong
 	 */
 	public func perform(server: FHIRServer, callback: ((bundle: Bundle?, error: NSError?) -> Void)) {
-		let type = profileType
-		if nil == type {
+		if nil == profileType {
 			let err = NSError(domain: FHIRSearchErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: "Cannot find the profile type against which to run the search"])
 			callback(bundle: nil, error: err)
 			return
 		}
 		
-		server.requestJSON(construct.expand()) { json, error in
+		let path = "\(profileType!.resourceName)?\(construct.expand())"
+		server.requestJSON(path) { json, error in
 			if nil != error {
 				callback(bundle: nil, error: error)
 			}
