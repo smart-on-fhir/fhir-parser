@@ -45,7 +45,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public required init(json: NSDictionary?) {
+	public required init(json: JSONDictionary?) {
 		super.init(json: json)
 		if let js = json {
 		{%- for prop in klass.properties %}

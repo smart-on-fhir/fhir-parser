@@ -8,6 +8,12 @@
 
 
 /**
+ *  A JSON dictionary, with `String` keys and `AnyObject` values.
+ */
+public typealias JSONDictionary = [String: AnyObject]
+
+
+/**
  *  Data encoded as a base-64 string.
  */
 public struct Base64Binary: Printable, Equatable, Comparable

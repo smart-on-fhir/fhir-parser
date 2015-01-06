@@ -25,15 +25,15 @@ public class FHIRContainedResource
 	public var type: String?
 	
 	/** The complete JSON dictionary. */
-	var json: NSDictionary?
+	var json: JSONDictionary?
 	
-	public init(id: String?, type: String?, json: NSDictionary?) {
+	public init(id: String?, type: String?, json: JSONDictionary?) {
 		self.id = id
 		self.type = type
 		self.json = json
 	}
 	
-	public convenience init(json: NSDictionary) {
+	public convenience init(json: JSONDictionary) {
 		let id = json["id"] as? String
 		let type = json["resourceType"] as? String
 		self.init(id: id, type: type, json: json)

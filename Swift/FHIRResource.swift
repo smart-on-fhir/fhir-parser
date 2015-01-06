@@ -38,13 +38,13 @@ public class FHIRResource: FHIRElement
 	/// A human-readable narrative.
 	public var text: Narrative?
 	
-	public required init(json: NSDictionary?) {
+	public required init(json: JSONDictionary?) {
 		super.init(json: json)
 		if let js = json {
 			if let val = js["id"] as? String {
 				id = val
 			}
-			if let val = js["meta"] as? NSDictionary {
+			if let val = js["meta"] as? JSONDictionary {
 				meta = FHIResourceMeta(json: val, owner: self)
 			}
 			if let val = js["implicitRules"] as? String {
@@ -53,7 +53,7 @@ public class FHIRResource: FHIRElement
 			if let val = js["language"] as? String {
 				language = val
 			}
-			if let val = js["text"] as? NSDictionary {
+			if let val = js["text"] as? JSONDictionary {
 				text = Narrative(json: val, owner: self)
 			}
 		}
@@ -135,7 +135,7 @@ public class FHIResourceMeta: FHIRElement
 	/// Tags applied.
 	public var tags: [Coding]?
 	
-	public required init(json: NSDictionary?) {
+	public required init(json: JSONDictionary?) {
 		super.init(json: json)
 		if let js = json {
 			if let val = js["versionId"] as? String {
@@ -147,10 +147,10 @@ public class FHIResourceMeta: FHIRElement
 			if let val = js["profiles"] as? [String] {
 				self.profiles = NSURL.from(val)
 			}
-			if let val = js["security"] as? [NSDictionary] {
+			if let val = js["security"] as? [JSONDictionary] {
 				self.security = Coding.from(val) as? [Coding]
 			}
-			if let val = js["tags"] as? [NSDictionary] {
+			if let val = js["tags"] as? [JSONDictionary] {
 				self.tags = Coding.from(val) as? [Coding]
 			}
 		}
@@ -168,11 +168,11 @@ public protocol FHIRServer
 	
 	/**
 		Instance method that takes a path, which is relative to `baseURL`, retrieves data from that URL and returns a
-		decoded NSDictionary - or an error - in the callback.
+		decoded JSONDictionary - or an error - in the callback.
 	
 		:param: path The REST path to request, relative to the server's base URL
 		:param: callback The callback to call when the request ends (success or failure)
 	 */
-	func requestJSON(path: String, callback: ((json: NSDictionary?, error: NSError?) -> Void))
+	func requestJSON(path: String, callback: ((json: JSONDictionary?, error: NSError?) -> Void))
 }
 

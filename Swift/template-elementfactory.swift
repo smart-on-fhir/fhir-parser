@@ -6,15 +6,13 @@
 //  {{ info.year }}, SMART Platforms.
 //
 
-import Foundation
-
 
 /**
  *  Extension to FHIRElement to be able to instantiate by class name.
  */
 extension FHIRElement
 {
-	public class func factory(className: String, json: NSDictionary, owner: FHIRElement?) -> FHIRElement {
+	public class func factory(className: String, json: JSONDictionary, owner: FHIRElement?) -> FHIRElement {
 		switch className {
 		{%- for klass in classes %}{% if klass.resource_name %}
 			case "{{ klass.resource_name }}":

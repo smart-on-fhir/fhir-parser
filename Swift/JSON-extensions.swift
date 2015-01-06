@@ -9,7 +9,8 @@
 import Foundation
 
 
-extension NSDate {
+extension NSDate
+{
 	public convenience init(json: String) {
 		let parsed = ISODateParser.sharedParser.dateFromString(json)
 		self.init(timeInterval: 0, sinceDate: parsed ?? NSDate())
@@ -28,7 +29,8 @@ extension NSDate {
 	}
 }
 
-extension NSURL {
+extension NSURL
+{
 	public convenience init?(json: String) {
 		self.init(string: json)
 	}
@@ -66,7 +68,8 @@ extension NSDecimalNumber
 	}
 }
 
-extension Base64Binary {
+extension Base64Binary
+{
 	public init(json: String) {
 		self.init(value: json)
 	}
