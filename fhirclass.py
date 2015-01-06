@@ -108,4 +108,5 @@ class FHIRClassProperty(object):
         self.reference_to_name = spec.class_name_for_profile(self.reference_to_profile)
         self.reference_to = None
         self.short = element.definition.short
+        self.representation = element.definition.representation
 

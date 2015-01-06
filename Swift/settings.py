@@ -19,7 +19,7 @@ manual_profiles = [                                         # all these profiles
     ('Swift/FHIRResource.swift', None, ['Resource', 'DomainResource']),
     ('Swift/FHIRReference.swift', None, []),
     ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
-    ('Swift/FHIRSearchParam.swift', None, ['FHIRSearchParam']),
+    ('Swift/FHIRSearch.swift', None, ['FHIRSearch']),
     ('Swift/FHIRTypes.swift', None, [
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
@@ -36,7 +36,7 @@ tpl_factory_source = 'Swift/template-elementfactory.swift'
 tpl_factory_target = '../Models/FHIRElement+Factory.swift'
 
 # search parameters
-write_searchparams = True
+write_searchparams = False
 search_generate_camelcase = True
 tpl_searchparams_source = 'Swift/template-searchparams.swift'
 tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
