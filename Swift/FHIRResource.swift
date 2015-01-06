@@ -51,7 +51,7 @@ public class FHIRResource: FHIRElement
 				implicitRules = NSURL(json: val)
 			}
 			if let val = js["language"] as? String {
-				self.language = val
+				language = val
 			}
 			if let val = js["text"] as? NSDictionary {
 				text = Narrative(json: val, owner: self)

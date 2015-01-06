@@ -74,5 +74,6 @@ jsonmap_default = 'dict'
 reservedmap = {
     'class': 'klass',
     'import': 'importFrom',
+    'modifier': 'mod',          # `modifierExtension` is called "modifier" in JSON
 }
 

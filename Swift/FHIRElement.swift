@@ -37,8 +37,8 @@ public class FHIRElement
 	
 	// MARK: - JSON Capabilities
 	
-	public required init(json: NSDictionary?) {
-		if let js = json {
+	public required init(json: NSDictionary?) {			// TODO: replace NSDictionary with [String: AnyObject] everywhere
+		if let js = json as? [String: AnyObject] {
 			if let arr = js["contained"] as? [NSDictionary] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
@@ -52,10 +52,23 @@ public class FHIRElement
 				}
 				contained = cont
 			}
-			if let arr = js["extension"] as? [NSDictionary] {
-				fhirExtension = Extension.from(arr) as? [Extension]
+			
+			// extract (modifier) extensions. Non-modifier extensions have a URL as their JSON dictionary key.
+			var extensions = [Extension]()
+			for (key, val) in js {
+				if contains(key, ":") && val is [NSDictionary] {
+					let url = NSURL(string: key)
+					for ext in Extension.from(val as [NSDictionary]) as [Extension] {
+						ext.url = url
+						extensions.append(ext)
+					}
+				}
 			}
-			if let arr = js["modifierExtension"] as? [NSDictionary] {
+			if countElements(extensions) > 0 {
+				fhirExtension = extensions
+			}
+			
+			if let arr = js["modifier"] as? [NSDictionary] {
 				modifierExtension = Extension.from(arr) as? [Extension]
 			}
 		}

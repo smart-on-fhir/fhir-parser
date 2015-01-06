@@ -82,4 +82,5 @@ reservedmap = {
     'protocol': 'protokol',
     'extension': 'fhirExtension',
     'operator': 'operatr',
+    'modifier': 'mod',          # `modifierExtension` is called "modifier" in JSON
 }
