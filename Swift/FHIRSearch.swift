@@ -28,15 +28,15 @@ public class FHIRSearch
 	public var profileType: FHIRResource.Type?
 	
 	/// The query construct used to describe the search
-	let construct: FHIRSearchConstruct
+	let query: FHIRSearchConstruct
 	
 	/** Designated initializer. */
-	init(query: AnyObject) {
-		self.construct = FHIRSearchConstruct(construct: query)
+	public init(query: AnyObject) {
+		self.query = FHIRSearchConstruct(construct: query)
 	}
 	
 	/** Convenience initializer. */
-	convenience init(type: FHIRResource.Type, query: AnyObject) {
+	public convenience init(type: FHIRResource.Type, query: AnyObject) {
 		self.init(query: query)
 		profileType = type
 	}
@@ -45,8 +45,25 @@ public class FHIRSearch
 	// MARK: - Running Search
 	
 	/**
-		Usually called on the **last** search param in a chain; creates the search URL from itself and its preceding
-		siblings, then performs a GET on the server, returning an error or an array of resources in the callback.
+		Creates the relative server path and query URL string.
+	 */
+	public func construct() -> String {
+		let qry = query.expand()
+		if let type = profileType {
+			if countElements(qry) > 0 {
+				return "\(type.resourceName)?\(qry)"
+			}
+			return type.resourceName
+		}
+		if countElements(qry) > 0 {
+			return "?\(qry)"
+		}
+		return ""
+	}
+	
+	/**
+		Performs a GET on the server after constructing the query URL, returning an error or an array of resources in
+		the callback.
 	
 		:param: server The FHIRServer instance on which to perform the search
 		:param: callback The callback, receives the response Bundle or an NSError message describing what went wrong
@@ -58,8 +75,7 @@ public class FHIRSearch
 			return
 		}
 		
-		let path = "\(profileType!.resourceName)?\(construct.expand())"
-		server.requestJSON(path) { json, error in
+		server.requestJSON(construct()) { json, error in
 			if nil != error {
 				callback(bundle: nil, error: error)
 			}
@@ -125,6 +141,9 @@ class FHIRSearchParamProto: Printable
 	class func from(any: AnyObject, parent: FHIRSearchParamProto?) -> [FHIRSearchParamProto] {
 		if let str = any as? String {
 			return [FHIRSearchParamProto(value: str, parent: parent)]
+		}
+		if let bol = any as? Bool {
+			return [FHIRSearchParamProto(value: bol ? "true" : "false", parent: parent)]
 		}
 		
 		let construct = FHIRSearchConstruct(construct: any)
@@ -242,7 +261,7 @@ struct FHIRSearchConstruct
 			return arr
 		}
 		
-		println("WARNING: not sure what to do with \(construct)")
+		println("WARNING: not sure what to do with \"\(construct)\"")
 		return arr
 	}
 }
@@ -328,7 +347,7 @@ struct FHIRSearchConstructModifierHandler: FHIRSearchConstructHandler
 	}
 	
 	func handle(param: FHIRSearchParamProto, value: AnyObject) {
-		if let modifier = FHIRSearchConstructModifierHandler.map[param.name!] {
+		if let modifier = FHIRSearchConstructModifierHandler.map[param.name ?? ""] {
 			param.name = modifier
 			param.isModifier = true
 			param.children = FHIRSearchParamProto.from(value, parent: param)
@@ -343,10 +362,10 @@ struct FHIRSearchConstructModifierHandler: FHIRSearchConstructHandler
 struct FHIRSearchConstructOperatorHandler: FHIRSearchConstructHandler
 {
 	static let map = [
-		"$gt": ">",
-		"$lt": "<",
-		"$lte": "<=",
-		"$gte": ">=",
+		"$gt": "%3E",           // NSURL() fails if un-encoded ">" and "<" are present in the query part
+		"$lt": "%3C",
+		"$lte": "%3C%3D",       // NSURL() does not fail on "=" but let's also encode these to be consistent
+		"$gte": "%3E%3D",
 	]
 	
 	func handles(key: String) -> Bool {
