@@ -6,7 +6,6 @@
 //  {{ info.year }}, SMART Platforms.
 //
 
-import Cocoa
 import XCTest
 import SwiftFHIR
 

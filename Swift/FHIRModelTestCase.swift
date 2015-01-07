@@ -6,8 +6,8 @@
 //  2014, SMART Platforms.
 //
 
-import Cocoa
 import XCTest
+import SwiftFHIR
 
 
 /**
@@ -21,7 +21,7 @@ class FHIRModelTestCase: XCTestCase
 		return proj.stringByAppendingPathComponent("fhir-parser/downloads/site")
 	}
 	
-	func readJSONFile(filename: String) -> NSDictionary? {
+	func readJSONFile(filename: String) -> JSONDictionary? {
 		let dir = self.dynamicType.testsDirectory
 		XCTAssertTrue(NSFileManager.defaultManager().fileExistsAtPath(dir), "You must either first download the FHIR spec or manually adjust `FHIRModelTestCase.testsDirectory` to point to your FHIR download directory")
 		
@@ -30,7 +30,7 @@ class FHIRModelTestCase: XCTestCase
 		XCTAssertNotNil(data, "Unable to read \"\(path)")
 		if nil == data { return nil }
 		
-		let json = NSJSONSerialization.JSONObjectWithData(data!, options: nil, error: nil) as? NSDictionary
+		let json = NSJSONSerialization.JSONObjectWithData(data!, options: nil, error: nil) as? JSONDictionary
 		XCTAssertNotNil(json, "Unable to decode \"\(path)")
 		
 		return json
