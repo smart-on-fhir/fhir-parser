@@ -32,7 +32,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         self.{{ prop.name }} = {% if "bool" == prop.class_name %}False{% else %}None{% endif %}
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
-        {%- if prop.reference_to %} referencing `{{ prop.reference_to.name }}`{% endif %}
+        {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
         {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
     {%- endfor %}
         
@@ -46,15 +46,11 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         if '{{ prop.name }}' in jsondict:
             {%- if prop.is_native %}
             self.{{ prop.name }} = jsondict['{{ prop.name }}']
-            {%- else %}{% if prop.reference_to %}
-            self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
-                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.name }}'], self, {% if prop.reference_to in imports -%}
-                    {{ prop.reference_to.module }}.{% endif -%}
-                {{ prop.reference_to.name }})
+            
             {%- else %}
             self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
                 {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.name }}'], self)
-            {%- endif %}{% endif %}
+            {%- endif %}
         {%- endfor %}
     
 {%- endif %}

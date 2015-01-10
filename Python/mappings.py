@@ -2,9 +2,8 @@
 
 # Which class names to map to resources and elements
 classmap = {
-    'Structure': 'FHIRElement',
+    'Element': 'FHIRElement',
     'Resource': 'FHIRResource',
-    'ResourceReference': 'FHIRReference',
     'Any': 'FHIRResource',
     
     'boolean': 'bool',
@@ -12,15 +11,22 @@ classmap = {
     'date': 'FHIRDate',
     'dateTime': 'FHIRDate',
     'instant': 'FHIRDate',
+    'time': 'FHIRDate',
     'decimal': 'float',
     
     'string': 'str',
     'id': 'str',
-    'oid': 'str',
-    'uri': 'str',
-    'base64Binary': 'str',
-    'xhtml': 'str',
     'code': 'str',      # for now we're not generating enums for these
+    'uri': 'str',
+    'oid': 'str',
+    'uuid': 'str',
+    'xhtml': 'str',
+    'base64Binary': 'str',
+}
+
+# Classes to be replaced with different ones at resource rendering time
+replacemap = {
+    'Reference': 'FHIRReference',
 }
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
@@ -32,6 +38,7 @@ starexpandtypes = {
     'dateTime',
     'date',
     'instant',
+    'time',
     'string',
     'uri',
     'boolean',
@@ -48,9 +55,9 @@ starexpandtypes = {
     'Ratio',
     'HumanName',
     'Address',
-    'Contact',
-    'Schedule',
-    'Resource',
+    'ContactPoint',
+    'Timing',
+    'Reference',
 }
 
 # Which class names are native to the lannguage
@@ -58,9 +65,6 @@ natives = ['bool', 'int', 'float', 'str', 'dict']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
-    'FHIRElement': 'dict',
-    'FHIRResource': 'dict',
-    
     'str': 'str',
     'int': 'int',
     'bool': 'bool',

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from logger import logger
+
 
 class FHIRClass(object):
     """ An element/resource that should become its own class.
@@ -50,10 +52,10 @@ class FHIRClass(object):
         # generic resource
         for existing in self.properties:
             if existing.name == prop.name:
-                if not existing.reference_to_profile:
-                    print('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
-                
-                existing.reference_to_profile = 'Resource'
+                if 0 == len(existing.reference_to_names):
+                    logger.warning('Already have property "{}" on "{}", which is only allowed for references'.format(prop.name, self.name))
+                else:
+                    existing.reference_to_names.extend(prop.reference_to_names)
                 return
         
         self.properties.append(prop)
@@ -98,15 +100,13 @@ class FHIRClassProperty(object):
         self.orig_name = name
         self.name = spec.safe_property_name(name)
         self.parent_name = element.parent_name
-        self.class_name = spec.class_name_for_type(type_name)
+        self.class_name = spec.class_name_for_property_type(type_name)
         self.module_name = None             # should only be set if it's an external module (think Python)
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == element.n_max else False
         self.nonoptional = True if element.n_min is not None and 0 != int(element.n_min) else False
-        self.reference_to_profile = type_obj.profile
-        self.reference_to_name = spec.class_name_for_profile(self.reference_to_profile)
-        self.reference_to = None
+        self.reference_to_names = [spec.class_name_for_profile(type_obj.profile)] if type_obj.profile is not None else []
         self.short = element.definition.short
         self.representation = element.definition.representation
 

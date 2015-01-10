@@ -112,9 +112,9 @@ class FHIRSpec(object):
     def as_class_name(self, classname):
         if not classname or 0 == len(classname):
             return None
-        mapped = self.settings.classmap.get(classname, classname)
-        uppercased = mapped[:1].upper() + mapped[1:]
-        return uppercased
+        if classname in self.settings.classmap:
+            return self.settings.classmap[classname]
+        return classname[:1].upper() + classname[1:]
     
     def mapped_name_for_type(self, type_name, main_resource=False):
         if type_name is None:
@@ -126,6 +126,12 @@ class FHIRSpec(object):
     def class_name_for_type(self, type_name, main_resource=False):
         mappedname = self.mapped_name_for_type(type_name, main_resource)
         return self.as_class_name(mappedname)
+    
+    def class_name_for_property_type(self, type_name):
+        classname = self.class_name_for_type(type_name)
+        if not classname:
+            return None
+        return self.settings.replacemap.get(classname, classname)
     
     def mapped_name_for_profile(self, profile_name):
         if not profile_name:
@@ -298,6 +304,7 @@ class FHIRProfile(object):
             raise Exception('Cannot use `needed_external_classes` before finalizing')
         
         checked = set([c.name for c in self.classes])
+        needed = set()
         needs = []
         
         for klass in self.classes:
@@ -312,19 +319,14 @@ class FHIRProfile(object):
                 prop_cls_name = prop.class_name
                 if prop_cls_name not in checked and not self.spec.class_name_is_native(prop_cls_name):
                     prop_cls = fhirclass.FHIRClass.with_name(prop_cls_name)
-                    checked.add(prop_cls_name)
                     if prop_cls is None:
                         # TODO: turn into exception once `nameReference` on element definition is implemented
                         logger.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
                     else:
                         prop.module_name = prop_cls.module
-                        needs.append(prop_cls)
-                
-                # is the property a reference to a certain class?
-                ref_cls = prop.reference_to
-                if ref_cls is not None and ref_cls.name not in checked:
-                    checked.add(ref_cls.name)
-                    needs.append(ref_cls)
+                        if not prop_cls_name in needed:
+                            needed.add(prop_cls_name)
+                            needs.append(prop_cls)
         
         return sorted(needs, key=lambda n: n.module)
     
@@ -342,7 +344,7 @@ class FHIRProfile(object):
         """ Our spec object calls this when all profiles have been parsed.
         """
         
-        # assign all super-classes and reference-to-classes as objects
+        # assign all super-classes as objects
         for cls in self.classes:
             if cls.superclass is None:
                 super_cls = fhirclass.FHIRClass.with_name(cls.superclass_name)
@@ -352,15 +354,6 @@ class FHIRProfile(object):
                         .format(cls.superclass_name, self.name))
                 else:
                     cls.superclass = super_cls
-            
-            for prop in cls.properties:
-                if prop.reference_to_profile is not None:
-                    ref_cls = fhirclass.FHIRClass.with_name(prop.reference_to_name)
-                    if ref_cls is None:
-                        logger.error('There is no class implementation for class named "{}" on reference property "{}" on "{}"'
-                            .format(prop.reference_to_name, prop.name, cls.name))
-                    else:
-                        prop.reference_to = ref_cls
         
         self._did_finalize = True
 

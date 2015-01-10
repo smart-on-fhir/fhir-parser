@@ -12,15 +12,15 @@ resource_modules_lowercase = True                       # whether all resource p
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
 tpl_resource_target_ptrn = '../models/{}.py'            # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../models/'                     # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
-resource_default_base = 'FHIRResource'                      # the default superclass to use for main profile models
-contained_default_base = 'FHIRElement'                      # the default superclass to use for inline-defined (backbone) models
-manual_profiles = [                                         # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
+resource_default_base = 'FHIRResource'                  # the default superclass to use for main profile models
+contained_default_base = 'FHIRElement'                  # the default superclass to use for inline-defined (backbone) models
+manual_profiles = [                                     # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
     ('Python/__init__.py', None, []),
-    ('Python/fhirelement.py', 'fhirelement', ['FHIRElement']),
-    ('Python/fhirresource.py', 'fhirresource', ['FHIRResource']),
-    ('Python/fhircontainedresource.py', 'fhircontainedresource', ['FHIRContainedResource']),
+    ('Python/fhirelement.py', 'fhirelement', ['Element']),
+    ('Python/fhirresource.py', 'fhirresource', ['Resource']),
+    ('Python/fhircontainedresource.py', 'fhircontainedresource', ['ContainedResource']),
     ('Python/fhirreference.py', 'fhirreference', ['FHIRReference']),
-    ('Python/fhirdate.py', 'fhirdate', ['FHIRDate']),
+    ('Python/fhirdate.py', 'fhirdate', ['date', 'dateTime', 'instant', 'time']),
     ('Python/fhirsearch.py', 'fhirsearch', ['FHIRSearch']),
 ]
 
@@ -30,7 +30,7 @@ tpl_factory_source = 'Python/template-elementfactory.py'
 tpl_factory_target = '../models/fhirelement+factory.py'
 
 # search parameters
-write_searchparams = True
+write_searchparams = False				# no longer implemented as of DSTU-2
 search_generate_camelcase = False
 tpl_searchparams_source = 'Python/template-searchparams.py'
 tpl_searchparams_target = '../models/fhirsearchelement.py'

@@ -24,6 +24,9 @@ classmap = {
     'base64Binary': 'Base64Binary',
 }
 
+# Classes to be replaced with different ones at resource rendering time
+replacemap = {}
+
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
 # any (value) type and have the `value[x]` form - how to substitute is defined
 # here
