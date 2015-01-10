@@ -27,7 +27,7 @@ public class FHIRResource: FHIRElement
 	public var id: String?
 	
 	/// Metadata about the resource.
-	public var meta: FHIResourceMeta?
+	public var meta: FHIRResourceMeta?
 	
 	/// A set of rules under which this content was created.
 	public var implicitRules: NSURL?
@@ -45,7 +45,7 @@ public class FHIRResource: FHIRElement
 				id = val
 			}
 			if let val = js["meta"] as? JSONDictionary {
-				meta = FHIResourceMeta(json: val, owner: self)
+				meta = FHIRResourceMeta(json: val, owner: self)
 			}
 			if let val = js["implicitRules"] as? String {
 				implicitRules = NSURL(json: val)
@@ -118,7 +118,7 @@ public class FHIRResource: FHIRElement
 /**
 	Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
  */
-public class FHIResourceMeta: FHIRElement
+public class FHIRResourceMeta: FHIRElement
 {
 	/// Version specific identifier.
 	public var versionId: String?
