@@ -43,8 +43,8 @@ class FHIRElement(object):
         # extract (modifier) extensions. Non-modifier extensions have a URL as their JSON dictionary key.
         extensions = []
         for key, val in jsondict.items():
-            if ":" in key and isinstance(val, dict):
-                for ext in Extension.with_json(val):
+            if ":" in key and isinstance(val, list):
+                for ext in extension.Extension.with_json(val):
                     ext.url = key
                     extensions.append(ext)
         if len(extensions) > 0:
@@ -53,8 +53,8 @@ class FHIRElement(object):
         if "modifier" in jsondict and isinstance(jsondict["modifier"], dict):
             extensions = []
             for key, val in jsondict["modifier"].items():
-                if isinstance(val, dict):
-                    for ext in Extension.with_json(val):
+                if isinstance(val, list):
+                    for ext in extension.Extension.with_json(val):
                         ext.url = key
                         extensions.append(ext)
             if len(extensions) > 0:
@@ -123,7 +123,7 @@ class FHIRElement(object):
             self._resolved[refid] = resolved
         else:
             self._resolved = {refid: resolved}
-    
+
 
 # these are subclasses of FHIRElement, import last
 import extension
