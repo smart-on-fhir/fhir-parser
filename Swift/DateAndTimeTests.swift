@@ -172,7 +172,7 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(3600 == d!.timeZone!.secondsFromGMT)
+		XCTAssertTrue(3600 == d!.timeZone!.secondsFromGMT, "Should be 3600 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29-05:00")
 		XCTAssertFalse(nil == d)
@@ -184,7 +184,7 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT)
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-05:00")
 		XCTAssertFalse(nil == d)
@@ -196,7 +196,19 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT)
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		
+		d = DateTime(string: "2015-03-28T02:33:29.1285-05:30")
+		XCTAssertFalse(nil == d)
+		XCTAssertEqual(2015, d!.date.year)
+		XCTAssertEqual(UInt8(3), d!.date.month!)
+		XCTAssertEqual(UInt8(28), d!.date.day!)
+		XCTAssertFalse(nil == d!.time)
+		XCTAssertEqual(UInt8(2), d!.time!.hour)
+		XCTAssertEqual(UInt8(33), d!.time!.minute)
+		XCTAssertEqual(29.1285, d!.time!.second!)
+		XCTAssertFalse(nil == d!.timeZone)
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29-05")
 		XCTAssertFalse(nil == d)
@@ -208,7 +220,7 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT)
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-0500")
 		XCTAssertFalse(nil == d)
@@ -221,6 +233,18 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
 		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		
+		d = DateTime(string: "2015-03-28T02:33:29.1285-0530")
+		XCTAssertFalse(nil == d)
+		XCTAssertEqual(2015, d!.date.year)
+		XCTAssertEqual(UInt8(3), d!.date.month!)
+		XCTAssertEqual(UInt8(28), d!.date.day!)
+		XCTAssertFalse(nil == d!.time)
+		XCTAssertEqual(UInt8(2), d!.time!.hour)
+		XCTAssertEqual(UInt8(33), d!.time!.minute)
+		XCTAssertEqual(29.1285, d!.time!.second!)
+		XCTAssertFalse(nil == d!.timeZone)
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 	}
 	
 	func testParseSomeFails() {

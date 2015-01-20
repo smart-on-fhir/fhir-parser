@@ -8,10 +8,6 @@ classmap = {
     
     'boolean': 'Bool',
     'integer': 'Int',
-    'date': 'NSDate',
-    'dateTime': 'NSDate',
-    'instant': 'NSDate',
-    'time': 'NSDate',
     'decimal': 'NSDecimalNumber',
     
     'string': 'String',
@@ -58,8 +54,8 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names are native to the lannguage
-natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'NSDate', 'NSURL']
+# Which class names are native to the language (or can be treated this way)
+natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -71,7 +67,10 @@ jsonmap = {
     'Double': 'NSNumber',
     
     'String': 'String',
-    'NSDate': 'String',
+    'Date': 'String',
+    'Time': 'String',
+    'DateTime': 'String',
+    'Instant': 'String',
     'NSDecimalNumber': 'NSNumber',
     'NSURL': 'String',
     'Base64Binary': 'String',

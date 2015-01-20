@@ -24,8 +24,10 @@ manual_profiles = [                                         # all these profiles
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
     	'decimal', 'integer',
-    	'date', 'dateTime', 'time', 'instant',
     	'uri', 'oid', 'uuid',
+    ]),
+    ('Swift/DateAndTime.swift', None, [
+        'date', 'dateTime', 'time', 'instant',
     ]),
     ('Swift/JSON-extensions.swift', None, []),
 ]
@@ -48,6 +50,7 @@ tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'
 unittest_copyfiles_base = '../SwiftFHIRTests/ModelTests/'	# Where to copy `unittest_copyfiles`
 unittest_copyfiles = [
     'Swift/FHIRModelTestCase.swift',
+    'Swift/DateAndTimeTests.swift'
 ]
 unittest_filename_prefix = ''
 unittest_format_path_prepare = '{}!'            # used to format `path` before appending another path element - one placeholder for `path`

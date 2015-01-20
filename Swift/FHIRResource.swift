@@ -124,7 +124,7 @@ public class FHIRResourceMeta: FHIRElement
 	public var versionId: String?
 	
 	/// When the resource version last changed.
-	public var lastUpdated: NSDate?
+	public var lastUpdated: Instant?
 	
 	/// Profiles this resource claims to conform to.
 	public var profiles: [NSURL]?
@@ -142,7 +142,7 @@ public class FHIRResourceMeta: FHIRElement
 				self.versionId = val
 			}
 			if let val = js["lastUpdated"] as? String {
-				self.lastUpdated = NSDate(json: val)
+				self.lastUpdated = Instant(string: val)
 			}
 			if let val = js["profiles"] as? [String] {
 				self.profiles = NSURL.from(val)

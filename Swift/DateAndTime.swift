@@ -529,13 +529,21 @@ class DateAndTimeParser
 						tz = NSTimeZone(abbreviation: "UTC")
 					}
 					else if scanner.scanString("-", intoString: &negStr) || scanner.scanString("+", intoString: nil) {
-						var tzhour = 0
-						var tzmin = 0
-						if scanner.scanInteger(&tzhour) && tzhour < 15 {
-							scanner.scanString(":", intoString: nil)			// the colon may be omitted
-							if scanner.scanInteger(&tzmin) && tzmin >= 60 {
-								tzmin = 0
+						var hourStr: NSString?
+						if scanner.scanCharactersFromSet(NSCharacterSet.decimalDigitCharacterSet(), intoString: &hourStr) {
+							var tzhour = 0
+							var tzmin = 0
+							if 2 == hourStr?.length {
+								tzhour = hourStr!.integerValue
+								if scanner.scanString(":", intoString: nil) && scanner.scanInteger(&tzmin) && tzmin >= 60 {
+									tzmin = 0
+								}
 							}
+							else if 4 == hourStr?.length {
+								tzhour = hourStr!.substringToIndex(2).toInt()!
+								tzmin = hourStr!.substringFromIndex(2).toInt()!
+							}
+							
 							let offset = tzhour * 3600 + tzmin * 60
 							tz = NSTimeZone(forSecondsFromGMT: nil == negStr ? offset : -1 * offset)
 						}
@@ -555,6 +563,10 @@ class DateAndTimeParser
 extension NSTimeZone
 {
 	func offset() -> String {
+		if 0 == secondsFromGMT {
+			return "Z"
+		}
+		
 		let hr = abs((secondsFromGMT / 3600) - (secondsFromGMT % 3600))
 		let min = abs((secondsFromGMT % 3600) / 60)
 		
