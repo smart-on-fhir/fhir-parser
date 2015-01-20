@@ -558,12 +558,12 @@ class DateAndTimeParser
 
 
 /**
-	Extend NSTimeZone to report the offset in "+00:00" format.
+	Extend NSTimeZone to report the offset in "+00:00" or "Z" (for UTC/GMT) format.
  */
 extension NSTimeZone
 {
 	func offset() -> String {
-		if 0 == secondsFromGMT {
+		if "UTC" == abbreviation || "GMT" == abbreviation {
 			return "Z"
 		}
 		
