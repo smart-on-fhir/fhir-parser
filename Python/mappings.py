@@ -60,7 +60,7 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names are native to the lannguage
+# Which class names are native to the language (or can be treated this way)
 natives = ['bool', 'int', 'float', 'str', 'dict']
 
 # Which classes are to be expected from JSON decoding

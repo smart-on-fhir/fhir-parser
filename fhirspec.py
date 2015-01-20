@@ -21,7 +21,7 @@ skip_because_unsupported = [
     r'geneticpedigreefamilyhistory',
     r'valueset-shareable-definition',
     r'cda-.+\.profile\.json',
-    r'xds-document\w+\.profile\.json',
+    r'^xds-',
     r'-uslab-',
     r'-daf-',
     r'-sdc-',
@@ -161,7 +161,7 @@ class FHIRSpec(object):
     
     def parse_unit_tests(self):
         controller = fhirunittest.FHIRUnitTestController(self, self.settings)
-        controller.find_and_parse_tests(self.directory)
+        controller.find_and_parse_tests(self.directory, skip=skip_because_unsupported)
         self.unit_tests = controller.collections
     
     

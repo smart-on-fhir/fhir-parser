@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import io
+import re
 import sys
 import glob
 import json
@@ -21,8 +22,8 @@ class FHIRUnitTestController(object):
         self.files = None
         self.collections = None
     
-    def find_and_parse_tests(self, directory):
-        self.files = FHIRResourceFile.find_all(directory)
+    def find_and_parse_tests(self, directory, skip=None):
+        self.files = FHIRResourceFile.find_all(directory, skip=skip)
         
         # create tests
         tests = []
@@ -189,13 +190,21 @@ class FHIRResourceFile(object):
     """ A FHIR example resource file.
     """
     @classmethod
-    def find_all(cls, directory):
+    def find_all(cls, directory, skip=None):
         """ Finds all example JSON files in the given directory.
         """
         assert os.path.isdir(directory)
         all_tests = []
         for utest in glob.glob(os.path.join(directory, '*-example*.json')):
-            all_tests.append(cls(filepath=utest))
+            use = True
+            if skip is not None:
+                basename = os.path.basename(utest)
+                for pattern in skip:
+                    if re.search(pattern, basename) is not None:
+                        use = False
+                        break
+            if use:
+                all_tests.append(cls(filepath=utest))
         
         return all_tests
     
