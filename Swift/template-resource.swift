@@ -85,7 +85,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		}
 		{%- else %}
 		if let {{ prop.name }} = self.{{ prop.name }} {
-			json["{{ prop.orig_name }}"] = self.dynamicType.asJSONArray({{ prop.name }})
+			json["{{ prop.orig_name }}"] = {{ prop.class_name }}.asJSONArray({{ prop.name }})
 		}
 		{%- endif %}
 		
