@@ -42,7 +42,7 @@ public class FHIRElement
 			if let arr = js["contained"] as? [JSONDictionary] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
-					let res = FHIRContainedResource(json: dict)
+					let res = FHIRContainedResource(json: dict, owner: self)
 					if nil != res.id {
 						cont[res.id!] = res
 					}
@@ -165,10 +165,7 @@ public class FHIRElement
 		:param: resolved The element that was resolved
 	 */
 	func didResolveReference(refid: String, resolved: FHIRElement) {
-		if let owner = _owner {
-			owner.didResolveReference(refid, resolved: resolved)
-		}
-		else if nil != _resolved {
+		if nil != _resolved {
 			_resolved![refid] = resolved
 		}
 		else {

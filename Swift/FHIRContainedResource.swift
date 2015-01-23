@@ -18,25 +18,29 @@ import Foundation
  */
 public class FHIRContainedResource
 {
-	/** The id of the resource. */
+	/// The id of the resource.
 	public var id: String?
 	
-	/** The type of the resource. */
+	/// The type of the resource.
 	public var type: String?
 	
-	/** The complete JSON dictionary. */
+	/// The complete JSON dictionary.
 	var json: JSONDictionary?
 	
-	public init(id: String?, type: String?, json: JSONDictionary?) {
+	/// Contained resources always have an owner, the resource they are contained in.
+	let owner: FHIRElement
+	
+	public init(id: String?, type: String?, json: JSONDictionary?, owner: FHIRElement) {
 		self.id = id
 		self.type = type
 		self.json = json
+		self.owner = owner
 	}
 	
-	public convenience init(json: JSONDictionary) {
+	public convenience init(json: JSONDictionary, owner: FHIRElement) {
 		let id = json["id"] as? String
 		let type = json["resourceType"] as? String
-		self.init(id: id, type: type, json: json)
+		self.init(id: id, type: type, json: json, owner: owner)
 	}
 }
 

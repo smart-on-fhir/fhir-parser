@@ -26,7 +26,7 @@ extension Reference
 			return nil
 		}
 		
-		if let resolved = resolvedReference(refid!) {
+		if let resolved = _owner?.resolvedReference(refid!) {
 			if let res = resolved as? T {
 				return res
 			}
@@ -34,10 +34,10 @@ extension Reference
 		}
 		
 		// not yet resolved, let's look at contained resources
-		if let contained = containedReference(refid!) {
+		if let contained = _owner?.containedReference(refid!) {
 			let t = T.self									// getting crashes when using T(...) directly as of 6.1 GM 2
 			let instance = t(json: contained.json)
-			didResolveReference(refid!, resolved: instance)
+			contained.owner.didResolveReference(refid!, resolved: instance)
 			return instance
 		}
 		
