@@ -109,7 +109,7 @@ public class FHIRResource: FHIRElement
 		return FHIRSearch(type: self.dynamicType, query: query)
 	}
 	
-	public class func search(query: AnyObject) -> FHIRSearch {
+	public class func where(query: AnyObject) -> FHIRSearch {
 		return FHIRSearch(type: self, query: query)
 	}
 }
