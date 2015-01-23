@@ -93,7 +93,7 @@ class FHIRSpec(object):
                 self.found_profile(profile)
                 
                 element = FHIRProfileElementManual(profile, contained)
-                element.create_class()
+                element.create_class(module)
     
     def finalize(self):
         """ Should be called after all profiles have been parsed and allows
@@ -303,21 +303,21 @@ class FHIRProfile(object):
         if not self._did_finalize:
             raise Exception('Cannot use `needed_external_classes` before finalizing')
         
-        checked = set([c.name for c in self.classes])
+        internal = set([c.name for c in self.classes])
         needed = set()
         needs = []
         
         for klass in self.classes:
             # are there superclasses that we need to import?
             sup_cls = klass.superclass
-            if sup_cls is not None and sup_cls.name not in checked:
-                checked.add(sup_cls.name)
+            if sup_cls is not None and sup_cls.name not in internal and sup_cls.name not in needed:
+                needed.add(sup_cls.name)
                 needs.append(sup_cls)
             
-            # look at all properties' classes
+            # look at all properties' classes and assign their modules
             for prop in klass.properties:
                 prop_cls_name = prop.class_name
-                if prop_cls_name not in checked and not self.spec.class_name_is_native(prop_cls_name):
+                if prop_cls_name not in internal and not self.spec.class_name_is_native(prop_cls_name):
                     prop_cls = fhirclass.FHIRClass.with_name(prop_cls_name)
                     if prop_cls is None:
                         # TODO: turn into exception once `nameReference` on element definition is implemented
@@ -468,7 +468,7 @@ class FHIRProfileElement(object):
         else:
             self.children.append(element)
     
-    def create_class(self):
+    def create_class(self, module=None):
         """ Creates a FHIRClass instance from the receiver, returning the
         created class as the first and all inline defined subclasses as the
         second item in the tuple.
@@ -482,13 +482,18 @@ class FHIRProfileElement(object):
         cls, did_create = fhirclass.FHIRClass.for_element(self)
         if did_create:
             logger.debug('Created class "{}"'.format(cls.name))
+            if module is None and self.is_main_profile_element:
+                module = self.profile.spec.as_module_name(cls.name)
+            cls.module = module
+        
+        # child classes
         if self.children is not None:
             for child in self.children:
                 properties = child.as_properties()
                 if properties is not None:    
                     
                     # collect subclasses
-                    sub, subsubs = child.create_class()
+                    sub, subsubs = child.create_class(module)
                     if sub is not None:
                         subs.append(sub)
                     if subsubs is not None:
@@ -572,12 +577,14 @@ class FHIRProfileElement(object):
 
 class FHIRProfileElementManual(FHIRProfileElement):
     def __init__(self, profile, path):
-        super().__init__(profile, {'path': path})
+        super(FHIRProfileElementManual, self).__init__(profile, {'path': path})
         self.represents_class = True
         self._did_resolve_dependencies = True
     
-    def create_class(self):
-        fhirclass.FHIRClass.for_element(self)
+    def create_class(self, module):
+        cls, created = fhirclass.FHIRClass.for_element(self)
+        if created:
+            cls.module = module
 
 
 class FHIRElementDefinition(object):

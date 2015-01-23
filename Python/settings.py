@@ -15,7 +15,12 @@ resource_base_target = '../models/'                     # resource target direct
 resource_default_base = 'FHIRResource'                  # the default superclass to use for main profile models
 contained_default_base = 'FHIRElement'                  # the default superclass to use for inline-defined (backbone) models
 manual_profiles = [                                     # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
-    ('Python/__init__.py', None, []),
+    ('Python/__init__.py', None, [
+    	'boolean',
+    	'string', 'base64Binary', 'code', 'id',
+    	'decimal', 'integer',
+    	'uri', 'oid', 'uuid',
+    ]),
     ('Python/fhirelement.py', 'fhirelement', ['Element']),
     ('Python/fhirresource.py', 'fhirresource', ['Resource']),
     ('Python/fhircontainedresource.py', 'fhircontainedresource', ['ContainedResource']),
@@ -25,9 +30,9 @@ manual_profiles = [                                     # all these profiles sho
 ]
 
 # factory methods
-write_factory = False
+write_factory = True
 tpl_factory_source = 'Python/template-elementfactory.py'
-tpl_factory_target = '../models/fhirelement+factory.py'
+tpl_factory_target = '../models/fhirelementfactory.py'
 
 # search parameters
 write_searchparams = False				# no longer implemented as of DSTU-2
