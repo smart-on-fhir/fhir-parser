@@ -227,7 +227,14 @@ public struct DateTime: DateAndTime
 	public var time: Time?
 	
 	/// The timezone
-	public var timeZone: NSTimeZone?
+	public var timeZone: NSTimeZone? {
+		didSet {
+			timeZoneString = nil
+		}
+	}
+	
+	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
+	var timeZoneString: String?
 	
 	/**
 		Designated initializer, takes a date and optionally a time and a timezone.
@@ -251,7 +258,7 @@ public struct DateTime: DateAndTime
 		If time is given but no timezone, the instance is assigned the local time zone.
 	 */
 	public init?(string: String) {
-		let (date, time, tz) = DateAndTimeParser.sharedParser.parse(string)
+		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
 		if nil == date {
 			return nil
 		}
@@ -259,6 +266,7 @@ public struct DateTime: DateAndTime
 		if nil != time {
 			self.time = time
 			self.timeZone = nil == tz ? NSTimeZone.localTimeZone() : tz
+			self.timeZoneString = tzString
 		}
 	}
 	
@@ -282,8 +290,8 @@ public struct DateTime: DateAndTime
 	
 	public var description: String {
 		if let tm = time {
-			if let tz = timeZone {
-				return String(format: "%@T%@%@", date.description, tm.description, tz.offset())
+			if let tz = timeZoneString ?? timeZone?.offset() {
+				return String(format: "%@T%@%@", date.description, tm.description, tz)
 			}
 		}
 		return date.description
@@ -318,7 +326,14 @@ public struct Instant: DateAndTime
 	}
 	
 	/// The timezone.
-	public var timeZone: NSTimeZone
+	public var timeZone: NSTimeZone {
+		didSet {
+			timeZoneString = nil
+		}
+	}
+	
+	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
+	var timeZoneString: String?
 	
 	/** :returns: The current date and time. */
 	public static func now() -> Instant {
@@ -344,13 +359,14 @@ public struct Instant: DateAndTime
 	
 	/** Uses `DateAndTimeParser` to initialize from a date-time string. */
 	public init?(string: String) {
-		let (date, time, tz) = DateAndTimeParser.sharedParser.parse(string)
+		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
 		if nil == date || nil == date!.month || nil == date!.day || nil == time || nil == time!.second || nil == tz {
 			return nil
 		}
 		self.date = date!
 		self.time = time!
 		self.timeZone = tz!
+		self.timeZoneString = tzString!
 	}
 	
 	
@@ -366,7 +382,8 @@ public struct Instant: DateAndTime
 	}
 	
 	public var description: String {
-		return String(format: "%@T%@%@", date.description, time.description, timeZone.offset())
+		let tz = timeZoneString ?? timeZone.offset()
+		return String(format: "%@T%@%@", date.description, time.description, tz)
 	}
 }
 
@@ -481,11 +498,12 @@ class DateAndTimeParser
 		:param: string The date string to parse
 		:param: isTimeOnly If true assumes that the string describes time only
 	 */
-	func parse(string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: NSTimeZone?) {
+	func parse(string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: NSTimeZone?, tzString: String?) {
 		let scanner = NSScanner(string: string)
 		var date: Date?
 		var time: Time?
 		var tz: NSTimeZone?
+		var tzString: String?
 		
 		// scan date (must have at least the year)
 		if !isTimeOnly {
@@ -527,16 +545,22 @@ class DateAndTimeParser
 					var negStr: NSString?
 					if scanner.scanString("Z", intoString: nil) {
 						tz = NSTimeZone(abbreviation: "UTC")
+						tzString = "Z"
 					}
 					else if scanner.scanString("-", intoString: &negStr) || scanner.scanString("+", intoString: nil) {
+						tzString = (nil == negStr) ? "+" : "-"
 						var hourStr: NSString?
 						if scanner.scanCharactersFromSet(NSCharacterSet.decimalDigitCharacterSet(), intoString: &hourStr) {
+							tzString! += hourStr!
 							var tzhour = 0
 							var tzmin = 0
 							if 2 == hourStr?.length {
 								tzhour = hourStr!.integerValue
-								if scanner.scanString(":", intoString: nil) && scanner.scanInteger(&tzmin) && tzmin >= 60 {
-									tzmin = 0
+								if scanner.scanString(":", intoString: nil) && scanner.scanInteger(&tzmin) {
+									tzString! += (tzmin < 10) ? ":0\(tzmin)" : ":\(tzmin)"
+									if tzmin >= 60 {
+										tzmin = 0
+									}
 								}
 							}
 							else if 4 == hourStr?.length {
@@ -552,7 +576,7 @@ class DateAndTimeParser
 			}
 		}
 		
-		return (date, time, tz)
+		return (date, time, tz, tzString)
 	}
 }
 
