@@ -9,6 +9,27 @@
 import Foundation
 
 
+extension String
+{
+	public func asJSON() -> String {
+		return self
+	}
+}
+
+extension Bool
+{
+	public func asJSON() -> Bool {
+		return self
+	}
+}
+
+extension Int
+{
+	public func asJSON() -> Int {
+		return self
+	}
+}
+
 extension NSURL
 {
 	public convenience init?(json: String) {
@@ -24,6 +45,10 @@ extension NSURL
 			}
 		}
 		return arr
+	}
+	
+	public func asJSON() -> String {
+		return self.description
 	}
 }
 
@@ -46,12 +71,48 @@ extension NSDecimalNumber
 			self.init(string: "\(json)")
 		}
 	}
+	
+	public func asJSON() -> NSDecimalNumber {
+		return self
+	}
 }
 
 extension Base64Binary
 {
 	public init(string: String) {
 		self.init(value: string)
+	}
+	
+	public func asJSON() -> String {
+		return self.value ?? ""
+	}
+}
+
+extension Date
+{
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension Time
+{
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension DateTime
+{
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension Instant
+{
+	public func asJSON() -> String {
+		return self.description
 	}
 }
 

@@ -87,6 +87,40 @@ public class FHIRElement
 	}
 	
 	/**
+		Represent the receiver in a JSONDictionary, ready to be used for JSON serialization.
+	 */
+	public func asJSON() -> JSONDictionary {
+		var json = JSONDictionary()
+		
+		if let contained = self.contained {
+			var dict = JSONDictionary()
+			for (key, val) in contained {
+				dict[key] = val.json			// TODO: check if it has been resolved, if so use `asJSON()`
+			}
+			json["contained"] = dict
+		}
+		if let fhirExtension = self.fhirExtension {
+			json["extension"] = self.dynamicType.asJSONArray(fhirExtension)
+		}
+		if let modifierExtension = self.modifierExtension {
+			json["modifierExtension"] = self.dynamicType.asJSONArray(modifierExtension)
+		}
+		
+		return json
+	}
+	
+	/**
+		Calls `asJSON()` on all elements in the array and returns the resulting array full of JSONDictionaries.
+	 */
+	public class func asJSONArray(array: [FHIRElement]) -> [JSONDictionary] {
+		var arr = [JSONDictionary]()
+		for element in array {
+			arr.append(element.asJSON())
+		}
+		return arr
+	}
+	
+	/**
 		Convenience allocator to be used when allocating an element as part of another element.
 	 */
 	public convenience init(json: JSONDictionary?, owner: FHIRElement?) {

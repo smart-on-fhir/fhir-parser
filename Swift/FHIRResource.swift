@@ -59,6 +59,29 @@ public class FHIRResource: FHIRElement
 		}
 	}
 	
+	override public func asJSON() -> JSONDictionary {
+		var json = super.asJSON()
+		
+		if let id = self.id {
+			json["id"] = id
+		}
+		if let meta = self.meta {
+			json["meta"] = meta.asJSON()
+		}
+		if let implicitRules = self.implicitRules {
+			json["implicitRules"] = implicitRules.asJSON()
+		}
+		if let language = self.language {
+			json["language"] = language
+		}
+		if let text = self.text {
+			json["text"] = text.asJSON()
+		}
+		
+		
+		return json
+	}
+	
 	
 	// MARK: - Retrieving Resources
 	

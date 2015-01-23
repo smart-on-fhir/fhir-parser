@@ -71,6 +71,33 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		{%- endfor %}
 		}
 	}
+	
+	override public func asJSON() -> JSONDictionary {
+		var json = super.asJSON()
+		{% for prop in klass.properties %}
+		{%- if prop.is_array %}{% if prop.is_native %}
+		if let {{ prop.name }} = self.{{ prop.name }} {
+			var arr = [AnyObject]()
+			for val in {{ prop.name }} {
+				arr.append(val.asJSON())
+			}
+			json["{{ prop.orig_name }}"] = arr
+		}
+		{%- else %}
+		if let {{ prop.name }} = self.{{ prop.name }} {
+			json["{{ prop.orig_name }}"] = self.dynamicType.asJSONArray({{ prop.name }})
+		}
+		{%- endif %}
+		
+		{%- else %}
+		if let {{ prop.name }} = self.{{ prop.name }} {
+			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON()
+		}
+		{%- endif %}
+		{%- endfor %}
+		
+		return json
+	}
 {%- endif %}
 }
 {% endfor %}

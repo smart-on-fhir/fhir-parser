@@ -328,7 +328,7 @@ class FHIRProfile(object):
                             needed.add(prop_cls_name)
                             needs.append(prop_cls)
         
-        return sorted(needs, key=lambda n: n.module)
+        return sorted(needs, key=lambda n: n.module or n.name)
     
     def writable_classes(self):
         classes = []
