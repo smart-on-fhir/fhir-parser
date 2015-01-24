@@ -138,11 +138,20 @@ public class FHIRResource: FHIRElement
 	public class func search(query: AnyObject) -> FHIRSearch {
 		return FHIRSearch(type: self, query: query)
 	}
+	
+	
+	// MARK: - Printable
+	
+	override public var description: String {
+		get {
+			return "<\(self.dynamicType.resourceName)> \(id) on \(_server?.baseURL)"
+		}
+	}
 }
 
 
 /**
-	Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
+ *  Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
  */
 public class FHIRResourceMeta: FHIRElement
 {

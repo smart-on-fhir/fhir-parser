@@ -12,15 +12,15 @@ import Foundation
 /**
  *  Abstract superclass for all FHIR data elements.
  */
-public class FHIRElement
+public class FHIRElement: Printable
 {
 	/// The name of the resource or element
 	public class var resourceName: String {
 		get { return "Element" }
 	}
 	
-	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
-	public var fhirExtension: [Extension]?
+	/// This should be `extension` but it is a keyword in Swift; renamed to `extension_fhir`.
+	public var extension_fhir: [Extension]?
 	
 	/// Optional modifier extensions.
 	public var modifierExtension: [Extension]?
@@ -65,7 +65,7 @@ public class FHIRElement
 				}
 			}
 			if countElements(extensions) > 0 {
-				fhirExtension = extensions
+				extension_fhir = extensions
 			}
 			
 			if let mod = js["modifier"] as? JSONDictionary {
@@ -99,11 +99,11 @@ public class FHIRElement
 			}
 			json["contained"] = dict
 		}
-		if let fhirExtension = self.fhirExtension {
-			json["extension"] = self.dynamicType.asJSONArray(fhirExtension)
+		if let extension_fhir = self.extension_fhir {
+			json["extension"] = Extension.asJSONArray(extension_fhir)
 		}
 		if let modifierExtension = self.modifierExtension {
-			json["modifierExtension"] = self.dynamicType.asJSONArray(modifierExtension)
+			json["modifierExtension"] = Extension.asJSONArray(modifierExtension)
 		}
 		
 		return json
@@ -204,6 +204,15 @@ public class FHIRElement
 		}
 		else {
 			_resolved = [refid: resolved]
+		}
+	}
+	
+	
+	// MARK: - Printable
+	
+	public var description: String {
+		get {
+			return "<\(self.dynamicType.resourceName)>"
 		}
 	}
 }

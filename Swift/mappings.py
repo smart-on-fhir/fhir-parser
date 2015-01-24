@@ -79,10 +79,11 @@ jsonmap_default = 'JSONDictionary'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
-    'class': 'klass',
-    'import': 'importFrom',
-    'protocol': 'protokol',
-    'extension': 'fhirExtension',
-    'operator': 'operatr',
-    'modifier': 'mod',          # `modifierExtension` is called "modifier" in JSON
+    'class': 'class_fhir',
+    'import': 'import_fhir',
+    'protocol': 'protocol_fhir',
+    'extension': 'extension_fhir',
+    'operator': 'operator_fhir',
+    'modifier': 'modifier_fhir',          # `modifierExtension` is called "modifier" in JSON
+    'description': 'description_fhir',    # Reserved for `Printable` classes
 }
