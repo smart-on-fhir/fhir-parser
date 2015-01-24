@@ -30,6 +30,7 @@ manual_profiles = [                                         # all these profiles
         'date', 'dateTime', 'time', 'instant',
     ]),
     ('Swift/JSON-extensions.swift', None, []),
+    ('Swift/FHIRServer.swift', None, []),
 ]
 
 # factory methods

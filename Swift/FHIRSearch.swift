@@ -75,12 +75,12 @@ public class FHIRSearch
 			return
 		}
 		
-		server.requestJSON(construct()) { json, error in
+		server.getJSON(construct()) { response, error in
 			if nil != error {
 				callback(bundle: nil, error: error)
 			}
 			else {
-				callback(bundle: Bundle(json: json), error: nil)
+				callback(bundle: Bundle(json: response?.body), error: nil)
 			}
 		}
 	}

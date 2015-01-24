@@ -8,6 +8,9 @@
 
 import Foundation
 
+/// The block signature for most server interaction callbacks
+public typealias FHIRResourceErrorCallback = ((resource: FHIRResource?, error: NSError?) -> Void)
+
 
 /**
  *  Abstract superclass for all FHIR resource models.
@@ -95,7 +98,7 @@ public class FHIRResource: FHIRElement
 	/**
 		Reads the resource with the given id from the given server.
 	 */
-	public class func read(id: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
+	public class func read(id: String, server: FHIRServer, callback: FHIRResourceErrorCallback) {
 		let path = "\(resourceName)/\(id)"
 		readFrom(path, server: server) { resource, error in
 			if let res = resource {
@@ -108,13 +111,13 @@ public class FHIRResource: FHIRElement
 	/**
 		Reads the resource from the given path on the given server.
 	 */
-	public class func readFrom(path: String, server: FHIRServer, callback: ((resource: FHIRResource?, error: NSError?) -> ())) {
-		server.requestJSON(path) { json, error in
-			if nil != error {
-				callback(resource: nil, error: error)
+	public class func readFrom(path: String, server: FHIRServer, callback: FHIRResourceErrorCallback) {
+		server.getJSON(path) { response, error in
+			if nil != error || nil != response?.error {
+				callback(resource: nil, error: error ?? response!.error!)
 			}
 			else {
-				let resource = self(json: json)
+				let resource = self(json: response?.body)
 				resource._server = server
 				callback(resource: resource, error: nil)
 			}
@@ -178,24 +181,5 @@ public class FHIRResourceMeta: FHIRElement
 			}
 		}
 	}
-}
-
-
-/**
- *  Protocol for server objects to be used by `FHIRResource` and subclasses.
- */
-public protocol FHIRServer
-{
-	/** A server object must always have a base URL. */
-	var baseURL: NSURL { get }
-	
-	/**
-		Instance method that takes a path, which is relative to `baseURL`, retrieves data from that URL and returns a
-		decoded JSONDictionary - or an error - in the callback.
-	
-		:param: path The REST path to request, relative to the server's base URL
-		:param: callback The callback to call when the request ends (success or failure)
-	 */
-	func requestJSON(path: String, callback: ((json: JSONDictionary?, error: NSError?) -> Void))
 }
 
