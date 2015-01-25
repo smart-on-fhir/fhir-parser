@@ -91,6 +91,7 @@ public class FHIRElement: Printable
 	 */
 	public func asJSON() -> JSONDictionary {
 		var json = JSONDictionary()
+		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
 		
 		if let contained = self.contained {
 			var dict = JSONDictionary()
@@ -211,9 +212,7 @@ public class FHIRElement: Printable
 	// MARK: - Printable
 	
 	public var description: String {
-		get {
-			return "<\(self.dynamicType.resourceName)>"
-		}
+		return "<\(self.dynamicType.resourceName)>"
 	}
 }
 

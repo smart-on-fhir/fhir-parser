@@ -8,8 +8,15 @@
 
 import Foundation
 
-/// The block signature for most server interaction callbacks
+
+/// The block signature for server interaction callbacks that return an error.
+public typealias FHIRErrorCallback = ((error: NSError?) -> Void)
+
+/// The block signature for most server interaction callbacks that return a resource and an error.
 public typealias FHIRResourceErrorCallback = ((resource: FHIRResource?, error: NSError?) -> Void)
+
+/// The FHIR resource error domain
+public let FHIRResourceErrorDomain = "FHIRResourceError"
 
 
 /**
@@ -24,7 +31,26 @@ public class FHIRResource: FHIRElement
 	public var _versionId: String?
 	
 	/// If this instance lives on a server, this property represents that server.
-	public var _server: FHIRServer?
+	public var _server: FHIRServer? {
+		get {
+			return __server ?? owningResource()?._server
+		}
+		set {
+			__server = newValue
+		}
+	}
+	var __server: FHIRServer?
+	
+	func owningResource() -> FHIRResource? {
+		var owner = _owner
+		while nil != owner {
+			if nil != owner as? FHIRResource {
+				break
+			}
+			owner = owner?._owner
+		}
+		return owner as? FHIRResource
+	}
 	
 	/// Logical id of this artefact.
 	public var id: String?
@@ -64,6 +90,7 @@ public class FHIRResource: FHIRElement
 	
 	override public func asJSON() -> JSONDictionary {
 		var json = super.asJSON()
+		json["resourceType"] = self.dynamicType.resourceName
 		
 		if let id = self.id {
 			json["id"] = id
@@ -112,15 +139,39 @@ public class FHIRResource: FHIRElement
 		Reads the resource from the given path on the given server.
 	 */
 	public class func readFrom(path: String, server: FHIRServer, callback: FHIRResourceErrorCallback) {
-		server.getJSON(path) { response, error in
-			if nil != error || nil != response?.error {
-				callback(resource: nil, error: error ?? response!.error!)
+		server.getJSON(path) { response in
+			if let error = response.error {
+				callback(resource: nil, error: error)
 			}
 			else {
-				let resource = self(json: response?.body)
+				let resource = self(json: response.body)
 				resource._server = server
 				callback(resource: resource, error: nil)
 			}
+		}
+	}
+	
+	
+	// MARK: - Sending Resources
+	
+	public func create(server: FHIRServer, callback: FHIRErrorCallback) {
+		callback(error: genResourceError("Not implemented"))
+	}
+	
+	public func update(callback: FHIRErrorCallback) {
+		if let server = _server {
+			if let id = self.id {
+				server.putJSON("\(self.dynamicType.resourceName)/\(id)", body: asJSON()) { response in
+					println("Response headers: \(response.headers)")
+					callback(error: nil)
+				}
+			}
+			else {
+				callback(error: genResourceError("Cannot update a resource without id"))
+			}
+		}
+		else {
+			callback(error: genResourceError("Cannot update a resource that doesn't have a server"))
 		}
 	}
 	
@@ -143,9 +194,7 @@ public class FHIRResource: FHIRElement
 	// MARK: - Printable
 	
 	override public var description: String {
-		get {
-			return "<\(self.dynamicType.resourceName)> \(id) on \(_server?.baseURL)"
-		}
+		return "<\(self.dynamicType.resourceName)> \(id) on \(__server?.baseURL)"
 	}
 }
 
@@ -190,5 +239,11 @@ public class FHIRResourceMeta: FHIRElement
 			}
 		}
 	}
+}
+
+
+/** Create an error in the FHIRResourceErrorDomain error domain. */
+func genResourceError(message: String, code: Int = 0) -> NSError {
+	return NSError(domain: FHIRResourceErrorDomain, code: code, userInfo: [NSLocalizedDescriptionKey: message])
 }
 

@@ -10,19 +10,51 @@ import Foundation
 
 
 /// Callback from server methods
-public typealias FHIRServerJSONCallback = ((response: FHIRServerJSONResponse?, error: NSError?) -> Void)
+public typealias FHIRServerJSONResponseCallback = ((response: FHIRServerJSONResponse) -> Void)
 
 /// The FHIR server error domain
 public let FHIRServerErrorDomain = "FHIRServerError"
 
 
 /**
-	Encapsulates a server response.
+Protocol for server objects to be used by `FHIRResource` and subclasses.
+*/
+public protocol FHIRServer
+{
+	/** A server object must always have a base URL. */
+	var baseURL: NSURL { get }
+	
+	/**
+	Instance method that takes a path, which is relative to `baseURL`, executes a GET request from that URL and
+	returns a decoded JSONDictionary - or an error - in the callback.
+	
+	:param: path The REST path to request, relative to the server's base URL
+	:param: callback The callback to call when the request ends (success or failure)
+	*/
+	func getJSON(path: String, callback: FHIRServerJSONResponseCallback)
+	
+	/**
+	Instance method that takes a path, which is relative to `baseURL`, executes a PUT request at that URL and
+	returns a decoded JSONDictionary - or an error - in the callback.
+	
+	:param: path The REST path to request, relative to the server's base URL
+	:param: body The request body data as JSONDictionary
+	:param: callback The callback to call when the request ends (success or failure)
+	*/
+	func putJSON(path: String, body: JSONDictionary, callback: FHIRServerJSONResponseCallback)
+	
+	func postJSON(path: String, body: JSONDictionary, callback: FHIRServerJSONResponseCallback)
+}
+
+
+/**
+	Encapsulates a server response, which can also indicate that there was no response or request (status >= 600), in
+	which case the `error` property carries the only useful information.
  */
 public class FHIRServerResponse
 {
 	/// The HTTP status code
-	public let status: Int = 0
+	public let status: Int
 	
 	/// Response headers
 	public let headers: [String: String]
@@ -30,12 +62,17 @@ public class FHIRServerResponse
 	/// An NSError, generated from status code unless it was explicitly assigned.
 	public var error: NSError?
 	
+	public convenience init(notSentBecause error: NSError) {
+		self.init(status: 700, headers: [String: String]())
+		self.error = error
+	}
+	
 	public required init(status: Int, headers: [String: String]) {
 		self.status = status
 		self.headers = headers
 		
 		if status >= 400 {
-			let errstr = NSHTTPURLResponse.localizedStringForStatusCode(status)
+			let errstr = (status >= 600) ? (status >= 700 ? "No request sent" : "No response received") : NSHTTPURLResponse.localizedStringForStatusCode(status)
 			error = NSError(domain: FHIRServerErrorDomain, code: status, userInfo: [NSLocalizedDescriptionKey: errstr])
 		}
 	}
@@ -61,6 +98,11 @@ public class FHIRServerResponse
 		}
 		
 		return self(status: status, headers: headers)
+	}
+	
+	/** Initializes with a status of 600 to signal that no response was received. */
+	public class func noneReceived() -> Self {
+		return self(status: 600, headers: [String: String]())
 	}
 }
 
@@ -96,36 +138,5 @@ public class FHIRServerJSONResponse: FHIRServerResponse
 		
 		return res
 	}
-}
-
-
-/**
-	Protocol for server objects to be used by `FHIRResource` and subclasses.
- */
-public protocol FHIRServer
-{
-	/** A server object must always have a base URL. */
-	var baseURL: NSURL { get }
-	
-	/**
-		Instance method that takes a path, which is relative to `baseURL`, executes a GET request from that URL and
-		returns a decoded JSONDictionary - or an error - in the callback.
-	
-		:param: path The REST path to request, relative to the server's base URL
-		:param: callback The callback to call when the request ends (success or failure)
-	 */
-	func getJSON(path: String, callback: FHIRServerJSONCallback)
-	
-	/**
-		Instance method that takes a path, which is relative to `baseURL`, executes a PUT request at that URL and
-		returns a decoded JSONDictionary - or an error - in the callback.
-	
-		:param: path The REST path to request, relative to the server's base URL
-		:param: body The request body data as JSONDictionary
-		:param: callback The callback to call when the request ends (success or failure)
-	*/
-	func putJSON(path: String, body: JSONDictionary, callback: FHIRServerJSONCallback)
-	
-	func postJSON(path: String, body: JSONDictionary, callback: FHIRServerJSONCallback)
 }
 

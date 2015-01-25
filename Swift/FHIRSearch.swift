@@ -75,12 +75,19 @@ public class FHIRSearch
 			return
 		}
 		
-		server.getJSON(construct()) { response, error in
-			if nil != error {
+		server.getJSON(construct()) { response in
+			if let error = response.error {
 				callback(bundle: nil, error: error)
 			}
 			else {
-				callback(bundle: Bundle(json: response?.body), error: nil)
+				let bundle = Bundle(json: response.body)
+				bundle._server = server
+				if let entries = bundle.entry {
+					for entry in entries {
+						entry.resource?._server = server		// workaround for when "Bundle" gets deallocated
+					}
+				}
+				callback(bundle: bundle, error: nil)
 			}
 		}
 	}
