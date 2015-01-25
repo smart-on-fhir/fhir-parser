@@ -63,9 +63,9 @@ class FHIRClass(object):
     
     def property_for(self, prop_name):
         for prop in self.properties:
-            if prop.name == prop_name:
+            if prop.orig_name == prop_name:
                 return prop
-        if self.superclass:
+        if self.superclass and self != self.superclass:         # Element is its own superclass
             return self.superclass.property_for(prop_name)
         return None
     
@@ -87,7 +87,7 @@ class FHIRClassProperty(object):
     """
     
     def __init__(self, element, type_obj, type_name=None):
-        assert element and type_obj     # and must be instances of FHIRElement and FHIRElementType
+        assert element and type_obj     # and must be instances of FHIRProfileElement and FHIRElementType
         spec = element.profile.spec
         
         self.path = element.path

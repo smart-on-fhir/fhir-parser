@@ -60,7 +60,7 @@ class FHIRProfileRenderer(FHIRRenderer):
                 shutil.copyfile(filepath, tgt)
     
     def render(self):
-        for pname, profile in self.spec.profiles.items():
+        for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
                 if profile.filename is not None:        # manual profiles have no filename and usually write no classes
@@ -87,7 +87,7 @@ class FHIRFactoryRenderer(FHIRRenderer):
     """
     def render(self):
         classes = []
-        for pname, profile in self.spec.profiles.items():
+        for profile in self.spec.writable_profiles():
             classes.extend(profile.writable_classes())
         
         data = {

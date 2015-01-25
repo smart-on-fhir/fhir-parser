@@ -107,8 +107,6 @@ class FHIRUnitTest(object):
                 continue
             
             prop = self.klass.property_for(key)
-            # TODO: some "subclasses" like Age are empty because all their definitons are in their parent (Quantity). This
-            # means that later on, the property lookup fails to find the properties for "Age", so fix this please.
             if prop is None:
                 path = "{}.{}".format(self.prefix, key) if self.prefix else key
                 logger.warning('Unknown property "{}" in unit test on {} in {}'
@@ -116,11 +114,11 @@ class FHIRUnitTest(object):
             else:
                 propclass = fhirclass.FHIRClass.with_name(prop.class_name)
                 if propclass is None:
-                    path = "{}.{}".format(self.prefix, key) if self.prefix else key
+                    path = "{}.{}".format(self.prefix, prop.name) if self.prefix else prop.name
                     logger.error('There is no class "{}" for property "{}" in {}'
                         .format(prop.class_name, path, self.filepath))
                 else:
-                    path = self.controller.make_path(self.prefix, key)
+                    path = self.controller.make_path(self.prefix, prop.name)
                     
                     if list == type(val):
                         i = 0

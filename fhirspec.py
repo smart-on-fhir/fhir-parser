@@ -69,18 +69,18 @@ class FHIRSpec(object):
             
             if basename:
                 profile = FHIRProfile(self, prof)
-                self.found_profile(profile)
+                if self.found_profile(profile):
+                    profile.process_profile()
     
     def found_profile(self, profile):
-            if not profile or not profile.name:
-                raise Exception("No name for profile {}".format(prof))
-            elif profile.name in self.profiles:
-                logger.warning('Already have profile "{}", discarding'.format(profile.name))
-            else:
-                self.profiles[profile.name] = profile
-    
-    def has_profile(self, profile_name):
-        return profile_name in self.profiles
+        if not profile or not profile.name:
+            raise Exception("No name for profile {}".format(prof))
+        if profile.name in self.profiles:
+            logger.warning('Already have profile "{}", discarding'.format(profile.name))
+            return False
+        
+        self.profiles[profile.name] = profile
+        return True
     
     def handle_manual_profiles(self):
         """ Creates in-memory representations for all our manually defined
@@ -89,11 +89,23 @@ class FHIRSpec(object):
         for filepath, module, contains in self.settings.manual_profiles:
             for contained in contains:
                 profile = FHIRProfile(self, None)
-                profile.structure = FHIRProfileStructure(profile, {'type': contained})
-                self.found_profile(profile)
+                profile.is_manual = True
                 
-                element = FHIRProfileElementManual(profile, contained)
-                element.create_class(module)
+                prof_dict = {
+                    'type': contained,
+                    'snapshot': {
+                        'element': [{'path': contained}]
+                    }
+                }
+                
+                # manual fix for Resource: add id (but not yet text) to make unit test generator happier
+                if 'Resource' == contained:
+                    prof_dict['snapshot']['element'].append({'path': 'Resource.id', 'type': [{'code': 'id'}]})
+                    #prof_dict['snapshot']['element'].append({'path': 'Resource.text', 'type': [{'code': 'Narrative'}]})
+                
+                profile.structure = FHIRProfileStructure(profile, prof_dict)
+                if self.found_profile(profile):
+                    profile.process_profile()
     
     def finalize(self):
         """ Should be called after all profiles have been parsed and allows
@@ -167,6 +179,13 @@ class FHIRSpec(object):
     
     # MARK: Writing Data
     
+    def writable_profiles(self):
+        profiles = []
+        for key, profile in self.profiles.items():
+            if not profile.is_manual:
+                profiles.append(profile)
+        return profiles
+    
     def write(self):
         if self.settings.write_resources:
             renderer = fhirrenderer.FHIRProfileRenderer(self, self.settings)
@@ -214,6 +233,7 @@ class FHIRProfile(object):
     """
     
     def __init__(self, spec, filepath):
+        self.is_manual = False
         self.spec = spec
         self.targetname = None
         self.structure = None
@@ -244,12 +264,12 @@ class FHIRProfile(object):
         assert 'Profile' == profile['resourceType']
         
         # parse structure
-        self.structure = FHIRProfileStructure(self, profile)
         logger.info('Parsing profile "{}"  -->  {}'.format(self.filename, self.name))
-        if self.spec.has_profile(self.name):
-            return
-        
-        # extract all elements
+        self.structure = FHIRProfileStructure(self, profile)
+    
+    def process_profile(self):
+        """ Extract all elements and create classes.
+        """
         struct = self.structure.differential or self.structure.snapshot
         if struct is not None:
             mapped = {}
@@ -511,7 +531,7 @@ class FHIRProfileElement(object):
         FHIRClassProperty instances, None otherwise.
         """
         assert self._did_resolve_dependencies
-        if self.definition.prop_name in self.skip_properties:
+        if self.definition.prop_name in self.skip_properties and not self.profile.is_manual:
             return None
         
         if self.is_main_profile_element or self.definition is None:
@@ -573,18 +593,6 @@ class FHIRProfileElement(object):
             self._superclass_name = self.profile.spec.class_name_for_type(type_code, self.is_main_profile_element)
         
         return self._superclass_name
-
-
-class FHIRProfileElementManual(FHIRProfileElement):
-    def __init__(self, profile, path):
-        super(FHIRProfileElementManual, self).__init__(profile, {'path': path})
-        self.represents_class = True
-        self._did_resolve_dependencies = True
-    
-    def create_class(self, module):
-        cls, created = fhirclass.FHIRClass.for_element(self)
-        if created:
-            cls.module = module
 
 
 class FHIRElementDefinition(object):
@@ -658,10 +666,6 @@ class FHIRElementType(object):
     def parse_from(self, type_dict):
         self.code = type_dict.get('code')
         self.profile = type_dict.get('profile')
-    
-    @property
-    def has_profile(self):
-        return self.profile is not None
 
 
 class FHIRElementConstraint(object):
