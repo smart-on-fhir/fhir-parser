@@ -162,8 +162,8 @@ public class FHIRResource: FHIRElement
 		if let server = _server {
 			if let id = self.id {
 				server.putJSON("\(self.dynamicType.resourceName)/\(id)", body: asJSON()) { response in
-					println("Response headers: \(response.headers)")
-					callback(error: nil)
+					// should we do some header inspection (response.headers)?
+					callback(error: response.error)
 				}
 			}
 			else {

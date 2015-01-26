@@ -119,7 +119,12 @@ public class FHIRServerJSONResponse: FHIRServerResponse
 		super.init(status: status, headers: headers)
 	}
 
-	/** Instantiate a FHIRServerJSONResponse from an NS(HTTP)URLResponse and NSData. */
+	/**
+		Instantiate a FHIRServerJSONResponse from an NS(HTTP)URLResponse and NSData.
+		
+		If the status is >= 400, the response body is checked for an OperationOutcome and its first issue item is
+		turned into an error message.
+	 */
 	public class func from(# response: NSURLResponse, data inData: NSData?) -> Self {
 		let sup = super.from(response: response)
 		let res = self(status: sup.status, headers: sup.headers)		// TODO: figure out how to make super work with "Self"
@@ -128,15 +133,43 @@ public class FHIRServerJSONResponse: FHIRServerResponse
 			var error: NSError? = nil
 			if let json = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: &error) as? JSONDictionary {
 				res.body = json
+				
+				// check for OperationOutcome if there was an error
+				if res.status >= 400 {
+					if let erritem = res.resource(OperationOutcome)?.issue?.first {
+						let none = "unknown"
+						let errstr = "\(erritem.severity ?? none): \(erritem.details ?? none)"
+						res.error = genServerError(errstr, code: res.status)
+					}
+				}
 			}
 			else {
 				let errstr = "Failed to deserialize JSON into a dictionary: \(error?.localizedDescription)\n"
 				             "\(NSString(data: data, encoding: NSUTF8StringEncoding))"
-				res.error = NSError(domain: FHIRServerErrorDomain, code: res.status, userInfo: [NSLocalizedDescriptionKey: errstr])
+				res.error = genServerError(errstr, code: res.status)
 			}
 		}
 		
 		return res
 	}
+	
+	
+	// MARK: - Resource Handling
+	
+	/** Uses FHIRElement's factory method to instantiate a resource from the response JSON, if any, and returns that
+		resource. */
+	public func resource<T: FHIRElement>(expectType: T.Type) -> T? {
+		if let json = body {
+			let resource = FHIRElement.instantiateFrom(json, owner: nil)
+			return resource as? T
+		}
+		return nil
+	}
+}
+
+
+/** Create an error in the FHIRServerErrorDomain error domain. */
+func genServerError(message: String, code: Int = 0) -> NSError {
+	return NSError(domain: FHIRServerErrorDomain, code: code, userInfo: [NSLocalizedDescriptionKey: message])
 }
 

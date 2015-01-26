@@ -94,11 +94,11 @@ public class FHIRElement: Printable
 		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
 		
 		if let contained = self.contained {
-			var dict = JSONDictionary()
+			var arr = [JSONDictionary]()
 			for (key, val) in contained {
-				dict[key] = val.json			// TODO: check if it has been resolved, if so use `asJSON()`
+				arr.append(val.json ?? JSONDictionary())		// TODO: check if it has been resolved, if so use `asJSON()`
 			}
-			json["contained"] = dict
+			json["contained"] = arr
 		}
 		if let extension_fhir = self.extension_fhir {
 			json["extension"] = Extension.asJSONArray(extension_fhir)
