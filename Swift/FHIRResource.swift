@@ -24,9 +24,6 @@ public let FHIRResourceErrorDomain = "FHIRResourceError"
  */
 public class FHIRResource: FHIRElement
 {
-	/// If this instance was read from a server, this is the identifier that was used, likely the same as `id`.
-	public var _localId: String?
-	
 	/// A specific version id, if the instance was created using `vread`.
 	public var _versionId: String?
 	
@@ -116,8 +113,8 @@ public class FHIRResource: FHIRElement
 	// MARK: - Retrieving Resources
 	
 	public func absoluteURI() -> NSURL? {
-		if nil != _localId {
-			return _server?.baseURL.URLByAppendingPathComponent(self.dynamicType.resourceName).URLByAppendingPathComponent(_localId!)
+		if let myID = id {
+			return _server?.baseURL.URLByAppendingPathComponent(self.dynamicType.resourceName).URLByAppendingPathComponent(myID)
 		}
 		return nil
 	}
@@ -127,12 +124,7 @@ public class FHIRResource: FHIRElement
 	 */
 	public class func read(id: String, server: FHIRServer, callback: FHIRResourceErrorCallback) {
 		let path = "\(resourceName)/\(id)"
-		readFrom(path, server: server) { resource, error in
-			if let res = resource {
-				res._localId = id
-			}
-			callback(resource: resource, error: error)
-		}
+		readFrom(path, server: server, callback: callback)
 	}
 	
 	/**
@@ -179,9 +171,9 @@ public class FHIRResource: FHIRElement
 	// MARK: - Search
 	
 	public func search(query: AnyObject) -> FHIRSearch {
-		if nil != _localId {
+		if let myId = id {
 			NSLog("UNFINISHED, must add '_id' reference to search expression")
-			//return FHIRSearch(subject: "_id", reference: _localId!, type: self.dynamicType)
+			//return FHIRSearch(subject: "_id", reference: myId, type: self.dynamicType)
 		}
 		return FHIRSearch(type: self.dynamicType, query: query)
 	}
