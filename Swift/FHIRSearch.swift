@@ -1,5 +1,5 @@
 //
-//  FHIRSearchParam.swift
+//  FHIRSearch.swift
 //  SMART-on-FHIR
 //
 //  Created by Pascal Pfiffner on 7/10/14.
@@ -30,6 +30,23 @@ public class FHIRSearch
 	/// The query construct used to describe the search
 	let query: FHIRSearchConstruct
 	
+	/// The sorting to request. Use tuples with the value followed by "asc" or "desc": [("given", "asc"), ("family", "asc")].
+	public var sort: [(String, String)]?
+	
+	/// The number of results to return per page; leave nil to let the server decide.
+	public var pageCount: Int?
+	
+	/// The URL to retrieve the next page of results from; nil if there are no more results.
+	var nextPageURL: NSURL?
+	
+	var busy = false
+	
+	/// Returns true if there are more search results to be fetched.
+	public var hasMore: Bool {
+		return (nil != nextPageURL)
+	}
+	
+	
 	/** Designated initializer. */
 	public init(query: AnyObject) {
 		self.query = FHIRSearchConstruct(construct: query)
@@ -44,11 +61,26 @@ public class FHIRSearch
 	
 	// MARK: - Running Search
 	
+	func reset() {
+		nextPageURL = nil
+	}
+	
 	/**
 		Creates the relative server path and query URL string.
 	 */
 	public func construct() -> String {
-		let qry = query.expand()
+		var extra = [FHIRURLParam]()
+		if let count = pageCount {
+			extra.append(FHIRURLParam(name: "_count", value: "\(count)"))
+		}
+		if let sorters = sort {
+			for (val, ord) in sorters {
+				extra.append(FHIRURLParam(name: "_sort:\(ord)", value: val))
+			}
+		}
+		
+		// expand
+		let qry = query.expand(extraArguments: extra)
 		if let type = profileType {
 			if countElements(qry) > 0 {
 				return "\(type.resourceName)?\(qry)"
@@ -62,8 +94,10 @@ public class FHIRSearch
 	}
 	
 	/**
-		Performs a GET on the server after constructing the query URL, returning an error or an array of resources in
-		the callback.
+		Performs a GET on the server after constructing the query URL, returning an error or a bundle resource with the
+		callback.
+	
+		Calling this method will always restart search, not fetch subsequent pages.
 	
 		:param: server The FHIRServer instance on which to perform the search
 		:param: callback The callback, receives the response Bundle or an NSError message describing what went wrong
@@ -75,7 +109,36 @@ public class FHIRSearch
 			return
 		}
 		
-		server.getJSON(construct()) { response in
+		reset()
+		performSearch(server, queryPath: construct(), callback: callback)
+	}
+	
+	/**
+		Attempts to retrieve the next page of search results. If there are none, the callback is called immediately
+		with no bundle and no error.
+	
+		:param: server The FHIRServer instance on which to perform the search
+		:param: callback The callback, receives the response Bundle or an NSError message describing what went wrong
+	 */
+	public func nextPage(server: FHIRServer, callback: ((bundle: Bundle?, error: NSError?) -> Void)) {
+		if let next = nextPageURL?.absoluteString {
+			performSearch(server, queryPath: next, callback: callback)
+		}
+		else {
+			callback(bundle: nil, error: nil)
+		}
+	}
+	
+	func performSearch(server: FHIRServer, queryPath: String, callback: ((bundle: Bundle?, error: NSError?) -> Void)) {
+		if busy {
+			callback(bundle: nil, error: nil)
+			return
+		}
+		
+		busy = true
+		server.getJSON(queryPath) { response in
+			self.busy = false
+			
 			if let error = response.error {
 				callback(bundle: nil, error: error)
 			}
@@ -87,6 +150,18 @@ public class FHIRSearch
 						entry.resource?._server = server		// workaround for when "Bundle" gets deallocated
 					}
 				}
+				
+				// is there more?
+				self.nextPageURL = nil
+				if let links = bundle.link {
+					for link in links {
+						if "next" == link.relation {
+							self.nextPageURL = link.url
+							break
+						}
+					}
+				}
+				
 				callback(bundle: bundle, error: nil)
 			}
 		}
@@ -97,7 +172,7 @@ public class FHIRSearch
 /**
 	Instances of this struct represent URL query parameters.
  */
-struct FHIRSearchParam
+struct FHIRURLParam
 {
 	/// Parameter name
 	let name: String
@@ -113,15 +188,15 @@ struct FHIRSearchParam
 
 
 /**
-	This class is used to create FHIRSearchParam instances from FHIRSearchConstruct objects.
+	This class is used to create FHIRURLParam instances from FHIRSearchConstruct objects.
  */
-class FHIRSearchParamProto: Printable
+class FHIRSearchParam: Printable
 {
 	var name: String?
 	var isModifier = false
 	var value: String?
-	weak var parent: FHIRSearchParamProto?
-	var children: [FHIRSearchParamProto]? {
+	weak var parent: FHIRSearchParam?
+	var children: [FHIRSearchParam]? {
 		didSet {
 			if let chldrn = children {
 				for child in chldrn {
@@ -131,26 +206,26 @@ class FHIRSearchParamProto: Printable
 		}
 	}
 	var description: String {
-		return "<FHIRSearchParamProto> \(name ?? nil) [parent \(parent?.description ?? nil) and \(nil != children ? countElements(children!) : 0) children]"
+		return "<FHIRSearchParam> \(name ?? nil) [parent \(parent?.description ?? nil) and \(nil != children ? countElements(children!) : 0) children]"
 	}
 	
-	init(name: String, parent: FHIRSearchParamProto?) {
+	init(name: String, parent: FHIRSearchParam?) {
 		self.name = name
 		self.parent = parent
 	}
 	
-	init(value: String, parent: FHIRSearchParamProto?) {
+	init(value: String, parent: FHIRSearchParam?) {
 		self.value = value
 		self.parent = parent
 	}
 	
 	/** Instantiate from any object, delegating to FHIRSearchConstruct to figure out what the object means. */
-	class func from(any: AnyObject, parent: FHIRSearchParamProto?) -> [FHIRSearchParamProto] {
+	class func from(any: AnyObject, parent: FHIRSearchParam?) -> [FHIRSearchParam] {
 		if let str = any as? String {
-			return [FHIRSearchParamProto(value: str, parent: parent)]
+			return [FHIRSearchParam(value: str, parent: parent)]
 		}
 		if let bol = any as? Bool {
-			return [FHIRSearchParamProto(value: bol ? "true" : "false", parent: parent)]
+			return [FHIRSearchParam(value: bol ? "true" : "false", parent: parent)]
 		}
 		
 		let construct = FHIRSearchConstruct(construct: any)
@@ -176,17 +251,17 @@ class FHIRSearchParamProto: Printable
 		return full
 	}
 	
-	/** Resolve all children to instantiate FHIRSearchParam objects. */
-	func apply() -> [FHIRSearchParam] {
+	/** Expand all children to instantiate FHIRURLParam objects. */
+	func expand() -> [FHIRURLParam] {
 		if let chldren = children {
-			var arr = [FHIRSearchParam]()
+			var arr = [FHIRURLParam]()
 			for child in chldren {
-				arr.extend(child.apply())
+				arr.extend(child.expand())
 			}
 			return arr
 		}
 		else if let val = value {
-			return [FHIRSearchParam(name: parentName() ?? "", value: val)]
+			return [FHIRURLParam(name: parentName() ?? "", value: val)]
 		}
 		return []
 	}
@@ -219,19 +294,24 @@ struct FHIRSearchConstruct
 		self.construct = construct
 	}
 	
-	func expand() -> String {
+	func expand(extraArguments: [FHIRURLParam]? = nil) -> String {
 		var arr = [String]()
 		for params in self.prepare(nil) {
-			for param in params.apply() {
+			for param in params.expand() {
 				arr.append(param.asParameter())
+			}
+		}
+		if let extras = extraArguments {
+			for extra in extras {
+				arr.append(extra.asParameter())
 			}
 		}
 		
 		return "&".join(arr)
 	}
 	
-	func prepare(parent: FHIRSearchParamProto?) -> [FHIRSearchParamProto] {
-		var arr = [FHIRSearchParamProto]()
+	func prepare(parent: FHIRSearchParam?) -> [FHIRSearchParam] {
+		var arr = [FHIRSearchParam]()
 		if let myarr = construct as? [AnyObject] {
 			for any in myarr {
 				let sub = FHIRSearchConstruct(construct: any)
@@ -243,7 +323,7 @@ struct FHIRSearchConstruct
 		if let dict = construct as? [String: AnyObject] {
 			for (key, val) in dict {
 				//println("-> \(key): \(val)")
-				var param = FHIRSearchParamProto(name: key, parent: parent)
+				var param = FHIRSearchParam(name: key, parent: parent)
 				
 				// special handling?
 				if let handler = self.dynamicType.handlerFor(key) {
@@ -279,7 +359,7 @@ struct FHIRSearchConstruct
 protocol FHIRSearchConstructHandler
 {
 	func handles(key: String) -> Bool
-	func handle(param: FHIRSearchParamProto, value: AnyObject)
+	func handle(param: FHIRSearchParam, value: AnyObject)
 }
 
 
@@ -289,12 +369,12 @@ struct FHIRSearchConstructAndHandler: FHIRSearchConstructHandler
 		return ("$and" == key)
 	}
 	
-	func handle(param: FHIRSearchParamProto, value: AnyObject) {
+	func handle(param: FHIRSearchParam, value: AnyObject) {
 		if let arr = value as? [AnyObject] {
 			param.name = nil
-			var ret = [FHIRSearchParamProto]()
+			var ret = [FHIRSearchParam]()
 			for obj in arr {
-				ret.extend(FHIRSearchParamProto.from(obj, parent: param.parent))
+				ret.extend(FHIRSearchParam.from(obj, parent: param.parent))
 			}
 			
 			if nil != param.children {
@@ -317,7 +397,7 @@ struct FHIRSearchConstructOrHandler: FHIRSearchConstructHandler
 		return ("$or" == key)
 	}
 	
-	func handle(param: FHIRSearchParamProto, value: AnyObject) {
+	func handle(param: FHIRSearchParam, value: AnyObject) {
 		if let arr = value as? [AnyObject] {
 			var strs = [String]()
 			for obj in arr {
@@ -353,11 +433,11 @@ struct FHIRSearchConstructModifierHandler: FHIRSearchConstructHandler
 		return contains(FHIRSearchConstructModifierHandler.map.keys, key)
 	}
 	
-	func handle(param: FHIRSearchParamProto, value: AnyObject) {
+	func handle(param: FHIRSearchParam, value: AnyObject) {
 		if let modifier = FHIRSearchConstructModifierHandler.map[param.name ?? ""] {
 			param.name = modifier
 			param.isModifier = true
-			param.children = FHIRSearchParamProto.from(value, parent: param)
+			param.children = FHIRSearchParam.from(value, parent: param)
 		}
 		else {
 			println("ERROR: unknown modifier \(param.name)")
@@ -379,7 +459,7 @@ struct FHIRSearchConstructOperatorHandler: FHIRSearchConstructHandler
 		return contains(FHIRSearchConstructOperatorHandler.map.keys, key)
 	}
 	
-	func handle(param: FHIRSearchParamProto, value: AnyObject) {
+	func handle(param: FHIRSearchParam, value: AnyObject) {
 		if let modifier = FHIRSearchConstructOperatorHandler.map[param.name!] {
 			if let str = value as? String {
 				param.name = nil
@@ -399,7 +479,7 @@ struct FHIRSearchConstructTypeHandler: FHIRSearchConstructHandler
 		return ("$type" == key)
 	}
 	
-	func handle(param: FHIRSearchParamProto, value: AnyObject) {
+	func handle(param: FHIRSearchParam, value: AnyObject) {
 		if let type = value as? String {
 			if let parent = param.parent {
 				parent.name = (parent.name ?? "") + ":\(type)"

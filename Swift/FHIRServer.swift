@@ -25,21 +25,21 @@ public protocol FHIRServer
 	var baseURL: NSURL { get }
 	
 	/**
-	Instance method that takes a path, which is relative to `baseURL`, executes a GET request from that URL and
-	returns a decoded JSONDictionary - or an error - in the callback.
-	
-	:param: path The REST path to request, relative to the server's base URL
-	:param: callback The callback to call when the request ends (success or failure)
+		Instance method that takes a path, which is relative to `baseURL`, executes a GET request from that URL and
+		returns a decoded JSONDictionary - or an error - in the callback.
+		
+		:param: path The REST path to request, relative to the server's base URL
+		:param: callback The callback to call when the request ends (success or failure)
 	*/
 	func getJSON(path: String, callback: FHIRServerJSONResponseCallback)
 	
 	/**
-	Instance method that takes a path, which is relative to `baseURL`, executes a PUT request at that URL and
-	returns a decoded JSONDictionary - or an error - in the callback.
-	
-	:param: path The REST path to request, relative to the server's base URL
-	:param: body The request body data as JSONDictionary
-	:param: callback The callback to call when the request ends (success or failure)
+		Instance method that takes a path, which is relative to `baseURL`, executes a PUT request at that URL and
+		returns a decoded JSONDictionary - or an error - in the callback.
+		
+		:param: path The REST path to request, relative to the server's base URL
+		:param: body The request body data as JSONDictionary
+		:param: callback The callback to call when the request ends (success or failure)
 	*/
 	func putJSON(path: String, body: JSONDictionary, callback: FHIRServerJSONResponseCallback)
 	
