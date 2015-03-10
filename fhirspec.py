@@ -112,6 +112,10 @@ class FHIRSpec(object):
                     }
                 }
                 
+                # manual fix for Resource: add "id" to make unit test generator happier
+                if 'FHIRResource' == contained:
+                    prof_dict['differential']['element'].append({'path': 'FHIRResource.id', 'type': [{'code': 'id'}]})
+
                 profile.structure = FHIRProfileStructure(profile, prof_dict)
                 if self.found_profile(profile):
                     profile.process_profile()
@@ -181,8 +185,8 @@ class FHIRSpec(object):
     # MARK: Unit Tests
     
     def parse_unit_tests(self):
-        controller = fhirunittest.FHIRUnitTestController(self, self.settings)
-        controller.find_and_parse_tests(self.directory, skip=skip_because_unsupported)
+        controller = fhirunittest.FHIRUnitTestController(self)
+        controller.find_and_parse_tests(self.directory)
         self.unit_tests = controller.collections
     
     
@@ -430,6 +434,7 @@ class FHIRProfileElement(object):
     
     # properties with these names will be skipped as we implement them in our base classes
     skip_properties = [
+        'id',               # implemented in FHIRResource to support URL creation
         'contained',
     ]
     

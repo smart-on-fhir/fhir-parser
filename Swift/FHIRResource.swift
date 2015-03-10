@@ -38,6 +38,9 @@ public class FHIRResource: FHIRElement
 	}
 	var __server: FHIRServer?
 	
+	/// Logical id of this artefact
+	public var id: String?
+	
 	func owningResource() -> FHIRResource? {
 		var owner = _owner
 		while nil != owner {
@@ -51,11 +54,20 @@ public class FHIRResource: FHIRElement
 	
 	public required init(json: JSONDictionary?) {
 		super.init(json: json)
+		if let js = json {
+			if let val = js["id"] as? String {
+				self.id = val
+			}
+		}
 	}
 	
 	override public func asJSON() -> JSONDictionary {
 		var json = super.asJSON()
 		json["resourceType"] = self.dynamicType.resourceName
+		
+		if let id = self.id {
+			json["id"] = id.asJSON()
+		}
 		
 		return json
 	}

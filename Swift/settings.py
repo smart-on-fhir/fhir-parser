@@ -45,7 +45,7 @@ tpl_searchparams_source = 'Swift/template-searchparams.swift'
 tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
 
 # unit tests
-write_unittests = False
+write_unittests = True
 tpl_unittest_source = 'Swift/template-unittest.swift'
 tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'
 unittest_copyfiles_base = '../SwiftFHIRTests/ModelTests/'	# Where to copy `unittest_copyfiles`

@@ -16,14 +16,14 @@ class FHIRUnitTestController(object):
     """ Can create unit tests from example files.
     """
     
-    def __init__(self, spec, settings):
+    def __init__(self, spec, settings=None):
         self.spec = spec
-        self.settings = settings
+        self.settings = settings or spec.settings
         self.files = None
         self.collections = None
     
-    def find_and_parse_tests(self, directory, skip=None):
-        self.files = FHIRResourceFile.find_all(directory, skip=skip)
+    def find_and_parse_tests(self, directory):
+        self.files = FHIRResourceFile.find_all(directory)
         
         # create tests
         tests = []
@@ -160,13 +160,17 @@ class FHIRUnitTestItem(object):
             test.expand()
             tests.extend(test.tests)
         
-        # regular test case
+        # regular test case; skip string tests that are longer than 200 chars
         else:
             isstr = isinstance(self.value, str)
             if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
                 isstr = isinstance(self.value, basestring)
             
-            value = self.value.replace("\n", "\\n") if isstr else self.value
+            value = self.value
+            if isstr:
+                if len(value) > 200 or not value.isprintable():
+                    return tests
+                value = self.value.replace("\n", "\\n")
             tests.append(FHIRUnitTestCase(self.path, value, self.klass))
         
         return tests
@@ -188,21 +192,13 @@ class FHIRResourceFile(object):
     """ A FHIR example resource file.
     """
     @classmethod
-    def find_all(cls, directory, skip=None):
+    def find_all(cls, directory):
         """ Finds all example JSON files in the given directory.
         """
         assert os.path.isdir(directory)
         all_tests = []
         for utest in glob.glob(os.path.join(directory, '*-example*.json')):
-            use = True
-            if skip is not None:
-                basename = os.path.basename(utest)
-                for pattern in skip:
-                    if re.search(pattern, basename) is not None:
-                        use = False
-                        break
-            if use:
-                all_tests.append(cls(filepath=utest))
+            all_tests.append(cls(filepath=utest))
         
         return all_tests
     

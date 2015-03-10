@@ -23,7 +23,15 @@ class FHIRResource(fhirelement.FHIRElement):
         self._server = None
         """ The server the instance was read from. """
         
+        self.id = None
+        """ Logical id of this artefact. """
+        
         super(FHIRResource, self).__init__(jsondict)
+    
+    def update_with_json(self, jsondict):
+        super(FHIRResource, self).update_with_json(jsondict)
+        if 'id' in jsondict:
+            self.id = jsondict['id']
     
     @classmethod
     def with_json(cls, jsonobj):

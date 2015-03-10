@@ -18,7 +18,7 @@ class FHIRModelTestCase: XCTestCase
 	class var testsDirectory: String {
 		let dir = __FILE__
 		let proj = dir.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent
-		return proj.stringByAppendingPathComponent("fhir-parser/downloads/site")
+		return proj.stringByAppendingPathComponent("fhir-parser/downloads")
 	}
 	
 	func readJSONFile(filename: String) -> JSONDictionary? {
