@@ -35,6 +35,7 @@ class FHIRLoader(object):
             os.mkdir(self.cache)
         
         # check all files and download if missing
+        uses_cache = False
         for local, remote in self.__class__.needs.items():
             path = os.path.join(self.cache, local)
             
@@ -47,7 +48,10 @@ class FHIRLoader(object):
                     logger.info('Extracting {}'.format(filename))
                     self.expand(filename)
             else:
-                logger.info('Using cached {}, supply "-f" to re-download'.format(local))
+                uses_cache = True
+        
+        if uses_cache:
+            logger.info('Using cached resources, supply "-f" to re-download')
         
         return self.cache
     

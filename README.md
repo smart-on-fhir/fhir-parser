@@ -41,7 +41,7 @@ Classes for Python are targeted towards Python 3 but will support the later 2.x 
 All resource classes will inherit from the `FHIRResource` base class, which is a subclass of `FHIRElement`.
 Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 
-### Todo: ###
+### Python TODO: ###
 
 ```text
 [x] Generate Python classes
