@@ -11,8 +11,6 @@ class FHIRElement(object):
     """
     
     def __init__(self, jsondict=None):
-        self.extension = None
-        self.modifierExtension = None
         self.contained = None
         
         self._resolved = None
@@ -39,26 +37,6 @@ class FHIRElement(object):
                     self.contained[res.id] = res
                 else:
                     logging.warning("Contained resource {} does not have an id, ignoring".format(res))
-        
-        # extract (modifier) extensions. Non-modifier extensions have a URL as their JSON dictionary key.
-        extensions = []
-        for key, val in jsondict.items():
-            if ":" in key and isinstance(val, list):
-                for ext in extension.Extension.with_json(val):
-                    ext.url = key
-                    extensions.append(ext)
-        if len(extensions) > 0:
-            self.extension = extensions
-        
-        if "modifier" in jsondict and isinstance(jsondict["modifier"], dict):
-            extensions = []
-            for key, val in jsondict["modifier"].items():
-                if isinstance(val, list):
-                    for ext in extension.Extension.with_json(val):
-                        ext.url = key
-                        extensions.append(ext)
-            if len(extensions) > 0:
-                self.modifierExtension = extensions
     
     @classmethod
     def with_json(cls, jsonobj):
@@ -126,5 +104,4 @@ class FHIRElement(object):
 
 
 # these are subclasses of FHIRElement, import last
-import extension
 import fhircontainedresource

@@ -3,7 +3,6 @@
 # Which class names to map to resources and elements
 classmap = {
     'Element': 'FHIRElement',
-    'Resource': 'FHIRResource',
     'Any': 'FHIRResource',
     
     'boolean': 'Bool',

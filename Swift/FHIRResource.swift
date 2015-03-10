@@ -49,62 +49,13 @@ public class FHIRResource: FHIRElement
 		return owner as? FHIRResource
 	}
 	
-	/// Logical id of this artefact.
-	public var id: String?
-	
-	/// Metadata about the resource.
-	public var meta: FHIRResourceMeta?
-	
-	/// A set of rules under which this content was created.
-	public var implicitRules: NSURL?
-	
-	/// Human language of the content (BCP-47).
-	public var language: String?
-	
-	/// A human-readable narrative.
-	public var text: Narrative?
-	
 	public required init(json: JSONDictionary?) {
 		super.init(json: json)
-		if let js = json {
-			if let val = js["id"] as? String {
-				id = val
-			}
-			if let val = js["meta"] as? JSONDictionary {
-				meta = FHIRResourceMeta(json: val, owner: self)
-			}
-			if let val = js["implicitRules"] as? String {
-				implicitRules = NSURL(json: val)
-			}
-			if let val = js["language"] as? String {
-				language = val
-			}
-			if let val = js["text"] as? JSONDictionary {
-				text = Narrative(json: val, owner: self)
-			}
-		}
 	}
 	
 	override public func asJSON() -> JSONDictionary {
 		var json = super.asJSON()
 		json["resourceType"] = self.dynamicType.resourceName
-		
-		if let id = self.id {
-			json["id"] = id
-		}
-		if let meta = self.meta {
-			json["meta"] = meta.asJSON()
-		}
-		if let implicitRules = self.implicitRules {
-			json["implicitRules"] = implicitRules.asJSON()
-		}
-		if let language = self.language {
-			json["language"] = language
-		}
-		if let text = self.text {
-			json["text"] = text.asJSON()
-		}
-		
 		
 		return json
 	}
@@ -187,49 +138,6 @@ public class FHIRResource: FHIRElement
 	
 	override public var description: String {
 		return "<\(self.dynamicType.resourceName)> \(id) on \(__server?.baseURL)"
-	}
-}
-
-
-/**
- *  Holds an element's metadata: http://hl7-fhir.github.io/resource.html#meta
- */
-public class FHIRResourceMeta: FHIRElement
-{
-	/// Version specific identifier.
-	public var versionId: String?
-	
-	/// When the resource version last changed.
-	public var lastUpdated: Instant?
-	
-	/// Profiles this resource claims to conform to.
-	public var profiles: [NSURL]?
-	
-	/// Security Labels applied to this resource.
-	public var security: [Coding]?
-	
-	/// Tags applied.
-	public var tags: [Coding]?
-	
-	public required init(json: JSONDictionary?) {
-		super.init(json: json)
-		if let js = json {
-			if let val = js["versionId"] as? String {
-				self.versionId = val
-			}
-			if let val = js["lastUpdated"] as? String {
-				self.lastUpdated = Instant(string: val)
-			}
-			if let val = js["profiles"] as? [String] {
-				self.profiles = NSURL.from(val)
-			}
-			if let val = js["security"] as? [JSONDictionary] {
-				self.security = Coding.from(val) as? [Coding]
-			}
-			if let val = js["tags"] as? [JSONDictionary] {
-				self.tags = Coding.from(val) as? [Coding]
-			}
-		}
 	}
 }
 

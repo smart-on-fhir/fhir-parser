@@ -12,11 +12,11 @@ resource_modules_lowercase = False							# whether all resource paths (i.e. modu
 tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source when writing resource implementations for profiles
 tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
 resource_base_target = '../Models/'                         # resource target directory, likely the same as `tpl_resource_target_ptrn` without the filename pattern
-resource_default_base = 'Resource'                          # the default superclass to use for main profile models
+resource_default_base = 'FHIRResource'                      # the default superclass to use for main profile models
 contained_default_base = 'Element'                          # the default superclass to use for inline-defined (backbone) models
 manual_profiles = [                                         # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
     ('Swift/FHIRElement.swift', None, ['Element', 'BackboneElement']),
-    ('Swift/FHIRResource.swift', None, ['Resource', 'DomainResource']),
+    ('Swift/FHIRResource.swift', None, ['FHIRResource']),
     ('Swift/FHIRReference.swift', None, []),
     ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
     ('Swift/FHIRSearch.swift', None, ['FHIRSearch']),
@@ -45,7 +45,7 @@ tpl_searchparams_source = 'Swift/template-searchparams.swift'
 tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
 
 # unit tests
-write_unittests = True
+write_unittests = False
 tpl_unittest_source = 'Swift/template-unittest.swift'
 tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'
 unittest_copyfiles_base = '../SwiftFHIRTests/ModelTests/'	# Where to copy `unittest_copyfiles`

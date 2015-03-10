@@ -63,8 +63,8 @@ class FHIRProfileRenderer(FHIRRenderer):
         for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
-                if profile.filename is not None:        # manual profiles have no filename and usually write no classes
-                    logger.info('Profile "{}" returns zero writable classes, skipping'.format(profile.filename))
+                if profile.url is not None:        # manual profiles have no url and usually write no classes
+                    logger.info('Profile "{}" returns zero writable classes, skipping'.format(profile.url))
                 continue
             
             imports = profile.needed_external_classes()

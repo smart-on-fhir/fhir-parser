@@ -22,7 +22,7 @@ manual_profiles = [                                     # all these profiles sho
     	'uri', 'oid', 'uuid',
     ]),
     ('Python/fhirelement.py', 'fhirelement', ['Element']),
-    ('Python/fhirresource.py', 'fhirresource', ['Resource']),
+    ('Python/fhirresource.py', 'fhirresource', ['FHIRResource']),
     ('Python/fhircontainedresource.py', 'fhircontainedresource', ['ContainedResource']),
     ('Python/fhirreference.py', 'fhirreference', ['FHIRReference']),
     ('Python/fhirdate.py', 'fhirdate', ['date', 'dateTime', 'instant', 'time']),
@@ -41,7 +41,7 @@ tpl_searchparams_source = 'Python/template-searchparams.py'
 tpl_searchparams_target = '../models/fhirsearchelement.py'
 
 # unit tests
-write_unittests = True
+write_unittests = False
 tpl_unittest_source = 'Python/template-unittest.py'
 tpl_unittest_target_ptrn = '../models/{}_tests.py'
 unittest_copyfiles_base = '../models/'          # Where to copy `unittest_copyfiles`

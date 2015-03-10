@@ -19,12 +19,6 @@ public class FHIRElement: Printable
 		get { return "Element" }
 	}
 	
-	/// This should be `extension` but it is a keyword in Swift; renamed to `extension_fhir`.
-	public var extension_fhir: [Extension]?
-	
-	/// Optional modifier extensions.
-	public var modifierExtension: [Extension]?
-	
 	/// Contained, inline Resources, indexed by resource id.
 	public var contained: [String: FHIRContainedResource]?
 	
@@ -52,37 +46,6 @@ public class FHIRElement: Printable
 				}
 				contained = cont
 			}
-			
-			// extract (modifier) extensions. Non-modifier extensions have a URL as their JSON dictionary key.
-			var extensions = [Extension]()
-			for (key, val) in js {
-				if contains(key, ":") && val is [JSONDictionary] {
-					let url = NSURL(string: key)
-					for ext in Extension.from(val as [JSONDictionary]) as [Extension] {
-						ext.url = url
-						extensions.append(ext)
-					}
-				}
-			}
-			if countElements(extensions) > 0 {
-				extension_fhir = extensions
-			}
-			
-			if let mod = js["modifier"] as? JSONDictionary {
-				var extensions = [Extension]()
-				for (key, val) in mod {
-					if val is [JSONDictionary] {
-						let url = NSURL(string: key)
-						for ext in Extension.from(val as [JSONDictionary]) as [Extension] {
-							ext.url = url
-							extensions.append(ext)
-						}
-					}
-				}
-				if countElements(extensions) > 0 {
-					modifierExtension = extensions
-				}
-			}
 		}
 	}
 	
@@ -99,12 +62,6 @@ public class FHIRElement: Printable
 				arr.append(val.json ?? JSONDictionary())		// TODO: check if it has been resolved, if so use `asJSON()`
 			}
 			json["contained"] = arr
-		}
-		if let extension_fhir = self.extension_fhir {
-			json["extension"] = Extension.asJSONArray(extension_fhir)
-		}
-		if let modifierExtension = self.modifierExtension {
-			json["modifierExtension"] = Extension.asJSONArray(modifierExtension)
 		}
 		
 		return json

@@ -2,7 +2,7 @@
 //  {{ profile.targetname }}.swift
 //  SMART-on-FHIR
 //
-//  Generated from FHIR {{ info.version }} ({{ profile.filename }}) on {{ info.date }}.
+//  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
 //  {{ info.year }}, SMART Platforms.
 //
 

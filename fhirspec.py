@@ -13,21 +13,14 @@ import fhirclass
 import fhirunittest
 import fhirrenderer
 
-# skip some profiles, mostly because they are WIP and our parser is not smart enough
+# allow to skip some profiles by matching against their url (used while WiP)
 skip_because_unsupported = [
-    r'composition-measurereport',
-    r'consentdirective-consentdirective',
-    r'devicemetricobservation',
-    r'geneticpedigreefamilyhistory',
-    r'valueset-shareable-definition',
-    r'cda-.+\.profile\.json',
-    r'^xds-',
-    r'-uslab-',
-    r'-daf-',
-    r'-sdc-',
-    r'-cqf-',
-    r'-ehrs-rle',
-    r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}',      # example profiles
+    r'composition-measurereport-measurereport$',
+    r'provenance-ehrs-rle-ehrprovenance$',
+    r'provenance-hspcattribution-hspcattribution$',
+    r'consentdirective-consentdirective$',
+    r'do-uslab-uslabdo$',
+    r'diagnosticorder-daf-dafdiagnosticorder$',
 ]
 
 
@@ -57,20 +50,41 @@ class FHIRSpec(object):
     # MARK: Handling Profiles
     
     def read_profiles(self):
-        """ Find all (JSON) profile files and instantiate into FHIRProfile.
+        """ Find all (JSON) profiles and instantiate into FHIRProfile.
         """
-        for prof in glob.glob(os.path.join(self.directory, '*.profile.json')):
-            basename = os.path.basename(prof)
+        resources = []
+        for filename in ['profiles-types.json', 'profiles-resources.json']: #, 'profiles-others.json']:
+            filepath = os.path.join(self.directory, filename)
+            with io.open(filepath, encoding='utf-8') as handle:
+                parsed = json.load(handle)
+                assert parsed is not None
+                assert 'resourceType' in parsed
+                assert 'Bundle' == parsed['resourceType']
+                assert 'entry' in parsed
+                
+                # find resources in entries
+                for entry in parsed['entry']:
+                    resource = entry.get('resource')
+                    if resource is not None:
+                        assert 'resourceType' in resource
+                        if 'StructureDefinition' == resource['resourceType']:
+                            resources.append(resource)
+                    else:
+                        logging.warning('There is no resource in this entry: {}'
+                            .format(entry))
+        
+        # create profile instances
+        for resource in resources:
+            profile = FHIRProfile(self, resource)
             for pattern in skip_because_unsupported:
-                if re.search(pattern, basename) is not None:
-                    logger.info('Skipping "{}"'.format(basename))
-                    basename = None
+                if re.search(pattern, profile.url) is not None:
+                    logger.info('Skipping "{}"'.format(resource['url']))
+                    profile = None
                     break
             
-            if basename:
-                profile = FHIRProfile(self, prof)
-                if self.found_profile(profile):
-                    profile.process_profile()
+            if profile is not None and self.found_profile(profile):
+                profile.process_profile()
+                    
     
     def found_profile(self, profile):
         if not profile or not profile.name:
@@ -92,16 +106,11 @@ class FHIRSpec(object):
                 profile.is_manual = True
                 
                 prof_dict = {
-                    'type': contained,
-                    'snapshot': {
+                    'name': contained,
+                    'differential': {
                         'element': [{'path': contained}]
                     }
                 }
-                
-                # manual fix for Resource: add id (but not yet text) to make unit test generator happier
-                if 'Resource' == contained:
-                    prof_dict['snapshot']['element'].append({'path': 'Resource.id', 'type': [{'code': 'id'}]})
-                    #prof_dict['snapshot']['element'].append({'path': 'Resource.text', 'type': [{'code': 'Narrative'}]})
                 
                 profile.structure = FHIRProfileStructure(profile, prof_dict)
                 if self.found_profile(profile):
@@ -232,9 +241,10 @@ class FHIRProfile(object):
     """ One FHIR profile.
     """
     
-    def __init__(self, spec, filepath):
+    def __init__(self, spec, profile):
         self.is_manual = False
         self.spec = spec
+        self.url = None
         self.targetname = None
         self.structure = None
         self.elements = None
@@ -243,44 +253,48 @@ class FHIRProfile(object):
         self.classes = []
         self._did_finalize = False
         
-        self.filepath = filepath
-        self.filename = os.path.basename(filepath) if filepath else None
-        
-        if filepath is not None:
-            assert os.path.exists(filepath)
-            self.read_profile()
+        if profile is not None:
+            self.parse_profile(profile)
     
     @property
     def name(self):
         return self.structure.name if self.structure is not None else None
     
-    def read_profile(self):
-        """ Read the JSON definition of a profile from disk.
+    def read_profile(self, filepath):
+        """ Read the JSON definition of a profile from disk and parse.
+        
+        Not currently used.
         """
         profile = None
-        with io.open(self.filepath, 'r', encoding='utf-8') as handle:
+        with io.open(filepath, 'r', encoding='utf-8') as handle:
             profile = json.load(handle)
+        self.parse_profile(profile)
+    
+    def parse_profile(self, profile):
+        """ Parse a JSON profile into a structure.
+        """
         assert profile
-        assert 'Profile' == profile['resourceType']
+        assert 'StructureDefinition' == profile['resourceType']
         
         # parse structure
-        logger.info('Parsing profile "{}"  -->  {}'.format(self.filename, self.name))
+        self.url = profile.get('url')
+        logger.info('Parsing profile "{}"'.format(profile.get('name')))
         self.structure = FHIRProfileStructure(self, profile)
     
     def process_profile(self):
         """ Extract all elements and create classes.
         """
-        struct = self.structure.differential or self.structure.snapshot
+        struct = self.structure.differential# or self.structure.snapshot
         if struct is not None:
             mapped = {}
             self.elements = []
             for elem_dict in struct:
-                element = FHIRProfileElement(self, elem_dict)
+                element = FHIRProfileElement(self, elem_dict, self.main_element is None)
                 self.elements.append(element)
                 mapped[element.path] = element
                 
                 # establish hierarchy (may move to extra loop in case elements are no longer in order)
-                if self.main_element is None:
+                if element.is_main_profile_element:
                     self.main_element = element
                 parent = mapped.get(element.parent_name)
                 if parent:
@@ -294,7 +308,8 @@ class FHIRProfile(object):
         if self.main_element is not None:
             snap_class, subs = self.main_element.create_class()
             if snap_class is None:
-                raise Exception('The main snapshot element did not create a class')
+                raise Exception('The main element for "{}" did not create a class'
+                    .format(self.url))
             
             self.found_class(snap_class)
             for sub in subs:
@@ -371,7 +386,7 @@ class FHIRProfile(object):
                 if super_cls is None:
                     # TODO: turn into exception once we have all basic types and can parse all special cases (like "#class")
                     logger.error('There is no class implementation for class named "{}" in profile "{}"'
-                        .format(cls.superclass_name, self.name))
+                        .format(cls.superclass_name, self.url))
                 else:
                     cls.superclass = super_cls
         
@@ -415,14 +430,10 @@ class FHIRProfileElement(object):
     
     # properties with these names will be skipped as we implement them in our base classes
     skip_properties = [
-        'extension', 'modifierExtension',
-        'id', 'meta',
-        'implicitRules',
-        'language',
         'contained',
     ]
     
-    def __init__(self, profile, element_dict):
+    def __init__(self, profile, element_dict, is_main_profile_element=False):
         assert isinstance(profile, FHIRProfile)
         self.profile = profile
         self.path = None
@@ -433,7 +444,7 @@ class FHIRProfileElement(object):
         self.n_min = None
         self.n_max = None
         
-        self.is_main_profile_element = False
+        self.is_main_profile_element = is_main_profile_element
         self.represents_class = False
         
         self._superclass_name = None
@@ -446,9 +457,6 @@ class FHIRProfileElement(object):
     
     def parse_from(self, element_dict):
         self.path = element_dict['path']
-        if self.path == self.profile.structure.type:
-            self.is_main_profile_element = True
-        
         parts = self.path.split('.')
         self.parent_name = '.'.join(parts[:-1]) if len(parts) > 0 else None
         prop_name = parts[-1]
@@ -473,7 +481,7 @@ class FHIRProfileElement(object):
             resolved = self.profile.element_with_name(self.definition.name_reference)
             if resolved is None:
                 raise Exception('Cannot resolve nameReference "{}" in "{}"'
-                    .format(self.definition.name_reference, self.profile.filename))
+                    .format(self.definition.name_reference, self.profile.url))
             self.definition = resolved.definition
         
         self._did_resolve_dependencies = True
@@ -627,7 +635,7 @@ class FHIRElementDefinition(object):
         self.name_reference = definition_dict.get('nameReference')
         
         self.short = definition_dict.get('short')
-        self.formal = definition_dict.get('formal')
+        self.formal = definition_dict.get('definition')
         if self.formal and self.short == self.formal[:-1]:     # formal adds a trailing period
             self.formal = None
         self.comment = definition_dict.get('comments')
