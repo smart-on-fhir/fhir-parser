@@ -19,6 +19,9 @@ public class FHIRElement: Printable
 		get { return "Element" }
 	}
 	
+	/// Logical id of this artefact
+	public var id: String?
+	
 	/// Contained, inline Resources, indexed by resource id.
 	public var contained: [String: FHIRContainedResource]?
 	
@@ -33,6 +36,9 @@ public class FHIRElement: Printable
 	
 	public required init(json: JSONDictionary?) {
 		if let js = json {
+			if let val = js["id"] as? String {
+				self.id = val
+			}
 			if let arr = js["contained"] as? [JSONDictionary] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
@@ -56,6 +62,9 @@ public class FHIRElement: Printable
 		var json = JSONDictionary()
 		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
 		
+		if let id = self.id {
+			json["id"] = id.asJSON()
+		}
 		if let contained = self.contained {
 			var arr = [JSONDictionary]()
 			for (key, val) in contained {

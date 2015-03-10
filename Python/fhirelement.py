@@ -11,7 +11,11 @@ class FHIRElement(object):
     """
     
     def __init__(self, jsondict=None):
+        self.id = None
+        """ Logical id of this artefact. """
+        
         self.contained = None
+        """ Contained resources. """
         
         self._resolved = None
         """ Dictionary of resolved resources. """
@@ -27,6 +31,9 @@ class FHIRElement(object):
         """
         if jsondict is None:
             return
+        
+        if 'id' in jsondict:
+            self.id = jsondict['id']
         
         # extract contained resources
         if 'contained' in jsondict:

@@ -37,7 +37,7 @@ class FHIRUnitTestController(object):
         for test in tests:
             coll = collections.get(test.klass.name)
             if coll is None:
-                coll = FHIRUnitTestCollection(test.klass, test)
+                coll = FHIRUnitTestCollection(test.klass)
                 collections[test.klass.name] = coll
             coll.add_test(test)
         
@@ -72,10 +72,9 @@ class FHIRUnitTestCollection(object):
     """ Represents a FHIR unit test collection, meaning unit tests pertaining to
     a certain data model to be run against local sample files.
     """
-    def __init__(self, klass, test):
+    def __init__(self, klass):
         self.klass = klass
         self.tests = []
-        self.add_test(test)
     
     def add_test(self, test):
         if test is not None:
@@ -157,7 +156,6 @@ class FHIRUnitTestItem(object):
         # property is another element, recurse
         if dict == type(self.value):
             test = FHIRUnitTest(controller, self.filepath, self.value, self.klass, self.path)
-            test.expand()
             tests.extend(test.tests)
         
         # regular test case; skip string tests that are longer than 200 chars
@@ -198,7 +196,8 @@ class FHIRResourceFile(object):
         assert os.path.isdir(directory)
         all_tests = []
         for utest in glob.glob(os.path.join(directory, '*-example*.json')):
-            all_tests.append(cls(filepath=utest))
+            if 'canonical.json' not in utest:
+                all_tests.append(cls(filepath=utest))
         
         return all_tests
     

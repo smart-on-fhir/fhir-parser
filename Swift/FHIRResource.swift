@@ -38,9 +38,6 @@ public class FHIRResource: FHIRElement
 	}
 	var __server: FHIRServer?
 	
-	/// Logical id of this artefact
-	public var id: String?
-	
 	func owningResource() -> FHIRResource? {
 		var owner = _owner
 		while nil != owner {
@@ -54,20 +51,11 @@ public class FHIRResource: FHIRElement
 	
 	public required init(json: JSONDictionary?) {
 		super.init(json: json)
-		if let js = json {
-			if let val = js["id"] as? String {
-				self.id = val
-			}
-		}
 	}
 	
 	override public func asJSON() -> JSONDictionary {
 		var json = super.asJSON()
 		json["resourceType"] = self.dynamicType.resourceName
-		
-		if let id = self.id {
-			json["id"] = id.asJSON()
-		}
 		
 		return json
 	}
@@ -76,7 +64,7 @@ public class FHIRResource: FHIRElement
 	// MARK: - Retrieving Resources
 	
 	public func absoluteURI() -> NSURL? {
-		if let myID = id {
+		if let myID = self.id {
 			return _server?.baseURL.URLByAppendingPathComponent(self.dynamicType.resourceName).URLByAppendingPathComponent(myID)
 		}
 		return nil
@@ -134,7 +122,7 @@ public class FHIRResource: FHIRElement
 	// MARK: - Search
 	
 	public func search(query: AnyObject) -> FHIRSearch {
-		if let myId = id {
+		if let myId = self.id {
 			NSLog("UNFINISHED, must add '_id' reference to search expression")
 			//return FHIRSearch(subject: "_id", reference: myId, type: self.dynamicType)
 		}
