@@ -23,6 +23,9 @@ class FHIRElement(object):
         self._owner = None
         """ Points to the parent resource, if there is one. """
         
+        self.extension = None
+        self.modifierExtension = None
+        
         if jsondict is not None:
             self.update_with_json(jsondict)
     
@@ -44,6 +47,28 @@ class FHIRElement(object):
                     self.contained[res.id] = res
                 else:
                     logging.warning("Contained resource {} does not have an id, ignoring".format(res))
+        
+        # extract extensions
+        if "extension" in jsondict and isinstance(jsondict["extension"], list):
+            extensions = []
+            for ext_dict in jsondict["extension"]:
+                if isinstance(ext_dict, dict):
+                    for ext in extension.Extension.with_json(ext_dict):
+                        ext.url = key
+                        extensions.append(ext)
+            if len(extensions) > 0:
+                self.extension = extensions
+        
+        if "modifierExtension" in jsondict and isinstance(jsondict["modifierExtension"], list):
+            extensions = []
+            for ext_dict in jsondict["modifierExtension"]:
+                if isinstance(ext_dict, dict):
+                    for ext in extension.Extension.with_json(ext_dict):
+                        ext.url = key
+                        extensions.append(ext)
+            if len(extensions) > 0:
+                self.modifierExtension = extensions
+
     
     @classmethod
     def with_json(cls, jsonobj):
@@ -111,4 +136,5 @@ class FHIRElement(object):
 
 
 # these are subclasses of FHIRElement, import last
+import extension
 import fhircontainedresource

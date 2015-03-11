@@ -434,8 +434,9 @@ class FHIRProfileElement(object):
     
     # properties with these names will be skipped as we implement them in our base classes
     skip_properties = [
-        'id',               # implemented in FHIRResource to support URL creation
+        'id',
         'contained',
+        'extension', 'modifierExtension',
     ]
     
     def __init__(self, profile, element_dict, is_main_profile_element=False):

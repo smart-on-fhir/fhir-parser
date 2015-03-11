@@ -31,6 +31,12 @@ public class FHIRElement: Printable
 	/// Resolved references.
 	var _resolved: [String: FHIRElement]?
 	
+	/// Additional Content defined by implementations
+	public var extension_fhir: [Extension]?
+	
+	/// Extensions that cannot be ignored
+	public var modifierExtension: [Extension]?
+	
 	
 	// MARK: - JSON Capabilities
 	
@@ -52,6 +58,12 @@ public class FHIRElement: Printable
 				}
 				contained = cont
 			}
+			if let val = js["extension"] as? [JSONDictionary] {
+				self.extension_fhir = Extension.from(val, owner: self) as? [Extension]
+			}
+			if let val = js["modifierExtension"] as? [JSONDictionary] {
+				self.modifierExtension = Extension.from(val, owner: self) as? [Extension]
+			}
 		}
 	}
 	
@@ -71,6 +83,12 @@ public class FHIRElement: Printable
 				arr.append(val.json ?? JSONDictionary())		// TODO: check if it has been resolved, if so use `asJSON()`
 			}
 			json["contained"] = arr
+		}
+		if let extension_fhir = self.extension_fhir {
+			json["extension"] = Extension.asJSONArray(extension_fhir)
+		}
+		if let modifierExtension = self.modifierExtension {
+			json["modifierExtension"] = Extension.asJSONArray(modifierExtension)
 		}
 		
 		return json
