@@ -112,9 +112,14 @@ class FHIRSpec(object):
                     }
                 }
                 
-                # manual fix for Resource: add "id" to make unit test generator happier
+                # manually add some properties that our base classes define to improve unit test generation
+                if 'FHIRElement' == contained:
+                    prof_dict['differential']['element'].append({'path': 'FHIRElement.extension', 'type': [{'code': 'Extension'}]})
+                    prof_dict['differential']['element'].append({'path': 'FHIRElement.modifierExtension', 'type': [{'code': 'Extension'}]})
                 if 'FHIRResource' == contained:
                     prof_dict['differential']['element'].append({'path': 'FHIRResource.id', 'type': [{'code': 'id'}]})
+                    prof_dict['differential']['element'].append({'path': 'FHIRResource.extension', 'type': [{'code': 'Extension'}]})
+                    prof_dict['differential']['element'].append({'path': 'FHIRResource.modifierExtension', 'type': [{'code': 'Extension'}]})
 
                 profile.structure = FHIRProfileStructure(profile, prof_dict)
                 if self.found_profile(profile):

@@ -143,7 +143,7 @@ public class FHIRSearch
 				callback(bundle: nil, error: error)
 			}
 			else {
-				let bundle = Bundle(json: response.body)
+				let bundle = Bundle(json: response.json)
 				bundle._server = server
 				if let entries = bundle.entry {
 					for entry in entries {

@@ -87,7 +87,7 @@ public class FHIRResource: FHIRElement
 				callback(resource: nil, error: error)
 			}
 			else {
-				let resource = self(json: response.body)
+				let resource = self(json: response.json)
 				resource._server = server
 				callback(resource: resource, error: nil)
 			}
