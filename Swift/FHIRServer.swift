@@ -129,6 +129,13 @@ public class FHIRServerDataRequestHandler: FHIRServerRequestHandler
 public class FHIRServerJSONRequestHandler: FHIRServerDataRequestHandler
 {
 	public typealias ResponseType = FHIRServerJSONResponse
+	
+	public override func response(# response: NSURLResponse?, data inData: NSData?) -> FHIRServerJSONResponse {
+		if let res = response {
+			return ResponseType(response: res, data: inData)
+		}
+		return ResponseType.noneReceived()
+	}
 }
 
 
