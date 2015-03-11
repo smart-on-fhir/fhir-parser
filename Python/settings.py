@@ -2,7 +2,7 @@
 
 from Python.mappings import *
 
-# where to load the specification archive from
+# Base URL for where to load specification data from
 #specification_url = 'http://hl7.org/documentcenter/public/standards/FHIR'
 specification_url = 'http://hl7-fhir.github.io'
 
