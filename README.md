@@ -2,10 +2,12 @@ Python FHIR Parser
 ==================
 
 A Python FHIR specification parser for model class generation.
-The `generate.py` script downloads the latest [FHIR specification][fhir], parses the profiles and represents them in Python.
+The _generate.py_ script downloads [FHIR specification][fhir] files, parses the profiles and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
+Additionally, `FHIRUnitTest` (in _fhirunittest.py_) instances get created that can generate unit tests from provided FHIR examples.
 These representations are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
 
 This script does its job for the most part, but it doesn't yet handle all FHIR pecularities and there's no guarantee the output is correct or complete.
+Unless you have a desire to understand how parsing works, you should be able to play with _Lang/settings.py_, _Lang/mappings.py_ and _Lang/templates*_ to achieve what you need.
 
 The `master` branch is currently on _DSTU 1_.  
 The `develop` branch is currently on _DSTU 2_ and WiP.
