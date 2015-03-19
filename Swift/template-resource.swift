@@ -62,8 +62,8 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 				
 				{%- else %}{% if prop.is_native %}
 				self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
-				{%- else %}{% if "FHIRResource" == prop.class_name %}
-				self.{{ prop.name }} = FHIRResource.instantiateFrom(val, owner: self) as? FHIRResource
+				{%- else %}{% if "Resource" == prop.class_name %}
+				self.{{ prop.name }} = Resource.instantiateFrom(val, owner: self) as? Resource
 				{%- else %}
 				self.{{ prop.name }} = {{ prop.class_name }}(json: val, owner: self)
 				{%- endif %}{% endif %}{% endif %}{% endif %}

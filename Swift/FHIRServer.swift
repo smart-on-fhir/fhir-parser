@@ -87,19 +87,24 @@ public class FHIRServerRequestHandler
 		self.type = type
 	}
 	
-	public func prepareRequest(req: NSMutableURLRequest) {
+	public func prepareRequest(req: NSMutableURLRequest, error: NSErrorPointer) -> Bool {
 		type.prepareRequest(req)
+		return true
 	}
 	
 	public func response(# response: NSURLResponse?, data inData: NSData? = nil) -> ResponseType {
 		if let res = response {
-			return ResponseType(response: res)
+			return self.dynamicType.ResType(response: res, data: inData)
 		}
-		return ResponseType.noneReceived()
+		return self.dynamicType.ResType.noneReceived()
 	}
 	
-	public func noResponse(reason: String) -> ResponseType {
-		return ResponseType(notSentBecause: genServerError(reason, code: 700))
+	public func notSent(reason: String) -> ResponseType {
+		return self.dynamicType.ResType(notSentBecause: genServerError(reason, code: 700))
+	}
+	
+	class var ResType: FHIRServerResponse.Type {
+		return FHIRServerResponse.self
 	}
 }
 
@@ -107,22 +112,27 @@ public class FHIRServerDataRequestHandler: FHIRServerRequestHandler
 {
 	public typealias ResponseType = FHIRServerDataResponse
 	
-	public let data: NSData?
+	public var data: NSData?
 	
 	public init(_ type: FHIRRequestType, data: NSData? = nil) {
 		super.init(type)
 		self.data = data
 	}
 	
-	public override func prepareRequest(req: NSMutableURLRequest) {
-		type.prepareRequest(req, body: data)
+	public func prepareData(error: NSErrorPointer) -> Bool {
+		return true
 	}
 	
-	public override func response(# response: NSURLResponse?, data inData: NSData?) -> FHIRServerDataResponse {
-		if let res = response {
-			return ResponseType(response: res, data: inData)
+	public override func prepareRequest(req: NSMutableURLRequest, error: NSErrorPointer) -> Bool {
+		if prepareData(error) {
+			type.prepareRequest(req, body: data)
+			return true
 		}
-		return ResponseType.noneReceived()
+		return false
+	}
+	
+	override class var ResType: FHIRServerResponse.Type {
+		return FHIRServerDataResponse.self
 	}
 }
 
@@ -130,14 +140,25 @@ public class FHIRServerJSONRequestHandler: FHIRServerDataRequestHandler
 {
 	public typealias ResponseType = FHIRServerJSONResponse
 	
-	public override func response(# response: NSURLResponse?, data inData: NSData?) -> FHIRServerJSONResponse {
-		if let res = response {
-			return ResponseType(response: res, data: inData)
+	public var json: JSONDictionary?
+	
+	public init(_ type: FHIRRequestType, json: JSONDictionary? = nil) {
+		super.init(type)
+		self.json = json
+	}
+	
+	override public func prepareData(error: NSErrorPointer) -> Bool {
+		if nil == data && nil != json {
+			data = NSJSONSerialization.dataWithJSONObject(json!, options: nil, error: error)
+			return nil != data
 		}
-		return ResponseType.noneReceived()
+		return true
+	}
+	
+	override class var ResType: FHIRServerResponse.Type {
+		return FHIRServerJSONResponse.self
 	}
 }
-
 
 
 // MARK: - Response Handling
@@ -171,7 +192,7 @@ public class FHIRServerResponse
 	/**
 		Instantiate a FHIRServerResponse from an NS(HTTP)URLResponse and NSData.
 	 */
-	public init(response: NSURLResponse) {
+	public required init(response: NSURLResponse, data: NSData?) {
 		var status = 0
 		var headers = [String: String]()
 		
@@ -218,8 +239,8 @@ public class FHIRServerDataResponse: FHIRServerResponse
 		super.init(status: status, headers: headers)
 	}
 	
-	public init(response: NSURLResponse, data inData: NSData?) {
-		super.init(response: response)
+	public required init(response: NSURLResponse, data inData: NSData?) {
+		super.init(response: response, data: inData)
 		if let data = inData {
 			body = data
 		}
@@ -246,7 +267,7 @@ public class FHIRServerJSONResponse: FHIRServerDataResponse
 		If the status is >= 400, the response body is checked for an OperationOutcome and its first issue item is
 		turned into an error message.
 	 */
-	public override init(response: NSURLResponse, data inData: NSData?) {
+	public required init(response: NSURLResponse, data inData: NSData?) {
 		super.init(response: response, data: inData)
 		
 		if let data = inData {
