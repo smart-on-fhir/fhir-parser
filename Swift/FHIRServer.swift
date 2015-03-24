@@ -177,16 +177,23 @@ public class FHIRServerResponse
 	public let headers: [String: String]
 	
 	/// An NSError, generated from status code unless it was explicitly assigned.
-	public var error: NSError?
+	public var error: NSError? {
+		get {
+			if nil == _error && status >= 400 {
+				let errstr = (status >= 600) ? (status >= 700 ? "No request sent" : "No response received") : NSHTTPURLResponse.localizedStringForStatusCode(status)
+				_error = genServerError(errstr, code: status)
+			}
+			return _error
+		}
+		set {
+			_error = newValue
+		}
+	}
+	private var _error: NSError?
 	
 	public required init(status: Int, headers: [String: String]) {
 		self.status = status
 		self.headers = headers
-		
-		if status >= 400 {
-			let errstr = (status >= 600) ? (status >= 700 ? "No request sent" : "No response received") : NSHTTPURLResponse.localizedStringForStatusCode(status)
-			error = genServerError(errstr, code: status)
-		}
 	}
 	
 	/**
@@ -214,11 +221,10 @@ public class FHIRServerResponse
 		self.headers = headers
 	}
 	
-	public required init(notSentBecause error: NSError) {
+	public required init(notSentBecause: NSError) {
 		status = 700
 		headers = [String: String]()
-//		self.init(status: 700, headers: [String: String]())
-		self.error = error
+		error = notSentBecause
 	}
 	
 	/** Initializes with a status of 600 to signal that no response was received. */
@@ -279,15 +285,15 @@ public class FHIRServerJSONResponse: FHIRServerDataResponse
 				if status >= 400 {
 					if let erritem = resource(OperationOutcome)?.issue?.first {
 						let none = "unknown"
-						let errstr = "\(erritem.severity ?? none): \(erritem.details ?? none)"
-						error = genServerError(errstr, code: status)
+						let errstr = "[\(erritem.severity ?? none)] \(erritem.details ?? none)"
+						self.error = genServerError(errstr, code: status)
 					}
 				}
 			}
 			else {
 				let errstr = "Failed to deserialize JSON into a dictionary: \(error?.localizedDescription)\n"
 				             "\(NSString(data: data, encoding: NSUTF8StringEncoding))"
-				error = genServerError(errstr, code: status)
+				self.error = genServerError(errstr, code: status)
 			}
 		}
 	}
