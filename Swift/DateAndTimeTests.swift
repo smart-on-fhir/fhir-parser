@@ -55,6 +55,38 @@ class DateTests: XCTestCase
 		XCTAssertTrue(nil == d!.month)
 		XCTAssertTrue(nil == d!.day)
 	}
+	
+	func testComparisons() {
+		var a = Date(string: "2014")!
+		var b = Date(string: "1914")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Date(string: "2014-12")!
+		b = Date(string: "2014-11")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Date(string: "2014-11-25")!
+		b = Date(string: "2014-11-24")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Date(string: "2014-11-24")!
+		b = Date(string: "1914-11-24")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Date(string: "2014-12-24")!
+		b = Date(string: "2014-11-24")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+	}
 }
 
 
@@ -108,6 +140,32 @@ class TimeTests: XCTestCase
 		
 		t = Time(string: "abc")
 		XCTAssertTrue(nil == t)
+	}
+	
+	func testComparisons() {
+		var a = Time(string: "19:12")!
+		var b = Time(string: "19:11")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Time(string: "19:11:04")!
+		b = Time(string: "19:11:03")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Time(string: "19:11:04")!
+		b = Time(string: "07:11:05")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Time(string: "19:11:04.0002")!
+		b = Time(string: "19:11:04")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
 	}
 }
 
@@ -296,6 +354,62 @@ class DateTimeTests: XCTestCase
 		XCTAssertFalse(nil == d!.timeZone)
 		XCTAssertEqual(NSTimeZone.localTimeZone(), d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
 	}
+	
+	func testComparisons() {
+		var a = DateTime(string: "2014")!
+		var b = DateTime(string: "1914")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11")!
+		b = DateTime(string: "2015-03-28T03:10")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11:04")!
+		b = DateTime(string: "2015-03-28T03:11:03")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11:04")!
+		b = DateTime(string: "2015-03-28T03:11:04")!
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11:04Z")!
+		b = DateTime(string: "1915-03-28T03:11:04Z")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11:04Z")!
+		b = DateTime(string: "2015-03-28T03:11:04+00:00")!
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T03:11+00:00")!
+		b = DateTime(string: "2015-03-28T03:17+01:00")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-27T22:12:44-05:00")!
+		b = DateTime(string: "2015-03-28T03:12:43-00:00")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = DateTime(string: "2015-03-28T05:11:44.3+01:00")!
+		b = DateTime(string: "2015-03-27T23:11:44.3-05:00")!
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		XCTAssertTrue(a == a)
+	}
 }
 
 
@@ -346,6 +460,38 @@ class InstantTests: XCTestCase
 		XCTAssertEqual(UInt8(33), d!.time.minute)
 		XCTAssertEqual(29.1285, d!.time.second!)
 		XCTAssertTrue(-18000 == d!.timeZone.secondsFromGMT)
+	}
+	
+	func testComparisons() {
+		var a = Instant(string: "2015-03-28T03:11:04Z")!
+		var b = Instant(string: "1915-03-28T03:11:04Z")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Instant(string: "2015-03-28T03:11:04Z")!
+		b = Instant(string: "2015-03-28T03:11:04+00:00")!
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Instant(string: "2015-03-28T03:11:44+00:00")!
+		b = Instant(string: "2015-03-28T03:17:44+01:00")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Instant(string: "2015-03-27T22:12:44-05:00")!
+		b = Instant(string: "2015-03-28T03:11:44-00:00")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Instant(string: "2015-03-28T05:11:44.3+01:00")!
+		b = Instant(string: "2015-03-27T23:11:44.3-05:00")!
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		XCTAssertTrue(a == a)
 	}
 }
 

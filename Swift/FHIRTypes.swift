@@ -28,7 +28,7 @@ public struct Base64Binary: Printable, Equatable, Comparable
 	// MARK: - Printable
 	
 	public var description: String {
-		return value ?? ""
+		return "<Base64Binary; \(nil != value ? countElements(value!) : 0) chars>"
 	}
 }
 
@@ -39,3 +39,4 @@ public func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 	return lhs.value == rhs.value
 }
+

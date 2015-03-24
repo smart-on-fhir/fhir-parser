@@ -65,4 +65,4 @@ isodate
 [fhir]: http://www.hl7.org/implement/standards/fhir/
 [jinja]: http://jinja.pocoo.org
 [swift]: https://developer.apple.com/swift/
-[swift-fhir]: https://github.com/p2/Swift-FHIR
+[swift-fhir]: https://github.com/smart-on-fhir/Swift-FHIR

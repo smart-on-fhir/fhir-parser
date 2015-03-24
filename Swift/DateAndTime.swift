@@ -12,7 +12,7 @@ import Foundation
 /**
 	A protocol for all our date and time structs.
  */
-protocol DateAndTime: Printable
+protocol DateAndTime: Printable, Comparable
 {
 	var nsDate: NSDate { get set }
 }
@@ -98,6 +98,24 @@ public struct Date: DateAndTime
 		return String(format: "%04d", year)
 	}
 }
+
+public func <(lhs: Date, rhs: Date) -> Bool {
+	if lhs.year == rhs.year {
+		if lhs.month == rhs.month {
+			return lhs.day < rhs.day
+		}
+		return lhs.month < rhs.month
+	}
+	return lhs.year < rhs.year
+}
+
+public func ==(lhs: Date, rhs: Date) -> Bool {
+	return lhs.year == rhs.year
+		&& lhs.month == rhs.month
+		&& lhs.day == rhs.day
+}
+
+
 
 /**
 	A time during the day, optionally with seconds, usually for human communication.
@@ -212,6 +230,22 @@ public struct Time: DateAndTime
 	}
 }
 
+public func <(lhs: Time, rhs: Time) -> Bool {
+	if lhs.hour == rhs.hour {
+		if lhs.minute == rhs.minute {
+			return lhs.second < rhs.second
+		}
+		return lhs.minute < rhs.minute
+	}
+	return lhs.hour < rhs.hour
+}
+
+public func ==(lhs: Time, rhs: Time) -> Bool {
+	return lhs.hour == rhs.hour
+		&& lhs.minute == rhs.minute
+		&& lhs.second == rhs.second
+}
+
 
 /**
 	A date, optionally with time, as used in human communication.
@@ -296,6 +330,18 @@ public struct DateTime: DateAndTime
 		}
 		return date.description
 	}
+}
+
+public func <(lhs: DateTime, rhs: DateTime) -> Bool {
+	let lhd = lhs.nsDate
+	let rhd = rhs.nsDate
+	return (lhd.compare(rhd) == .OrderedAscending)
+}
+
+public func ==(lhs: DateTime, rhs: DateTime) -> Bool {
+	let lhd = lhs.nsDate
+	let rhd = rhs.nsDate
+	return (lhd.compare(rhd) == .OrderedSame)
 }
 
 
@@ -385,6 +431,18 @@ public struct Instant: DateAndTime
 		let tz = timeZoneString ?? timeZone.offset()
 		return String(format: "%@T%@%@", date.description, time.description, tz)
 	}
+}
+
+public func <(lhs: Instant, rhs: Instant) -> Bool {
+	let lhd = lhs.nsDate
+	let rhd = rhs.nsDate
+	return (lhd.compare(rhd) == .OrderedAscending)
+}
+
+public func ==(lhs: Instant, rhs: Instant) -> Bool {
+	let lhd = lhs.nsDate
+	let rhd = rhs.nsDate
+	return (lhd.compare(rhd) == .OrderedSame)
 }
 
 
