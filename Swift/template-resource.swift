@@ -45,7 +45,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public required init(json: JSONDictionary?) {
+	public required init(json: FHIRJSON?) {
 		super.init(json: json)
 		if let js = json {
 		{%- for prop in klass.properties %}
@@ -72,7 +72,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		}
 	}
 	
-	override public func asJSON() -> JSONDictionary {
+	override public func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
 		{% for prop in klass.properties %}
 		{%- if prop.is_array %}{% if prop.is_native %}

@@ -58,8 +58,8 @@ natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
-    'FHIRElement': 'JSONDictionary',
-    'FHIRResource': 'JSONDictionary',
+    'FHIRElement': 'FHIRJSON',
+    'FHIRResource': 'FHIRJSON',
     
     'Int': 'Int',
     'Bool': 'Bool',
@@ -74,7 +74,7 @@ jsonmap = {
     'NSURL': 'String',
     'Base64Binary': 'String',
 }
-jsonmap_default = 'JSONDictionary'
+jsonmap_default = 'FHIRJSON'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {

@@ -19,7 +19,6 @@ manual_profiles = [                                         # all these profiles
     ('Swift/FHIRResource.swift', None, ['FHIRResource']),
     ('Swift/FHIRReference.swift', None, []),
     ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
-    ('Swift/FHIRSearch.swift', None, ['FHIRSearch']),
     ('Swift/FHIRTypes.swift', None, [
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
@@ -30,7 +29,6 @@ manual_profiles = [                                         # all these profiles
         'date', 'dateTime', 'time', 'instant',
     ]),
     ('Swift/JSON-extensions.swift', None, []),
-    ('Swift/FHIRServer.swift', None, []),
 ]
 
 # factory methods
@@ -41,8 +39,8 @@ tpl_factory_target = '../Models/FHIRElement+Factory.swift'
 # search parameters
 write_searchparams = False
 search_generate_camelcase = True
-tpl_searchparams_source = 'Swift/template-searchparams.swift'
-tpl_searchparams_target = '../Models/FHIRSearchParam+Params.swift'
+tpl_searchparams_source = ''
+tpl_searchparams_target = ''
 
 # unit tests
 write_unittests = True

@@ -40,12 +40,12 @@ public class FHIRElement: Printable
 	
 	// MARK: - JSON Capabilities
 	
-	public required init(json: JSONDictionary?) {
+	public required init(json: FHIRJSON?) {
 		if let js = json {
 			if let val = js["id"] as? String {
 				self.id = val
 			}
-			if let arr = js["contained"] as? [JSONDictionary] {
+			if let arr = js["contained"] as? [FHIRJSON] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
 					let res = FHIRContainedResource(json: dict, owner: self)
@@ -58,29 +58,29 @@ public class FHIRElement: Printable
 				}
 				contained = cont
 			}
-			if let val = js["extension"] as? [JSONDictionary] {
+			if let val = js["extension"] as? [FHIRJSON] {
 				self.extension_fhir = Extension.from(val, owner: self) as? [Extension]
 			}
-			if let val = js["modifierExtension"] as? [JSONDictionary] {
+			if let val = js["modifierExtension"] as? [FHIRJSON] {
 				self.modifierExtension = Extension.from(val, owner: self) as? [Extension]
 			}
 		}
 	}
 	
 	/**
-		Represent the receiver in a JSONDictionary, ready to be used for JSON serialization.
+		Represent the receiver in a FHIRJSON, ready to be used for JSON serialization.
 	 */
-	public func asJSON() -> JSONDictionary {
-		var json = JSONDictionary()
+	public func asJSON() -> FHIRJSON {
+		var json = FHIRJSON()
 		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
 		
 		if let id = self.id {
 			json["id"] = id.asJSON()
 		}
 		if let contained = self.contained {
-			var arr = [JSONDictionary]()
+			var arr = [FHIRJSON]()
 			for (key, val) in contained {
-				arr.append(val.json ?? JSONDictionary())		// TODO: check if it has been resolved, if so use `asJSON()`
+				arr.append(val.json ?? FHIRJSON())		// TODO: check if it has been resolved, if so use `asJSON()`
 			}
 			json["contained"] = arr
 		}
@@ -97,8 +97,8 @@ public class FHIRElement: Printable
 	/**
 		Calls `asJSON()` on all elements in the array and returns the resulting array full of JSONDictionaries.
 	 */
-	public class func asJSONArray(array: [FHIRElement]) -> [JSONDictionary] {
-		var arr = [JSONDictionary]()
+	public class func asJSONArray(array: [FHIRElement]) -> [FHIRJSON] {
+		var arr = [FHIRJSON]()
 		for element in array {
 			arr.append(element.asJSON())
 		}
@@ -108,7 +108,7 @@ public class FHIRElement: Printable
 	/**
 		Convenience allocator to be used when allocating an element as part of another element.
 	 */
-	public convenience init(json: JSONDictionary?, owner: FHIRElement?) {
+	public convenience init(json: FHIRJSON?, owner: FHIRElement?) {
 		self.init(json: json)
 		self._owner = owner
 	}
@@ -120,11 +120,11 @@ public class FHIRElement: Printable
 		Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
 		specified resource type, or instantiates the receiver's class otherwise.
 		
-		:param: json A JSONDictionary decoded from a JSON response
+		:param: json A FHIRJSON decoded from a JSON response
 		:param: owner The FHIRElement owning the new instance, if appropriate
 		:returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
 	 */
-	final class func instantiateFrom(json: JSONDictionary?, owner: FHIRElement?) -> FHIRElement {
+	final class func instantiateFrom(json: FHIRJSON?, owner: FHIRElement?) -> FHIRElement {
 		if let type = json?["resourceType"] as? String {
 			return factory(type, json: json!, owner: owner)
 		}
@@ -137,7 +137,7 @@ public class FHIRElement: Printable
 		Instantiates an array of the receiver's type and returns it.
 		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
 	 */
-	final class func from(array: [JSONDictionary]) -> [FHIRElement] {
+	final class func from(array: [FHIRJSON]) -> [FHIRElement] {
 		var arr: [FHIRElement] = []
 		for arrJSON in array {
 			arr.append(self(json: arrJSON))
@@ -148,7 +148,7 @@ public class FHIRElement: Printable
 	/**
 		Instantiates an array of the receiver's type and returns it.
 	 */
-	final class func from(array: [JSONDictionary], owner: FHIRElement?) -> [FHIRElement] {
+	final class func from(array: [FHIRJSON], owner: FHIRElement?) -> [FHIRElement] {
 		let arr = from(array)
 		for elem in arr {
 			elem._owner = owner			// would be neater to use init(json:owner:) but cannot use non-required init with dynamic type

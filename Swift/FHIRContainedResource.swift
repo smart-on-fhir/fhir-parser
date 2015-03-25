@@ -25,19 +25,19 @@ public class FHIRContainedResource
 	public var type: String?
 	
 	/// The complete JSON dictionary.
-	var json: JSONDictionary?
+	var json: FHIRJSON?
 	
 	/// Contained resources always have an owner, the resource they are contained in.
 	let owner: FHIRElement
 	
-	public init(id: String?, type: String?, json: JSONDictionary?, owner: FHIRElement) {
+	public init(id: String?, type: String?, json: FHIRJSON?, owner: FHIRElement) {
 		self.id = id
 		self.type = type
 		self.json = json
 		self.owner = owner
 	}
 	
-	public convenience init(json: JSONDictionary, owner: FHIRElement) {
+	public convenience init(json: FHIRJSON, owner: FHIRElement) {
 		let id = json["id"] as? String
 		let type = json["resourceType"] as? String
 		self.init(id: id, type: type, json: json, owner: owner)

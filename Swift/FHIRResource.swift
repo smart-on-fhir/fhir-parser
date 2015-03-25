@@ -49,11 +49,11 @@ public class FHIRResource: FHIRElement
 		return owner as? FHIRResource
 	}
 	
-	public required init(json: JSONDictionary?) {
+	public required init(json: FHIRJSON?) {
 		super.init(json: json)
 	}
 	
-	override public func asJSON() -> JSONDictionary {
+	override public func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
 		json["resourceType"] = self.dynamicType.resourceName
 		

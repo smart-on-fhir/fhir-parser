@@ -10,7 +10,7 @@
 /**
  *  A JSON dictionary, with `String` keys and `AnyObject` values.
  */
-public typealias JSONDictionary = [String: AnyObject]
+public typealias FHIRJSON = [String: AnyObject]
 
 
 /**

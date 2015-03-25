@@ -39,9 +39,8 @@ extension NSURL
 	public class func from(json: [String]) -> [NSURL] {
 		var arr: [NSURL] = []
 		for string in json {
-			let url: NSURL? = NSURL(string: string)
-			if nil != url {
-				arr.append(url!)
+			if let url = NSURL(string: string) {
+				arr.append(url)
 			}
 		}
 		return arr
@@ -90,6 +89,16 @@ extension Base64Binary
 
 extension Date
 {
+	public static func from(json: [String]) -> [Date] {
+		var arr: [Date] = []
+		for string in json {
+			if let obj = Date(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
 	public func asJSON() -> String {
 		return self.description
 	}
@@ -97,6 +106,16 @@ extension Date
 
 extension Time
 {
+	public static func from(json: [String]) -> [Time] {
+		var arr: [Time] = []
+		for string in json {
+			if let obj = Time(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
 	public func asJSON() -> String {
 		return self.description
 	}
@@ -104,6 +123,16 @@ extension Time
 
 extension DateTime
 {
+	public static func from(json: [String]) -> [DateTime] {
+		var arr: [DateTime] = []
+		for string in json {
+			if let obj = DateTime(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
 	public func asJSON() -> String {
 		return self.description
 	}
@@ -111,6 +140,16 @@ extension DateTime
 
 extension Instant
 {
+	public static func from(json: [String]) -> [Instant] {
+		var arr: [Instant] = []
+		for string in json {
+			if let obj = Instant(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
 	public func asJSON() -> String {
 		return self.description
 	}

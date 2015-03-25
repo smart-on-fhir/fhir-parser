@@ -12,7 +12,7 @@
  */
 extension FHIRElement
 {
-	public class func factory(className: String, json: JSONDictionary, owner: FHIRElement?) -> FHIRElement {
+	public class func factory(className: String, json: FHIRJSON, owner: FHIRElement?) -> FHIRElement {
 		switch className {
 		{%- for klass in classes %}{% if klass.resource_name %}
 			case "{{ klass.resource_name }}":

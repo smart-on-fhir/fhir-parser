@@ -16,7 +16,7 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		return instantiateFrom(json: readJSONFile(filename)!)
 	}
 	
-	func instantiateFrom(# json: JSONDictionary) -> {{ class.name }} {
+	func instantiateFrom(# json: FHIRJSON) -> {{ class.name }} {
 		let instance = {{ class.name }}(json: json)
 		XCTAssertNotNil(instance, "Must have instantiated a test instance")
 		return instance
@@ -29,7 +29,7 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		test{{ class.name }}{{ loop.index }}_impl(json: instance.asJSON())
 	}
 	
-	func test{{ class.name }}{{ loop.index }}_impl(json: JSONDictionary? = nil) -> {{ class.name }} {
+	func test{{ class.name }}{{ loop.index }}_impl(json: FHIRJSON? = nil) -> {{ class.name }} {
 		let inst = (nil != json) ? instantiateFrom(json: json!) : instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
 		{%- if "String" == onetest.klass.name %}

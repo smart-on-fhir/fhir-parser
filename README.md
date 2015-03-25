@@ -36,6 +36,9 @@ Since the language is still under active development, the repo will be updated w
 The current supported "version" corresponds to what's accepted by Xcode 6.2.
 The [Swift-FHIR][] repo contains the latest generated Swift classes.
 
+The Swift classes depend on two protocols to be implemented, defined in `Swift/FHIRServer.swift`.
+Implementations are provided by the [Swift-FHIR][] library.
+
 Python
 ------
 
