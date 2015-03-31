@@ -1,6 +1,6 @@
 //
 //  {{ class.name }}Tests.swift
-//  {{ class.name }}Tests
+//  SwiftFHIR
 //
 //  Generated from FHIR {{ info.version }} on {{ info.date }}.
 //  {{ info.year }}, SMART Platforms.

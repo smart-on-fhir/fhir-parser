@@ -1,6 +1,6 @@
 //
 //  FHIRContainedResource.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/18/14.
 //  2014, SMART Platforms.
@@ -11,8 +11,9 @@ import Foundation
 
 /**
  *  Contained resources are stored to instances of this class until they are resolved.
+ *
  *  The id of contained resources will be referenced from their parents as URL fragment, meaning "med1" will be
- *  referenced as "#med1". FHIRReference handles id normalization.
+ *  referenced as "#med1".
  *
  *  http://hl7.org/implement/standards/fhir/references.html#contained
  */

@@ -1,6 +1,6 @@
 //
 //  FHIRTypes.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 12/16/14.
 //  2014, SMART Platforms.

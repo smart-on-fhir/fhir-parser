@@ -1,6 +1,6 @@
 //
 //  {{ profile.targetname }}.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
 //  {{ info.year }}, SMART Platforms.

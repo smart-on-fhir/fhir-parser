@@ -1,6 +1,6 @@
 //
-//  FHIRReference.swift
-//  SMART-on-FHIR
+//  FHIRServer.swift
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 01/24/15.
 //  2015, SMART Platforms.

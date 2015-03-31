@@ -1,6 +1,6 @@
 //
 //  JSON-extensions.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/4/14.
 //  2014, SMART Platforms.

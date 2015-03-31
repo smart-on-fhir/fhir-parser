@@ -1,6 +1,6 @@
 //
 //  FHIRElement+Factory.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Generated from FHIR {{ info.version }} on {{ info.date }}.
 //  {{ info.year }}, SMART Platforms.
