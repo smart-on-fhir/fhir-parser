@@ -28,21 +28,6 @@ public class FHIRResource: FHIRElement
 	}
 	var __server: FHIRServer?
 	
-	/**
-		The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if
-		any.
-	 */
-	func owningResource() -> FHIRResource? {
-		var owner = _owner
-		while nil != owner {
-			if nil != owner as? FHIRResource {
-				break
-			}
-			owner = owner?._owner
-		}
-		return owner as? FHIRResource
-	}
-	
 	/** Initialize with a JSON object. */
 	public required init(json: FHIRJSON?) {
 		super.init(json: json)

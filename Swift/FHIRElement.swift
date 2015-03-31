@@ -29,7 +29,7 @@ public class FHIRElement: Printable
 	weak var _owner: FHIRElement?
 	
 	/// Resolved references.
-	var _resolved: [String: FHIRElement]?
+	var _resolved: [String: Resource]?
 	
 	/// Additional Content defined by implementations
 	public var extension_fhir: [Extension]?
@@ -95,7 +95,7 @@ public class FHIRElement: Printable
 	}
 	
 	/**
-		Calls `asJSON()` on all elements in the array and returns the resulting array full of JSONDictionaries.
+		Calls `asJSON()` on all elements in the array and returns the resulting array full of FHIRJSON dictionaries.
 	 */
 	public class func asJSONArray(array: [FHIRElement]) -> [FHIRJSON] {
 		var arr = [FHIRJSON]()
@@ -138,7 +138,7 @@ public class FHIRElement: Printable
 		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
 	 */
 	final class func from(array: [FHIRJSON]) -> [FHIRElement] {
-		var arr: [FHIRElement] = []
+		var arr = [FHIRElement]()
 		for arrJSON in array {
 			arr.append(self(json: arrJSON))
 		}
@@ -168,7 +168,7 @@ public class FHIRElement: Printable
 	}
 	
 	/** Returns the resolved reference with the given id, if it has been resolved already. */
-	func resolvedReference(refid: String) -> FHIRElement? {
+	func resolvedReference(refid: String) -> Resource? {
 		if let resolved = _resolved?[refid] {
 			return resolved
 		}
@@ -178,18 +178,31 @@ public class FHIRElement: Printable
 	/**
 		Stores the resolved reference into the `_resolved` dictionary.
 	
-		Called by FHIRResource when it resolves a reference.
-	
 		:param: refid The reference identifier as String
 		:param: resolved The element that was resolved
 	 */
-	func didResolveReference(refid: String, resolved: FHIRElement) {
+	func didResolveReference(refid: String, resolved: Resource) {
 		if nil != _resolved {
 			_resolved![refid] = resolved
 		}
 		else {
 			_resolved = [refid: resolved]
 		}
+	}
+	
+	/**
+		The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if
+		any.
+	 */
+	func owningResource() -> FHIRResource? {
+		var owner = _owner
+		while nil != owner {
+			if nil != owner as? FHIRResource {
+				break
+			}
+			owner = owner?._owner
+		}
+		return owner as? FHIRResource
 	}
 	
 	
