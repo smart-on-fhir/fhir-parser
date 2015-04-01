@@ -45,7 +45,8 @@ public class FHIRResource: FHIRElement
 	// MARK: - Printable
 	
 	override public var description: String {
-		return "<\(self.dynamicType.resourceName)> \(id) on \(__server?.baseURL)"
+		let nilstr = "nil"
+		return "<\(self.dynamicType.resourceName)> \(id ?? nilstr) on \(__server?.baseURL ?? nilstr)"
 	}
 }
 
