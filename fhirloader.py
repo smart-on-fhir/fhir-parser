@@ -68,7 +68,8 @@ class FHIRLoader(object):
         path = os.path.join(self.cache, filename)
         
         ret = requests.get(url)
-        assert(ret.ok)
+        if not ret.ok:
+            raise Exception("Failed to download {}".format(url))
         with io.open(path, 'wb') as handle:
             for chunk in ret.iter_content():
                 handle.write(chunk)
