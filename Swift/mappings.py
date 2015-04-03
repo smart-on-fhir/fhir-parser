@@ -7,6 +7,8 @@ classmap = {
     
     'boolean': 'Bool',
     'integer': 'Int',
+    'positiveInt': 'UInt',
+    'unsignedInt': 'UInt',
     'decimal': 'NSDecimalNumber',
     
     'string': 'String',
@@ -56,7 +58,7 @@ starexpandtypes = {
 }
 
 # Which class names are native to the language (or can be treated this way)
-natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
+natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -64,6 +66,7 @@ jsonmap = {
     'FHIRResource': 'FHIRJSON',
     
     'Int': 'Int',
+    'UInt': 'UInt',
     'Bool': 'Bool',
     'Double': 'NSNumber',
     

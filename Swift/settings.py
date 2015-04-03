@@ -21,7 +21,7 @@ manual_profiles = [                                         # all these profiles
     ('Swift/FHIRTypes.swift', None, [
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
-    	'decimal', 'integer',
+    	'decimal', 'integer', 'positiveInt', 'unsignedInt',
     	'uri', 'oid', 'uuid',
     ]),
     ('Swift/DateAndTime.swift', None, [

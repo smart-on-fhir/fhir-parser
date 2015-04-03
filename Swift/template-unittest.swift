@@ -38,15 +38,19 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		XCTAssertEqual(inst.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
 		{%- else %}{% if "Int" == onetest.klass.name or "Double" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
+		{%- else %}{% if "UInt" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, UInt({{ onetest.value }}))
 		{%- else %}{% if "Bool" == onetest.klass.name %}
 		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst.{{ onetest.path }})
 		{%- else %}{% if "Date" == onetest.klass.name or "Time" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}.description, "{{ onetest.value }}")
 		{%- else %}{% if "NSURL" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}.absoluteString!, "{{ onetest.value }}")
+		{%- else %}{% if "Base64Binary" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
 		{%- else %}
 		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
-		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
+		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
 		{%- endfor %}
 		
 		return inst

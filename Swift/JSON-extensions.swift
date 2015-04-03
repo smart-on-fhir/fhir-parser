@@ -30,6 +30,13 @@ extension Int
 	}
 }
 
+extension UInt
+{
+	public func asJSON() -> UInt {
+		return self
+	}
+}
+
 extension NSURL
 {
 	public convenience init?(json: String) {
