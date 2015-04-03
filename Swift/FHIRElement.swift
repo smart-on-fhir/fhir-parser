@@ -3,7 +3,7 @@
 //  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/2/14.
-//  2014, SMART Platforms.
+//  2014, SMART Health IT.
 //
 
 import Foundation

@@ -174,7 +174,7 @@ class FHIRSpec(object):
         return self.as_class_name(mappedname)
     
     def class_name_is_native(self, class_name):
-        return True if class_name in self.settings.natives else False
+        return class_name in self.settings.natives
     
     def safe_property_name(self, prop_name):
         return self.settings.reservedmap.get(prop_name, prop_name)

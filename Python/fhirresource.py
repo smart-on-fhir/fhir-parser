@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Base class for FHIR resources.
-#  2014, SMART Platforms.
+#  2014, SMART Health IT.
 
 import fhirelement
 import fhirdate

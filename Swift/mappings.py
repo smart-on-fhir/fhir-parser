@@ -25,6 +25,7 @@ replacemap = {}
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
 # any (value) type and have the `value[x]` form - how to substitute is defined
 # here
+# see http://hl7.org/fhir/2015May/datatypes.html#1.18.0.17
 starexpandtypes = {
     'integer',
     'decimal',
@@ -50,6 +51,7 @@ starexpandtypes = {
     'Address',
     'ContactPoint',
     'Timing',
+    'Signature',
     'Reference',
 }
 

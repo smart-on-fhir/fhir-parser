@@ -3,7 +3,7 @@
 //  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 12/16/14.
-//  2014, SMART Platforms.
+//  2014, SMART Health IT.
 //
 
 
@@ -16,12 +16,38 @@ public typealias FHIRJSON = [String: AnyObject]
 /**
  *  Data encoded as a base-64 string.
  */
-public struct Base64Binary: Printable, Equatable, Comparable
+public struct Base64Binary: StringLiteralConvertible, Printable, Equatable, Comparable
 {
+	public typealias UnicodeScalarLiteralType = Character
+	public typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
+	
 	var value: String?
 	
 	public init(value: String) {
 		self.value = value
+	}
+	
+	
+	// MARK: - String Literal Convertible
+	
+	public init(stringLiteral value: StringLiteralType) {
+		self.value = value
+	}
+	
+	public init(unicodeScalarLiteral value: UnicodeScalarLiteralType) {
+		self.value = "\(value)"
+	}
+	
+	public init(extendedGraphemeClusterLiteral value: ExtendedGraphemeClusterLiteralType) {
+		self.value = value
+	}
+	
+	public static func convertFromExtendedGraphemeClusterLiteral(value: String) -> Base64Binary {
+		return self(stringLiteral: value)
+	}
+	
+	public static func convertFromStringLiteral(value: String) -> Base64Binary {
+		return self(stringLiteral: value)
 	}
 	
 	

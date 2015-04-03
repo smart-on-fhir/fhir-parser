@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
-#  {{ info.year }}, SMART Platforms.
+#  {{ info.year }}, SMART Health IT.
 
 {% for imp in imports %}
 import {{ imp.module }}

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Generated from FHIR {{ info.version }} on {{ info.date }}.
-#  {{ info.year }}, SMART Platforms.
+#  {{ info.year }}, SMART Health IT.
 
 import fhirelement
 
