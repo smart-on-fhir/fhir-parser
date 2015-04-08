@@ -5,42 +5,44 @@
 #  {{ info.year }}, SMART Health IT.
 
 
+import os
 import io
 import unittest
 import json
-from {% if info.lowercase_import_hack %}{{ class|lower }}{% else %}{{ class }}{% endif %} import {{ class }}
+import {{ class.module }}
 from fhirdate import FHIRDate
 
 
-class {{ class }}Tests(unittest.TestCase):
+class {{ class.name }}Tests(unittest.TestCase):
     def instantiate_from(self, filename):
-        with io.open(filename, 'r', encoding='utf-8') as handle:
+        datadir = os.environ.get('FHIR_UNITTEST_DATADIR') or ''
+        with io.open(os.path.join(datadir, filename), 'r', encoding='utf-8') as handle:
             js = json.load(handle)
-        instance = {{ class }}(js)
+        instance = {{ class.module }}.{{ class.name }}(js)
         self.assertIsNotNone(instance, "Must have instantiated a test instance")
         return instance
     
 {%- for tcase in tests %}
     
-    def test{{ class }}{{ loop.index }}(self):
+    def test{{ class.name }}{{ loop.index }}(self):
         inst = self.instantiate_from("{{ tcase.filename }}")
         self.assertIsNotNone(inst, "Must have instantiated a {{ class }} instance")
     {% for onetest in tcase.tests %}
-    {%- if "str" == onetest.class %}
+    {%- if "str" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
-    {%- else %}{% if "int" == onetest.class or "float" == onetest.class or "NSDecimalNumber" == onetest.class %}
+    {%- else %}{% if "int" == onetest.klass.name or "float" == onetest.klass.name or "NSDecimalNumber" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
-    {%- else %}{% if "bool" == onetest.class %}
+    {%- else %}{% if "bool" == onetest.klass.name %}
         {%- if onetest.value %}
         self.assertTrue(inst.{{ onetest.path }})
         {%- else %}
         self.assertFalse(inst.{{ onetest.path }})
         {%- endif %}
-    {%- else %}{% if "FHIRDate" == onetest.class %}
+    {%- else %}{% if "FHIRDate" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}.date, FHIRDate("{{ onetest.value }}").date)
         self.assertEqual(inst.{{ onetest.path }}.isostring, "{{ onetest.value }}")
     {%- else %}
-        # Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.class }}
+        # Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
     {%- endif %}{% endif %}{% endif %}{% endif %}
     {%- endfor %}
 {%- endfor %}

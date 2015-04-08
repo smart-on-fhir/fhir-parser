@@ -53,9 +53,8 @@ class FHIRElement(object):
             extensions = []
             for ext_dict in jsondict["extension"]:
                 if isinstance(ext_dict, dict):
-                    for ext in extension.Extension.with_json(ext_dict):
-                        ext.url = key
-                        extensions.append(ext)
+                    ext = extension.Extension.with_json(ext_dict)
+                    extensions.append(ext)
             if len(extensions) > 0:
                 self.extension = extensions
         
@@ -63,12 +62,11 @@ class FHIRElement(object):
             extensions = []
             for ext_dict in jsondict["modifierExtension"]:
                 if isinstance(ext_dict, dict):
-                    for ext in extension.Extension.with_json(ext_dict):
-                        ext.url = key
-                        extensions.append(ext)
+                    ext = extension.Extension.with_json(ext_dict)
+                    extensions.append(ext)
             if len(extensions) > 0:
                 self.modifierExtension = extensions
-
+    
     
     @classmethod
     def with_json(cls, jsonobj):

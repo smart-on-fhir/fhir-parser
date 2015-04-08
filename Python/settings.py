@@ -18,7 +18,7 @@ manual_profiles = [                                     # all these profiles sho
     ('Python/__init__.py', None, [
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
-    	'decimal', 'integer',
+    	'decimal', 'integer', 'unsignedInt', 'positiveInt',
     	'uri', 'oid', 'uuid',
     ]),
     ('Python/fhirelement.py', 'fhirelement', ['Element']),
@@ -46,7 +46,6 @@ tpl_unittest_source = 'Python/template-unittest.py'
 tpl_unittest_target_ptrn = '../models/{}_tests.py'
 unittest_copyfiles_base = '../models/'          # Where to copy `unittest_copyfiles`
 unittest_copyfiles = []
-unittest_filename_prefix = '../fhir-parser/downloads/site'
 unittest_format_path_prepare = '{}'             # used to format `path` before appending another path element - one placeholder for `path`
 unittest_format_path_key = '{}.{}'              # used to create property paths by appending `key` to the existing `path` - two placeholders
 unittest_format_path_index = '{}[{}]'           # used for array properties - two placeholders, `path` and the array index

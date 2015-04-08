@@ -43,13 +43,13 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     def update_with_json(self, jsondict):
         super({{ klass.name }}, self).update_with_json(jsondict)
         {%- for prop in klass.properties %}
-        if '{{ prop.name }}' in jsondict:
+        if '{{ prop.orig_name }}' in jsondict:
             {%- if prop.is_native %}
-            self.{{ prop.name }} = jsondict['{{ prop.name }}']
+            self.{{ prop.name }} = jsondict['{{ prop.orig_name }}']
             
             {%- else %}
             self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
-                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.name }}'], self)
+                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.orig_name }}'], self)
             {%- endif %}
         {%- endfor %}
     

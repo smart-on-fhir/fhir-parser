@@ -166,8 +166,16 @@ class FHIRUnitTestItem(object):
             
             value = self.value
             if isstr:
-                if len(value) > 200 or not value.isprintable():
+                if len(value) > 200:
                     return tests
+                elif not hasattr(value, 'isprintable'):       # Python 2.x doesn't have it
+                    try:
+                        value.decode('utf-8')
+                    except Exception:
+                        return tests
+                elif not value.isprintable():
+                    return tests
+                
                 value = self.value.replace("\n", "\\n")
             tests.append(FHIRUnitTestCase(self.path, value, self.klass))
         

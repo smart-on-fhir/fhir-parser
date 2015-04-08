@@ -7,6 +7,8 @@ classmap = {
     
     'boolean': 'bool',
     'integer': 'int',
+    'positiveInt': 'int',
+    'unsignedInt': 'int',
     'date': 'FHIRDate',
     'dateTime': 'FHIRDate',
     'instant': 'FHIRDate',
@@ -56,6 +58,7 @@ starexpandtypes = {
     'Address',
     'ContactPoint',
     'Timing',
+    'Signature',
     'Reference',
 }
 
