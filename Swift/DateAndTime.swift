@@ -155,27 +155,27 @@ public struct Time: DateAndTime
 		24:00:00 or it will be capped.
 	 */
 	public init(hour: UInt8, minute: UInt8, second: Double?) {
-		var overflowMinute: Int = 0
-		var overflowHour: Int = 0
+		var overflowMinute: UInt = 0
+		var overflowHour: UInt = 0
 		
 		if second >= 60.0 {
 			self.second = second! % 60
-			overflowMinute = Int((second! - self.second!) / 60)
+			overflowMinute = UInt((second! - self.second!) / 60)
 		}
 		else {
 			self.second = second
 		}
 		
-		let mins = Int(minute) + overflowMinute
+		let mins = UInt(minute) + overflowMinute
 		if mins > 59 {
 			self.minute = UInt8(mins % 60)
 			overflowHour = (mins - (mins % 60)) / 60
 		}
 		else {
-			self.minute = minute + overflowMinute
+			self.minute = UInt8(mins)
 		}
 		
-		let hrs = Int(hour) + overflowHour
+		let hrs = UInt(hour) + overflowHour
 		if hrs > 23 {
 			self.hour = 23
 			self.minute = 59
@@ -463,7 +463,7 @@ class DateNSDateConverter
 	let utc: NSTimeZone
 	
 	init() {
-		calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)!
+		calendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
 		utc = NSTimeZone(abbreviation: "UTC")!
 	}
 	
@@ -609,7 +609,7 @@ class DateAndTimeParser
 						tzString = (nil == negStr) ? "+" : "-"
 						var hourStr: NSString?
 						if scanner.scanCharactersFromSet(NSCharacterSet.decimalDigitCharacterSet(), intoString: &hourStr) {
-							tzString! += hourStr!
+							tzString! += hourStr! as String
 							var tzhour = 0
 							var tzmin = 0
 							if 2 == hourStr?.length {

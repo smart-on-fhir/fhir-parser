@@ -17,7 +17,7 @@ import Foundation
  *
  *  http://hl7.org/implement/standards/fhir/references.html#contained
  */
-public class FHIRContainedResource
+public final class FHIRContainedResource
 {
 	/// The id of the resource.
 	public var id: String?

@@ -71,7 +71,7 @@ extension NSDecimalNumber
 	 */
 	public convenience init(json: NSNumber) {
 		if let periodIdx = find(json.stringValue, ".") {
-			self.init(string: NSString(format: "%.15g", json.doubleValue))
+			self.init(string: NSString(format: "%.15g", json.doubleValue) as String)
 		}
 		else {
 			self.init(string: "\(json)")

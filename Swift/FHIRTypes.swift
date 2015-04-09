@@ -54,7 +54,7 @@ public struct Base64Binary: StringLiteralConvertible, Printable, Equatable, Comp
 	// MARK: - Printable
 	
 	public var description: String {
-		return "<Base64Binary; \(nil != value ? countElements(value!) : 0) chars>"
+		return "<Base64Binary; \(nil != value ? count(value!) : 0) chars>"
 	}
 }
 
