@@ -1,45 +1,59 @@
 //
-//  {{ class }}Tests.swift
-//  {{ class }}Tests
+//  {{ class.name }}Tests.swift
+//  SwiftFHIR
 //
 //  Generated from FHIR {{ info.version }} on {{ info.date }}.
-//  {{ info.year }}, SMART Platforms.
+//  {{ info.year }}, SMART Health IT.
 //
 
-import Cocoa
 import XCTest
 import SwiftFHIR
 
 
-class {{ class }}Tests: FHIRModelTestCase
+class {{ class.name }}Tests: FHIRModelTestCase
 {
-	func instantiateFrom(filename: String) -> {{ class }}? {
-		let json = readJSONFile(filename)
-		let instance = {{ class }}(json: json)
+	func instantiateFrom(# filename: String) -> {{ class.name }} {
+		return instantiateFrom(json: readJSONFile(filename)!)
+	}
+	
+	func instantiateFrom(# json: FHIRJSON) -> {{ class.name }} {
+		let instance = {{ class.name }}(json: json)
 		XCTAssertNotNil(instance, "Must have instantiated a test instance")
 		return instance
 	}
 	
 {%- for tcase in tests %}
 	
-	func test{{ class }}{{ loop.index }}() {
-		let inst = instantiateFrom("{{ tcase.filename }}")
-		XCTAssertNotNil(inst, "Must have instantiated a {{ class }} instance")
-	{% for onetest in tcase.tests %}	
-	{%- if "String" == onetest.class %}	
-		XCTAssertEqual(inst!.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
-	{%- else %}{% if "Int" == onetest.class or "Double" == onetest.class or "NSDecimalNumber" == onetest.class %}
-		XCTAssertEqual(inst!.{{ onetest.path }}, {{ onetest.value }})
-	{%- else %}{% if "Bool" == onetest.class %}
-		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst!.{{ onetest.path }})
-	{%- else %}{% if "NSDate" == onetest.class %}
-		XCTAssertEqual(inst!.{{ onetest.path }}, NSDate.dateFromISOString("{{ onetest.value }}")!)
-	{%- else %}{% if "NSURL" == onetest.class %}
-		XCTAssertEqual(inst!.{{ onetest.path }}, NSURL(string: "{{ onetest.value }}")!)
-	{%- else %}
-		# Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.class }}
-	{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
-	{%- endfor %}
+	func test{{ class.name }}{{ loop.index }}() {
+		let instance = test{{ class.name }}{{ loop.index }}_impl()
+		test{{ class.name }}{{ loop.index }}_impl(json: instance.asJSON())
+	}
+	
+	func test{{ class.name }}{{ loop.index }}_impl(json: FHIRJSON? = nil) -> {{ class.name }} {
+		let inst = (nil != json) ? instantiateFrom(json: json!) : instantiateFrom(filename: "{{ tcase.filename }}")
+		{% for onetest in tcase.tests %}
+		{%- if "String" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
+		{%- else %}{% if "NSDecimalNumber" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
+		{%- else %}{% if "Int" == onetest.klass.name or "Double" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
+		{%- else %}{% if "UInt" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, UInt({{ onetest.value }}))
+		{%- else %}{% if "Bool" == onetest.klass.name %}
+		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst.{{ onetest.path }})
+		{%- else %}{% if "Date" == onetest.klass.name or "Time" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}.description, "{{ onetest.value }}")
+		{%- else %}{% if "NSURL" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}.absoluteString!, "{{ onetest.value }}")
+		{%- else %}{% if "Base64Binary" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
+		{%- else %}
+		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
+		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
+		{%- endfor %}
+		
+		return inst
 	}
 {%- endfor %}
 }

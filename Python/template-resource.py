@@ -1,28 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  Generated from FHIR {{ info.version }} ({{ info.filename }}) on {{ info.date }}.
-#  {{ info.year }}, SMART Platforms.
+#  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
+#  {{ info.year }}, SMART Health IT.
 
-{% for imp in info.imports %}
-import {% if info.lowercase_import_hack %}{{ imp|lower }}{% else %}{{ imp }}{% endif %}
+{% for imp in imports %}
+import {{ imp.module }}
 {%- endfor %}
 
 {%- for klass in classes %}
 
 
-class {{ klass.className }}({% if klass.superclass in info.imports %}
-    {%- if info.lowercase_import_hack %}{{ klass.superclass|lower }}{% else %}{{ klass.superclass }}{% endif %}.{% endif -%}
-    {{ klass.superclass|default('object')}}):
+class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.module }}.{% endif -%}
+    {{ klass.superclass.name|default('object')}}):
     """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
 {%- if klass.formal %}
     
     {{ klass.formal|wordwrap(width=75, wrapstring="\n    ") }}
 {%- endif %}
     """
-{%- if klass.resourceName %}
+{%- if klass.resource_name %}
     
-    resource_name = "{{ klass.resourceName }}"
+    resource_name = "{{ klass.resource_name }}"
 {%- endif %}
     
     def __init__(self, jsondict=None):
@@ -30,34 +29,28 @@ class {{ klass.className }}({% if klass.superclass in info.imports %}
         """
     {%- for prop in klass.properties %}
         
-        self.{{ prop.name }} = {% if "bool" == prop.className %}False{% else %}None{% endif %}
+        self.{{ prop.name }} = {% if "bool" == prop.class_name %}False{% else %}None{% endif %}
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
-        {% if prop.isArray %}List of{% else %}Type{% endif %} `{{ prop.className }}`{% if prop.isArray %} items{% endif %}
-        {%- if prop.isReferenceTo %} referencing `{{ prop.isReferenceTo }}`{% endif %}
-        {%- if prop.jsonClass != prop.className %} (represented as `{{ prop.jsonClass }}` in JSON){% endif %}. """
+        {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
+        {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
+        {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
     {%- endfor %}
         
-        super({{ klass.className }}, self).__init__(jsondict)
+        super({{ klass.name }}, self).__init__(jsondict)
     
 {%- if klass.properties %}
     
     def update_with_json(self, jsondict):
-        super({{ klass.className }}, self).update_with_json(jsondict)
+        super({{ klass.name }}, self).update_with_json(jsondict)
         {%- for prop in klass.properties %}
-        if '{{ prop.name }}' in jsondict:
-            {%- if prop.isNative %}
-            self.{{ prop.name }} = jsondict['{{ prop.name }}']
-            {%- else %}{% if prop.isReferenceTo %}
-            self.{{ prop.name }} = {% if prop.className in info.imports %}
-                {%- if info.lowercase_import_hack %}{{ prop.className|lower }}{% else %}{{ prop.className }}{% endif %}.{% endif -%}
-                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self, {% if prop.isReferenceTo in info.imports %}
-                    {%- if info.lowercase_import_hack %}{{ prop.isReferenceTo|lower }}{% else %}{{ prop.isReferenceTo }}{% endif %}.{% endif -%}
-                {{ prop.isReferenceTo }})
+        if '{{ prop.orig_name }}' in jsondict:
+            {%- if prop.is_native %}
+            self.{{ prop.name }} = jsondict['{{ prop.orig_name }}']
+            
             {%- else %}
-            self.{{ prop.name }} = {% if prop.className in info.imports %}
-                {%- if info.lowercase_import_hack %}{{ prop.className|lower }}{% else %}{{ prop.className }}{% endif %}.{% endif -%}
-                {{ prop.className }}.with_json_and_owner(jsondict['{{ prop.name }}'], self)
-            {%- endif %}{% endif %}
+            self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
+                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.orig_name }}'], self)
+            {%- endif %}
         {%- endfor %}
     
 {%- endif %}

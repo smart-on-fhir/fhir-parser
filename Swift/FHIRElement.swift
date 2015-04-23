@@ -1,9 +1,9 @@
 //
 //  FHIRElement.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/2/14.
-//  2014, SMART Platforms.
+//  2014, SMART Health IT.
 //
 
 import Foundation
@@ -12,17 +12,15 @@ import Foundation
 /**
  *  Abstract superclass for all FHIR data elements.
  */
-public class FHIRElement
+public class FHIRElement: Printable
 {
+	/// The name of the resource or element
 	public class var resourceName: String {
-		get { return "FHIRElement" }
+		get { return "Element" }
 	}
 	
-	/// This should be `extension` but it is a keyword in Swift; renamed to `fhirExtension`.
-	public var fhirExtension: [Extension]?
-	
-	/// Optional modifier extensions.
-	public var modifierExtension: [Extension]?
+	/// Logical id of this artefact
+	public var id: String?
 	
 	/// Contained, inline Resources, indexed by resource id.
 	public var contained: [String: FHIRContainedResource]?
@@ -31,17 +29,26 @@ public class FHIRElement
 	weak var _owner: FHIRElement?
 	
 	/// Resolved references.
-	var _resolved: [String: FHIRElement]?
+	var _resolved: [String: Resource]?
+	
+	/// Additional Content defined by implementations
+	public var extension_fhir: [Extension]?
+	
+	/// Extensions that cannot be ignored
+	public var modifierExtension: [Extension]?
 	
 	
 	// MARK: - JSON Capabilities
 	
-	public required init(json: NSDictionary?) {
+	public required init(json: FHIRJSON?) {
 		if let js = json {
-			if let arr = js["contained"] as? [NSDictionary] {
+			if let val = js["id"] as? String {
+				self.id = val
+			}
+			if let arr = js["contained"] as? [FHIRJSON] {
 				var cont = contained ?? [String: FHIRContainedResource]()
 				for dict in arr {
-					let res = FHIRContainedResource(json: dict)
+					let res = FHIRContainedResource(json: dict, owner: self)
 					if nil != res.id {
 						cont[res.id!] = res
 					}
@@ -51,29 +58,97 @@ public class FHIRElement
 				}
 				contained = cont
 			}
-			if let arr = js["extension"] as? [NSDictionary] {
-				self.fhirExtension = Extension.from(arr) as? [Extension]
+			if let val = js["extension"] as? [FHIRJSON] {
+				self.extension_fhir = Extension.from(val, owner: self) as? [Extension]
 			}
-			if let arr = js["modifierExtension"] as? [NSDictionary] {
-				self.modifierExtension = Extension.from(arr) as? [Extension]
+			if let val = js["modifierExtension"] as? [FHIRJSON] {
+				self.modifierExtension = Extension.from(val, owner: self) as? [Extension]
 			}
 		}
 	}
 	
-	public convenience init(json: NSDictionary?, owner: FHIRElement?) {
+	/**
+		Represent the receiver in a FHIRJSON, ready to be used for JSON serialization.
+	 */
+	public func asJSON() -> FHIRJSON {
+		var json = FHIRJSON()
+		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
+		
+		if let id = self.id {
+			json["id"] = id.asJSON()
+		}
+		if let contained = self.contained {
+			var arr = [FHIRJSON]()
+			for (key, val) in contained {
+				arr.append(val.json ?? FHIRJSON())		// TODO: check if it has been resolved, if so use `asJSON()`
+			}
+			json["contained"] = arr
+		}
+		if let extension_fhir = self.extension_fhir {
+			json["extension"] = Extension.asJSONArray(extension_fhir)
+		}
+		if let modifierExtension = self.modifierExtension {
+			json["modifierExtension"] = Extension.asJSONArray(modifierExtension)
+		}
+		
+		return json
+	}
+	
+	/**
+		Calls `asJSON()` on all elements in the array and returns the resulting array full of FHIRJSON dictionaries.
+	 */
+	public class func asJSONArray(array: [FHIRElement]) -> [FHIRJSON] {
+		var arr = [FHIRJSON]()
+		for element in array {
+			arr.append(element.asJSON())
+		}
+		return arr
+	}
+	
+	/**
+		Convenience allocator to be used when allocating an element as part of another element.
+	 */
+	public convenience init(json: FHIRJSON?, owner: FHIRElement?) {
 		self.init(json: json)
 		self._owner = owner
 	}
 	
-	final class func from(array: [NSDictionary]) -> [FHIRElement] {
-		var arr: [FHIRElement] = []
+	
+	// MARK: - Factories
+	
+	/**
+		Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
+		specified resource type, or instantiates the receiver's class otherwise.
+		
+		:param: json A FHIRJSON decoded from a JSON response
+		:param: owner The FHIRElement owning the new instance, if appropriate
+		:returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
+	 */
+	final class func instantiateFrom(json: FHIRJSON?, owner: FHIRElement?) -> FHIRElement {
+		if let type = json?["resourceType"] as? String {
+			return factory(type, json: json!, owner: owner)
+		}
+		let instance = self(json: json)		// must use 'required' init with dynamic type
+		instance._owner = owner
+		return instance
+	}
+	
+	/**
+		Instantiates an array of the receiver's type and returns it.
+		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
+	 */
+	final class func from(array: [FHIRJSON]) -> [FHIRElement] {
+		var arr = [FHIRElement]()
 		for arrJSON in array {
 			arr.append(self(json: arrJSON))
 		}
 		return arr
 	}
 	
-	final class func from(array: [NSDictionary], owner: FHIRElement?) -> [FHIRElement] {
+	/**
+		Instantiates an array of the receiver's type and returns it.
+	 */
+	final class func from(array: [FHIRJSON], owner: FHIRElement?) -> [FHIRElement] {
 		let arr = from(array)
 		for elem in arr {
 			elem._owner = owner			// would be neater to use init(json:owner:) but cannot use non-required init with dynamic type
@@ -93,26 +168,48 @@ public class FHIRElement
 	}
 	
 	/** Returns the resolved reference with the given id, if it has been resolved already. */
-	func resolvedReference(refid: String) -> FHIRElement? {
+	func resolvedReference(refid: String) -> Resource? {
 		if let resolved = _resolved?[refid] {
 			return resolved
 		}
 		return _owner?.resolvedReference(refid)
 	}
 	
-	/** Called by FHIRResource when it resolves a reference. Stores the resolved reference into the `_resolved`
-	 *  dictionary.
+	/**
+		Stores the resolved reference into the `_resolved` dictionary.
+	
+		:param: refid The reference identifier as String
+		:param: resolved The element that was resolved
 	 */
-	func didResolveReference(refid: String, resolved: FHIRElement) {
-		if let owner = _owner {
-			owner.didResolveReference(refid, resolved: resolved)
-		}
-		else if nil != _resolved {
+	func didResolveReference(refid: String, resolved: Resource) {
+		if nil != _resolved {
 			_resolved![refid] = resolved
 		}
 		else {
 			_resolved = [refid: resolved]
 		}
+	}
+	
+	/**
+		The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if
+		any.
+	 */
+	func owningResource() -> FHIRResource? {
+		var owner = _owner
+		while nil != owner {
+			if nil != owner as? FHIRResource {
+				break
+			}
+			owner = owner?._owner
+		}
+		return owner as? FHIRResource
+	}
+	
+	
+	// MARK: - Printable
+	
+	public var description: String {
+		return "<\(self.dynamicType.resourceName)>"
 	}
 }
 

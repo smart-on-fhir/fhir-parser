@@ -1,81 +1,44 @@
 //
 //  JSON-extensions.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/4/14.
-//  2014, SMART Platforms.
+//  2014, SMART Health IT.
 //
 
 import Foundation
 
 
-extension NSDate {
-	public convenience init(json: String) {
-		let parsed = NSDate.dateFromISOString(json)
-		self.init(timeInterval: 0, sinceDate: parsed ?? NSDate())
-	}
-	
-	public class func dateFromISOString(string: String) -> NSDate? {
-		var date = isoDateTimeFormatter().dateFromString(string)
-		if nil == date {
-			date = isoLocalDateTimeFormatter().dateFromString(string)
-		}
-		if nil == date {
-			date = isoDateFormatter().dateFromString(string)
-		}
-		
-		return date
-	}
-	
-	public func isoDateString() -> String {
-		return self.dynamicType.isoDateFormatter().stringFromDate(self)
-	}
-	
-	public func isoDateTimeString() -> String {
-		return self.dynamicType.isoDateTimeFormatter().stringFromDate(self)
-	}
-	
-	
-	// MARK: Date Formatter
-	
-	/**
-	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 with timezone.
-	 */
-	public class func isoDateTimeFormatter() -> NSDateFormatter {
-		let formatter = NSDateFormatter()							// class vars are not yet supported
-		formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-		formatter.timeZone = NSTimeZone(forSecondsFromGMT: 0)
-		formatter.calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)
-		
-		return formatter
-	}
-	
-	/**
-	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 WITHOUT timezone.
-	 */
-	public class func isoLocalDateTimeFormatter() -> NSDateFormatter {
-		let formatter = NSDateFormatter()							// class vars are not yet supported
-		formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-		formatter.timeZone = NSTimeZone.localTimeZone()
-		formatter.calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)
-		
-		return formatter
-	}
-	
-	/**
-	 *  Instantiates and returns an NSDateFormatter that understands ISO-8601 date only.
-	 */
-	public class func isoDateFormatter() -> NSDateFormatter {
-		let formatter = NSDateFormatter()							// class vars are not yet supported
-		formatter.dateFormat = "yyyy-MM-dd"
-		formatter.timeZone = NSTimeZone.localTimeZone()
-		formatter.calendar = NSCalendar(calendarIdentifier: NSGregorianCalendar)
-		
-		return formatter
+extension String
+{
+	public func asJSON() -> String {
+		return self
 	}
 }
 
-extension NSURL {
+extension Bool
+{
+	public func asJSON() -> Bool {
+		return self
+	}
+}
+
+extension Int
+{
+	public func asJSON() -> Int {
+		return self
+	}
+}
+
+extension UInt
+{
+	public func asJSON() -> UInt {
+		return self
+	}
+}
+
+extension NSURL
+{
 	public convenience init?(json: String) {
 		self.init(string: json)
 	}
@@ -83,18 +46,119 @@ extension NSURL {
 	public class func from(json: [String]) -> [NSURL] {
 		var arr: [NSURL] = []
 		for string in json {
-			let url: NSURL? = NSURL(string: string)
-			if nil != url {
-				arr.append(url!)
+			if let url = NSURL(string: string) {
+				arr.append(url)
 			}
 		}
 		return arr
 	}
+	
+	public func asJSON() -> String {
+		return self.description
+	}
 }
 
-extension NSDecimalNumber {
+extension NSDecimalNumber
+{
+	/*
+		Takes an NSNumber, usually decoded from JSON, and creates an NSDecimalNumber instance
+	
+		We're using a string format approach using "%.15g" since NSJSONFormatting returns NSNumber objects instantiated
+		with Double() or Int(). In the former case this causes precision issues (e.g. try 8.7). Unfortunately, some
+		doubles with 16 and 17 significant digits will be truncated (e.g. a longitude of "4.844614000123024").
+	
+		TODO: improve to avoid double precision issues
+	 */
 	public convenience init(json: NSNumber) {
-		self.init(string: "\(json)")			// there is no "decimalValue" on NSNumber in Swift, so use a String
+		if let periodIdx = find(json.stringValue, ".") {
+			self.init(string: NSString(format: "%.15g", json.doubleValue) as String)
+		}
+		else {
+			self.init(string: "\(json)")
+		}
+	}
+	
+	public func asJSON() -> NSDecimalNumber {
+		return self
+	}
+}
+
+extension Base64Binary
+{
+	public init(string: String) {
+		self.init(value: string)
+	}
+	
+	public func asJSON() -> String {
+		return self.value ?? ""
+	}
+}
+
+extension Date
+{
+	public static func from(json: [String]) -> [Date] {
+		var arr: [Date] = []
+		for string in json {
+			if let obj = Date(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension Time
+{
+	public static func from(json: [String]) -> [Time] {
+		var arr: [Time] = []
+		for string in json {
+			if let obj = Time(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension DateTime
+{
+	public static func from(json: [String]) -> [DateTime] {
+		var arr: [DateTime] = []
+		for string in json {
+			if let obj = DateTime(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
+	public func asJSON() -> String {
+		return self.description
+	}
+}
+
+extension Instant
+{
+	public static func from(json: [String]) -> [Instant] {
+		var arr: [Instant] = []
+		for string in json {
+			if let obj = Instant(string: string) {
+				arr.append(obj)
+			}
+		}
+		return arr
+	}
+	
+	public func asJSON() -> String {
+		return self.description
 	}
 }
 

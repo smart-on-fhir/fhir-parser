@@ -11,15 +11,20 @@ class FHIRElement(object):
     """
     
     def __init__(self, jsondict=None):
-        self.extension = None
-        self.modifierExtension = None
+        self.id = None
+        """ Logical id of this artefact. """
+        
         self.contained = None
+        """ Contained resources. """
         
         self._resolved = None
         """ Dictionary of resolved resources. """
         
         self._owner = None
         """ Points to the parent resource, if there is one. """
+        
+        self.extension = None
+        self.modifierExtension = None
         
         if jsondict is not None:
             self.update_with_json(jsondict)
@@ -30,21 +35,38 @@ class FHIRElement(object):
         if jsondict is None:
             return
         
-        # extract extensions
-        if 'extension' in jsondict:
-            self.extension = extension.Extension.with_json(jsondict['extension'])
-        if 'modifierExtension' in jsondict:
-            self.modifierExtension = extension.Extension.with_json(jsondict['modifierExtension'])
+        if 'id' in jsondict:
+            self.id = jsondict['id']
         
         # extract contained resources
         if 'contained' in jsondict:
             self.contained = self.contained or {}
             for js in jsondict['contained']:         # "contained" should be an array
-                res = fhircontainedresource.FHIRContainedResource(jsondict=js)
+                res = fhircontainedresource.FHIRContainedResource(jsondict=js, owner=self)
                 if res.id:
                     self.contained[res.id] = res
                 else:
                     logging.warning("Contained resource {} does not have an id, ignoring".format(res))
+        
+        # extract extensions
+        if "extension" in jsondict and isinstance(jsondict["extension"], list):
+            extensions = []
+            for ext_dict in jsondict["extension"]:
+                if isinstance(ext_dict, dict):
+                    ext = extension.Extension.with_json(ext_dict)
+                    extensions.append(ext)
+            if len(extensions) > 0:
+                self.extension = extensions
+        
+        if "modifierExtension" in jsondict and isinstance(jsondict["modifierExtension"], list):
+            extensions = []
+            for ext_dict in jsondict["modifierExtension"]:
+                if isinstance(ext_dict, dict):
+                    ext = extension.Extension.with_json(ext_dict)
+                    extensions.append(ext)
+            if len(extensions) > 0:
+                self.modifierExtension = extensions
+    
     
     @classmethod
     def with_json(cls, jsonobj):
@@ -84,7 +106,9 @@ class FHIRElement(object):
     # MARK: Handling References
     
     def containedReference(self, refid):
-        """ Returns the contained reference with the given id, if it exists.
+        """ Looks for the contained reference with the given id.
+        
+        :returns: An instance of FHIRContainedResource, if it was found
         """
         if self.contained and refid in self.contained:
             return self.contained[refid]
@@ -103,13 +127,11 @@ class FHIRElement(object):
         resolved reference into the `_resolved` dictionary of the topmost
         owner.
         """
-        if self._owner is not None:
-            self._owner.didResolveReference(refid, resolved)
-        elif self._resolved is not None:
+        if self._resolved is not None:
             self._resolved[refid] = resolved
         else:
             self._resolved = {refid: resolved}
-    
+
 
 # these are subclasses of FHIRElement, import last
 import extension

@@ -1,12 +1,10 @@
 //
 //  FHIRElement+Factory.swift
-//  SMART-on-FHIR
+//  SwiftFHIR
 //
 //  Generated from FHIR {{ info.version }} on {{ info.date }}.
-//  {{ info.year }}, SMART Platforms.
+//  {{ info.year }}, SMART Health IT.
 //
-
-import Foundation
 
 
 /**
@@ -14,12 +12,14 @@ import Foundation
  */
 extension FHIRElement
 {
-	public class func factory(className: String, json: NSDictionary) -> FHIRElement {
+	public class func factory(className: String, json: FHIRJSON, owner: FHIRElement?) -> FHIRElement {
 		switch className {
-		{%- for klass in classes|sort %}
-			case "{{ klass }}":	return {{ klass }}(json: json)
-		{%- endfor %}
-			default:	return FHIRElement(json: json)
+		{%- for klass in classes %}{% if klass.resource_name %}
+			case "{{ klass.resource_name }}":
+				return {{ klass.name }}(json: json, owner: owner)
+		{%- endif %}{% endfor %}
+			default:
+				return FHIRElement(json: json, owner: owner)
 		}
 	}
 }

@@ -1,88 +1,93 @@
 # Mappings for the FHIR class generator
 
-# Which class names to map to resources and properties
+# Which class names to map to resources and elements
 classmap = {
-	'Structure': 'FHIRElement',
-	'Resource': 'FHIRResource',
-    'ResourceReference': 'FHIRReference',
+    'Element': 'FHIRElement',
     'Any': 'FHIRResource',
-	
-	'boolean': 'Bool',
-	'integer': 'Int',
-	'date': 'NSDate',
-	'dateTime': 'NSDate',
-	'instant': 'NSDate',
-	'decimal': 'NSDecimalNumber',
-	
-	'string': 'String',
-	'id': 'String',
-	'oid': 'String',
-	'idref': 'String',
-	'uri': 'NSURL',
-	'base64Binary': 'String',
-	'xhtml': 'String',
-	'code': 'String',		# for now we're not generating enums for these
+    
+    'boolean': 'Bool',
+    'integer': 'Int',
+    'positiveInt': 'UInt',
+    'unsignedInt': 'UInt',
+    'decimal': 'NSDecimalNumber',
+    
+    'string': 'String',
+    'id': 'String',
+    'code': 'String',       # for now we're not generating enums for these
+    'uri': 'NSURL',
+    'oid': 'String',
+    'uuid': 'String',
+    'xhtml': 'String',
+    'base64Binary': 'Base64Binary',
 }
 
-# Which mapped class is a subclass of a profile (used for FHIRReference)
-subclassmap = {
-    'FHIRReference': 'ResourceReference',
-}
+# Classes to be replaced with different ones at resource rendering time
+replacemap = {}
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
 # any (value) type and have the `value[x]` form - how to substitute is defined
 # here
+# see http://hl7.org/fhir/2015May/datatypes.html#1.18.0.17
 starexpandtypes = {
-	'integer',
-	'decimal',
-	'dateTime',
-	'date',
-	'instant',
-	'string',
-	'uri',
-	'boolean',
-	'code',
-	'base64Binary',
-	
-	'Coding',
-	'CodeableConcept',
-	'Attachment',
-	'Identifier',
-	'Quantity',
-	'Range',
-	'Period',
-	'Ratio',
-	'HumanName',
-	'Address',
-	'Contact',
-	'Schedule',
-	'Resource',
+    'integer',
+    'decimal',
+    'dateTime',
+    'date',
+    'instant',
+    'time',
+    'string',
+    'uri',
+    'boolean',
+    'code',
+    'base64Binary',
+    
+    'Coding',
+    'CodeableConcept',
+    'Attachment',
+    'Identifier',
+    'Quantity',
+    'Range',
+    'Period',
+    'Ratio',
+    'HumanName',
+    'Address',
+    'ContactPoint',
+    'Timing',
+    'Signature',
+    'Reference',
 }
 
-# Which class names are native to the lannguage
-natives = ['Bool', 'Int', 'String', 'NSNumber', 'NSDecimalNumber', 'NSDate', 'NSURL']
+# Which class names are native to the language (or can be treated this way)
+natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
-	'FHIRElement': 'NSDictionary',
-	'FHIRResource': 'NSDictionary',
-	
-	'Int': 'Int',
-	'Bool': 'Bool',
-	'Double': 'NSNumber',
-	
-	'String': 'String',
-	'NSDate': 'String',
-	'NSDecimalNumber': 'NSNumber',
-	'NSURL': 'String',
+    'FHIRElement': 'FHIRJSON',
+    'FHIRResource': 'FHIRJSON',
+    
+    'Int': 'Int',
+    'UInt': 'UInt',
+    'Bool': 'Bool',
+    'Double': 'NSNumber',
+    
+    'String': 'String',
+    'Date': 'String',
+    'Time': 'String',
+    'DateTime': 'String',
+    'Instant': 'String',
+    'NSDecimalNumber': 'NSNumber',
+    'NSURL': 'String',
+    'Base64Binary': 'String',
 }
-jsonmap_default = 'NSDictionary'
+jsonmap_default = 'FHIRJSON'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
-	'class': 'klass',
-	'import': 'importFrom',
-	'protocol': 'protokol',
-	'extension': 'fhirExtension',
-	'operator': 'operatr',
+    'class': 'class_fhir',
+    'import': 'import_fhir',
+    'protocol': 'protocol_fhir',
+    'extension': 'extension_fhir',
+    'operator': 'operator_fhir',
+    'modifier': 'modifier_fhir',          # `modifierExtension` is called "modifier" in JSON
+    'description': 'description_fhir',    # Reserved for `Printable` classes
 }

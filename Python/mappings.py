@@ -1,32 +1,33 @@
 # Mappings for the FHIR class generator
 
-# Which class names to map to resources and properties
+# Which class names to map to resources and elements
 classmap = {
-    'Structure': 'FHIRElement',
-    'Resource': 'FHIRResource',
-    'ResourceReference': 'FHIRReference',
+    'Element': 'FHIRElement',
     'Any': 'FHIRResource',
     
     'boolean': 'bool',
     'integer': 'int',
+    'positiveInt': 'int',
+    'unsignedInt': 'int',
     'date': 'FHIRDate',
     'dateTime': 'FHIRDate',
     'instant': 'FHIRDate',
+    'time': 'FHIRDate',
     'decimal': 'float',
     
     'string': 'str',
     'id': 'str',
-    'oid': 'str',
-    'idref': 'str',
-    'uri': 'str',
-    'base64Binary': 'str',
-    'xhtml': 'str',
     'code': 'str',      # for now we're not generating enums for these
+    'uri': 'str',
+    'oid': 'str',
+    'uuid': 'str',
+    'xhtml': 'str',
+    'base64Binary': 'str',
 }
 
-# Which mapped class is a subclass of a profile (used for FHIRReference)
-subclassmap = {
-    'FHIRReference': 'ResourceReference',
+# Classes to be replaced with different ones at resource rendering time
+replacemap = {
+    'Reference': 'FHIRReference',
 }
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
@@ -38,6 +39,7 @@ starexpandtypes = {
     'dateTime',
     'date',
     'instant',
+    'time',
     'string',
     'uri',
     'boolean',
@@ -54,19 +56,17 @@ starexpandtypes = {
     'Ratio',
     'HumanName',
     'Address',
-    'Contact',
-    'Schedule',
-    'Resource',
+    'ContactPoint',
+    'Timing',
+    'Signature',
+    'Reference',
 }
 
-# Which class names are native to the lannguage
+# Which class names are native to the language (or can be treated this way)
 natives = ['bool', 'int', 'float', 'str', 'dict']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
-    'FHIRElement': 'dict',
-    'FHIRResource': 'dict',
-    
     'str': 'str',
     'int': 'int',
     'bool': 'bool',
@@ -80,5 +80,6 @@ jsonmap_default = 'dict'
 reservedmap = {
     'class': 'klass',
     'import': 'importFrom',
+    'modifier': 'mod',          # `modifierExtension` is called "modifier" in JSON
 }
 

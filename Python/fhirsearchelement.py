@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Construct server search parameters.
-#  2014, SMART Platforms.
+#  2014, SMART Health IT.
 
 import fhirsearch
 
