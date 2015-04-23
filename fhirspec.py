@@ -492,7 +492,7 @@ class FHIRProfileElement(object):
             if resolved is None:
                 raise Exception('Cannot resolve nameReference "{}" in "{}"'
                     .format(self.definition.name_reference, self.profile.url))
-            self.definition = resolved.definition
+            self.definition.update_from_reference(resolved.definition)
         
         self._did_resolve_dependencies = True
     
@@ -657,6 +657,15 @@ class FHIRElementDefinition(object):
         if 'slicing' in definition_dict:
             self.slicing = definition_dict['slicing']
         self.representation = definition_dict.get('representation')
+    
+    def update_from_reference(self, reference_definition):
+        self.element = reference_definition.element
+        self.types = reference_definition.types
+        self.name = reference_definition.name
+        self.constraint = reference_definition.constraint
+        self.mapping = reference_definition.mapping
+        self.slicing = reference_definition.slicing
+        self.representation = reference_definition.representation
     
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was
