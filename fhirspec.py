@@ -364,8 +364,7 @@ class FHIRProfile(object):
                 if prop_cls_name not in internal and not self.spec.class_name_is_native(prop_cls_name):
                     prop_cls = fhirclass.FHIRClass.with_name(prop_cls_name)
                     if prop_cls is None:
-                        # TODO: turn into exception once `nameReference` on element definition is implemented
-                        logger.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
+                        raise Exception('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
                     else:
                         prop.module_name = prop_cls.module
                         if not prop_cls_name in needed:

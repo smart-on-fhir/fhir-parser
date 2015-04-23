@@ -38,33 +38,99 @@ public class FHIRElement: Printable
 	public var modifierExtension: [Extension]?
 	
 	
-	// MARK: - JSON Capabilities
-	
+	/**
+		The default initializer.
+		
+		Forwards to `populateFromJSON` and logs all JSON errors to console, if "DEBUG" is defined and true.
+	 */
 	public required init(json: FHIRJSON?) {
-		if let js = json {
-			if let val = js["id"] as? String {
-				self.id = val
-			}
-			if let arr = js["contained"] as? [FHIRJSON] {
-				var cont = contained ?? [String: FHIRContainedResource]()
-				for dict in arr {
-					let res = FHIRContainedResource(json: dict, owner: self)
-					if nil != res.id {
-						cont[res.id!] = res
-					}
-					else {
-						println("Contained resource in \(self) without \"_id\" will be ignored")
-					}
-				}
-				contained = cont
-			}
-			if let val = js["extension"] as? [FHIRJSON] {
-				self.extension_fhir = Extension.from(val, owner: self) as? [Extension]
-			}
-			if let val = js["modifierExtension"] as? [FHIRJSON] {
-				self.modifierExtension = Extension.from(val, owner: self) as? [Extension]
+		if let errors = populateFromJSON(json) {
+			for error in errors {
+				fhir_logIfDebug(error.localizedDescription)
 			}
 		}
+	}
+	
+	
+	// MARK: - JSON Capabilities
+	
+	/**
+		Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
+		
+		:param: json The JSON dictionary to pull data from
+		:returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
+			properties of the wrong type
+	 */
+	public final func populateFromJSON(json: FHIRJSON?) -> [NSError]? {
+		let present = NSMutableSet()
+		var errors = populateFromJSON(json, presentKeys: present) ?? [NSError]()
+		
+		// superfluous JSON entries?
+		let superfluous = json?.keys.array.filter() { !present.containsObject($0) }
+		if let supflu = superfluous where !supflu.isEmpty {
+			for sup in supflu {
+				errors.append(fhir_generateJSONError("\(self) has superfluous JSON property “\(sup)”, ignoring"))
+			}
+		}
+		return errors.isEmpty ? nil : errors
+	}
+	
+	/**
+		Internal function to perform the actual JSON parsing and pass used key information from sub to superclass.
+	 */
+	func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
+		if let js = json {
+			var errors = [NSError]()
+			
+			if let exist: AnyObject = js["id"] {
+				presentKeys.addObject("id")
+				if let val = exist as? String {
+					id = val
+				}
+				else {
+					errors.append(fhir_generateJSONError("\(self) expects JSON property “id” to be `String`, but is \(exist.dynamicType)"))
+				}
+			}
+			if let exist: AnyObject = js["contained"] {
+				presentKeys.addObject("contained")
+				if let arr = exist as? [FHIRJSON] {
+					var cont = contained ?? [String: FHIRContainedResource]()
+					for dict in arr {
+						let res = FHIRContainedResource(json: dict, owner: self)
+						if nil != res.id {
+							cont[res.id!] = res
+						}
+						else {
+							println("Contained resource in \(self) without “_id” will be ignored")
+						}
+					}
+					contained = cont
+				}
+				else {
+					errors.append(fhir_generateJSONError("\(self) expects JSON property “contained” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+				}
+			}
+			if let exist: AnyObject = js["extension"] {
+				presentKeys.addObject("extension")
+				if let val = exist as? [FHIRJSON] {
+					extension_fhir = Extension.from(val, owner: self) as? [Extension]
+				}
+				else {
+					errors.append(fhir_generateJSONError("\(self) expects JSON property “extension” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+				}
+			}
+			if let exist: AnyObject = js["modifierExtension"] {
+				presentKeys.addObject("modifierExtension")
+				if let val = exist as? [FHIRJSON] {
+					modifierExtension = Extension.from(val, owner: self) as? [Extension]
+				}
+				else {
+					errors.append(fhir_generateJSONError("\(self) expects JSON property “modifierExtension” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+				}
+			}
+			return errors.isEmpty ? nil : errors
+		}
+		return nil
 	}
 	
 	/**

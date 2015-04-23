@@ -6,11 +6,16 @@
 //  2014, SMART Health IT.
 //
 
+import Foundation
+
 
 /**
  *  A JSON dictionary, with `String` keys and `AnyObject` values.
  */
 public typealias FHIRJSON = [String: AnyObject]
+
+/// Error domain used for errors raised during JSON parsing.
+public let FHIRJSONErrorDomain = "FHIRJSONError"
 
 
 /**
@@ -64,5 +69,18 @@ public func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 
 public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 	return lhs.value == rhs.value
+}
+
+
+// MARK: - Helper Functiosn
+
+public func fhir_logIfDebug(log: String) {
+#if DEBUG
+	println("SwiftFHIR: \(log)")
+#endif
+}
+
+func fhir_generateJSONError(message: String, code: Int = 0) -> NSError {
+	return NSError(domain: FHIRJSONErrorDomain, code: code, userInfo: [NSLocalizedDescriptionKey: message])
 }
 

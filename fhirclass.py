@@ -39,6 +39,7 @@ class FHIRClass(object):
         self.short = element.definition.short
         self.formal = element.definition.formal
         self.properties = []
+        self.expanded_nonoptionals = {}
     
     def add_property(self, prop):
         """ Add a property to the receiver.
@@ -60,6 +61,12 @@ class FHIRClass(object):
         
         self.properties.append(prop)
         self.properties = sorted(self.properties, key=lambda x: x.name)
+        
+        if prop.nonoptional and prop.one_of_many is not None:
+            if prop.one_of_many in self.expanded_nonoptionals:
+                self.expanded_nonoptionals[prop.one_of_many].append(prop)
+            else:
+                self.expanded_nonoptionals[prop.one_of_many] = [prop]
     
     def property_for(self, prop_name):
         for prop in self.properties:
@@ -91,10 +98,12 @@ class FHIRClassProperty(object):
         spec = element.profile.spec
         
         self.path = element.path
+        self.one_of_many = None        # assign if this property has been expanded from "property[x]"
         if not type_name:
             type_name = type_obj.code
         name = element.definition.prop_name
         if '[x]' in name:
+            self.one_of_many = name
             name = name.replace('[x]', '{}{}'.format(type_name[:1].upper(), type_name[1:]))
         
         self.orig_name = name

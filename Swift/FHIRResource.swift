@@ -33,6 +33,13 @@ public class FHIRResource: FHIRElement
 		super.init(json: json)
 	}
 	
+	override func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
+		if let resType = json?["resourceType"] as? String {
+			presentKeys.addObject("resourceType")
+		}
+		return super.populateFromJSON(json, presentKeys: presentKeys)
+	}
+	
 	/** Serialize the receiver to JSON. */
 	override public func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
