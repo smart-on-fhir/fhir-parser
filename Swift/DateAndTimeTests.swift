@@ -87,6 +87,12 @@ class DateTests: XCTestCase
 		XCTAssertFalse(a == b)
 		XCTAssertTrue(a == a)
 	}
+	
+	func testConversion() {
+		let date = Date(string: "1981-03-28")!
+		let ns = date.nsDate
+		XCTAssertEqual(date, ns.asDate(), "Conversion to NSDate and back again must not alter `Date`")
+	}
 }
 
 
@@ -166,6 +172,12 @@ class TimeTests: XCTestCase
 		XCTAssertTrue(a > b)
 		XCTAssertFalse(a == b)
 		XCTAssertTrue(a == a)
+	}
+	
+	func testConversion() {
+		let time = Time(string: "15:42:03")!
+		let ns = time.nsDate
+		XCTAssertEqual(time, ns.asTime(), "Conversion to NSDate and back again must not alter `Time`")
 	}
 }
 
@@ -410,6 +422,16 @@ class DateTimeTests: XCTestCase
 		XCTAssertTrue(a == b)
 		XCTAssertTrue(a == a)
 	}
+	
+	func testConversion() {
+		let dt = DateTime(string: "1981-03-28T15:42:03")!
+		let ns = dt.nsDate
+		XCTAssertEqual(dt, ns.asDateTime(), "Conversion to NSDate and back again must not alter `DateTime`")
+		
+		let dt2 = DateTime(string: "1981-03-28T15:42:03-0100")!
+		let ns2 = dt2.nsDate
+		XCTAssertEqual(dt2, ns2.asDateTime(), "Conversion to NSDate and back again must not alter `DateTime`")
+	}
 }
 
 
@@ -492,6 +514,12 @@ class InstantTests: XCTestCase
 		XCTAssertFalse(a > b)
 		XCTAssertTrue(a == b)
 		XCTAssertTrue(a == a)
+	}
+	
+	func testConversion() {
+		let inst = Instant(string: "1981-03-28T15:42:03-0500")!
+		let ns = inst.nsDate
+		XCTAssertEqual(inst, ns.asInstant(), "Conversion to NSDate and back again must not alter `Instant`")
 	}
 }
 
