@@ -34,7 +34,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		super.init(json: json)
 	}
 {% if klass.has_nonoptional %}	
-	/** Convenience initializer, taking all required properties an arguments. */
+	/** Convenience initializer, taking all required properties as arguments. */
 	public convenience init(
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
 		{%- if past_first_item %}, {% endif -%}
