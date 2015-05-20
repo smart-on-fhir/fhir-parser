@@ -606,25 +606,25 @@ class DateAndTimeParser
 public extension NSDate
 {
 	/** Create a `Date` instance from the receiver. */
-	func asDate() -> Date {
+	func fhir_asDate() -> Date {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return date
 	}
 	
 	/** Create a `Time` instance from the receiver. */
-	func asTime() -> Time {
+	func fhir_asTime() -> Time {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return time
 	}
 	
 	/** Create a `DateTime` instance from the receiver. */
-	func asDateTime() -> DateTime {
+	func fhir_asDateTime() -> DateTime {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return DateTime(date: date, time: time, timeZone: tz)
 	}
 	
 	/** Create an `Instance` instance from the receiver. */
-	func asInstant() -> Instant {
+	func fhir_asInstant() -> Instant {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return Instant(date: date, time: time, timeZone: tz)
 	}
