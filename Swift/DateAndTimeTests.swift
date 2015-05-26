@@ -430,7 +430,7 @@ class DateTimeTests: XCTestCase
 		
 		let dt2 = DateTime(string: "1981-03-28T15:42:03-0100")!
 		let ns2 = dt2.nsDate
-		XCTAssertEqual(dt2, ns2.asDateTime(), "Conversion to NSDate and back again must not alter `DateTime`")
+		XCTAssertEqual(dt2, ns2.fhir_asDateTime(), "Conversion to NSDate and back again must not alter `DateTime`")
 	}
 }
 
