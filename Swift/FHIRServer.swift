@@ -9,8 +9,43 @@
 import Foundation
 
 
+/// The FHIR server error domain.
+public let FHIRServerErrorDomain = "FHIRServerError"
+
+
 /**
-	Protocol for server objects to be used by `FHIRResource` and subclasses.
+    Struct to describe REST request types, with a convenience method to make a request FHIR compliant.
+ */
+public enum FHIRRequestType: String
+{
+	case GET = "GET"
+	case PUT = "PUT"
+	case POST = "POST"
+	
+	/** Prepare a given mutable URL request with appropriate headers, methods and body values. */
+	func prepareRequest(req: NSMutableURLRequest, body: NSData? = nil) {
+		req.HTTPMethod = rawValue
+		switch self {
+		case .GET:
+			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
+			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
+		case .PUT:
+			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
+			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
+			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
+			req.HTTPBody = body
+		case .POST:
+			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
+			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
+			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
+			req.HTTPBody = body
+		}
+	}
+}
+
+
+/**
+    Protocol for server objects to be used by `FHIRResource` and subclasses.
  */
 public protocol FHIRServer
 {
@@ -18,60 +53,42 @@ public protocol FHIRServer
 	var baseURL: NSURL { get }
 	
 	
-	// MARK: - Base Requests
+	// MARK: - HTTP Request
 	
 	/**
-		Instance method that takes a path, which is relative to `baseURL`, executes a GET request from that URL and
-		returns a JSON response object in the callback.
-		
-		:param: path The REST path to request, relative to the server's base URL
-		:param: callback The callback to call when the request ends (success or failure)
-	 */
-	func getJSON(path: String, callback: ((response: FHIRServerJSONResponse) -> Void))
+	    Performs an HTTP request against a relative path on the receiver.
 	
-	/**
-		Instance method that takes a path, which is relative to `baseURL`, executes a PUT request at that URL and
-		returns a JSON response object in the callback.
-		
-		:param: path The REST path to request, relative to the server's base URL
-		:param: body The request body data as FHIRJSON
-		:param: callback The callback to call when the request ends (success or failure)
-	 */
-	func putJSON(path: String, body: FHIRJSON, callback: ((response: FHIRServerJSONResponse) -> Void))
+	    The supplied request handler can provide request body data, depending on which class it is, and also determines the type of
+	    response and how response data is handled.
 	
-	/**
-		Instance method that takes a path, which is relative to `baseURL`, executes a POST request at that URL and
-		returns a JSON response object in the callback.
+	    This method is being called from the REST extension on `Resource`, with a JSON request handler and therefore expected to deliver a
+	    JSON response.
 	
-		:param: path The REST path to request, relative to the server's base URL
-		:param: body The request body data as FHIRJSON
-		:param: callback The callback to call when the request ends (success or failure)
+	    :param: path The REST path to request, relative to the server's base URL
+	    :param: handler The FHIRServerRequestHandler instance informing NSURLRequest creation
+	    :param: callback The callback to call when the request ends (success or failure)
 	 */
-	func postJSON(path: String, body: FHIRJSON, callback: ((response: FHIRServerJSONResponse) -> Void))
+	func performRequestAgainst<R: FHIRServerRequestHandler>(path: String, handler: R, callback: ((response: R.ResponseType) -> Void))
 	
 	
 	// MARK: - Operations
 	
 	/**
-		Performs the given Operation.
+	    Performs the given Operation.
 	
-		The server should first validate the operation and only proceed with execution if validation succeeds.
-		
-		:param: operation The operation instance to perform
-		:param: callback The callback to call when the request ends (success or failure)
+	    The server should first validate the operation and only proceed with execution if validation succeeds.
+	
+	    `Resource` has extensions to facilitate working with operations, be sure to take a look.
+	
+	    :param: operation The operation instance to perform
+	    :param: callback The callback to call when the request ends (success or failure)
 	 */
-	func perform(operation: FHIROperation, callback: ((response: FHIRServerJSONResponse) -> Void))
+	func performOperation(operation: FHIROperation, callback: ((response: FHIRServerJSONResponse) -> Void))
 }
 
-/**
-	Protocol to be used by FHIRServer classes when responding to JSON requests.
- */
-public protocol FHIRServerJSONResponse
-{
-	/// Error that occurred during request or response, if any
-	var error: NSError?
-	
-	/// The JSON response
-	var json: FHIRJSON?
+
+/** Create an error in the FHIRServerErrorDomain error domain. */
+func genServerError(message: String, code: Int = 0) -> NSError {
+	return NSError(domain: FHIRServerErrorDomain, code: code, userInfo: [NSLocalizedDescriptionKey: message])
 }
 
