@@ -190,7 +190,7 @@ public class FHIRElement: Printable
 		:param: owner The FHIRElement owning the new instance, if appropriate
 		:returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
 	 */
-	final class func instantiateFrom(json: FHIRJSON?, owner: FHIRElement?) -> FHIRElement {
+	public final class func instantiateFrom(json: FHIRJSON?, owner: FHIRElement?) -> FHIRElement {
 		if let type = json?["resourceType"] as? String {
 			return factory(type, json: json!, owner: owner)
 		}
@@ -203,7 +203,7 @@ public class FHIRElement: Printable
 		Instantiates an array of the receiver's type and returns it.
 		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
 	 */
-	final class func from(array: [FHIRJSON]) -> [FHIRElement] {
+	public final class func from(array: [FHIRJSON]) -> [FHIRElement] {
 		var arr = [FHIRElement]()
 		for arrJSON in array {
 			arr.append(self(json: arrJSON))
@@ -214,7 +214,7 @@ public class FHIRElement: Printable
 	/**
 		Instantiates an array of the receiver's type and returns it.
 	 */
-	final class func from(array: [FHIRJSON], owner: FHIRElement?) -> [FHIRElement] {
+	public final class func from(array: [FHIRJSON], owner: FHIRElement?) -> [FHIRElement] {
 		let arr = from(array)
 		for elem in arr {
 			elem._owner = owner			// would be neater to use init(json:owner:) but cannot use non-required init with dynamic type
