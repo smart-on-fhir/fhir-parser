@@ -21,24 +21,25 @@ public enum FHIRRequestType: String
 	case GET = "GET"
 	case PUT = "PUT"
 	case POST = "POST"
+	case DELETE = "DELETE"
 	
 	/** Prepare a given mutable URL request with appropriate headers, methods and body values. */
 	func prepareRequest(req: NSMutableURLRequest, body: NSData? = nil) {
 		req.HTTPMethod = rawValue
+		req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
+		req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
+		
 		switch self {
 		case .GET:
-			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
-			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
+			break
 		case .PUT:
 			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
-			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
-			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
 			req.HTTPBody = body
 		case .POST:
 			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
-			req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
-			req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
 			req.HTTPBody = body
+		case .DELETE:
+			break
 		}
 	}
 }
