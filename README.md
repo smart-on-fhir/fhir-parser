@@ -12,13 +12,21 @@ Unless you have a desire to understand how parsing works, you should be able to 
 The `master` branch is currently on _DSTU 2, May 2015 ballot_.  
 The `develop` branch is currently on _DSTU 2_ and WiP.
 
-See [tags][releases] for other specific FHIR versions.
+See [tags](releases) for other specific FHIR versions.
 
 ### Use ###
 
 1. Copy the file `settings.py` from the language's subdirectory into the project's root directory, 
 2. Adjust settings, if necessary
-3. Execute `./generate.py` to run the script.
+3. Install requirements by running `pip3` (or `pip`):
+    ```bash
+    pip3 install -r requirements.txt
+    ```
+
+4. Run the script:
+    ```bash
+    ./generate.py
+    ```
     This will use Python _3_, issue `python generate.py` if you don't have Python 3 yet.
     Supply the `-f` flag to force a re-download of the spec.
 
@@ -62,6 +70,8 @@ Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 ```
 
 ### Requirements ###
+
+The generated Python classes require the following packages to be installed:
 
 ```text
 isodate
