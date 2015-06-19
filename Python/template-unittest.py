@@ -30,7 +30,7 @@ class {{ class.name }}Tests(unittest.TestCase):
         self.impl{{ class.name }}{{ loop.index }}(inst2)
     
     def impl{{ class.name }}{{ loop.index }}(self, inst):
-    {% for onetest in tcase.tests %}
+    {%- for onetest in tcase.tests %}
     {%- if "str" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
     {%- else %}{% if "int" == onetest.klass.name or "float" == onetest.klass.name or "NSDecimalNumber" == onetest.klass.name %}
