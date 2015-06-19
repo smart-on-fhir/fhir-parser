@@ -16,10 +16,6 @@ class FHIRResource(fhirelement.FHIRElement):
     resource_name = 'Resource'
     
     def __init__(self, jsondict=None):
-        self._local_id = None
-        """ If the instance was read from a server, this is the id that was
-        used, likely the same as `id`. """
-        
         self._server = None
         """ The server the instance was read from. """
         
@@ -36,7 +32,35 @@ class FHIRResource(fhirelement.FHIRElement):
         return super(FHIRResource, cls).with_json(jsonobj)
     
     
+    # MARK: Handling Paths
+    
+    def relativeBase(self):
+        return self.__class__.resource_name
+    
+    def relativePath(self):
+        return "{}/{}".format(self.relativeBase(), self.id)
+    
+    
     # MARK: Server Connection
+    
+    def server(self):
+        """ Walks the owner hierarchy until it finds an owner with a server.
+        """
+        if self._server is not None:
+            return self._server
+        owningRes = self.owningResource()
+        return owningRes.server() if owningRes is not None else None
+    
+    def owningResource(self):
+        """ Walks the owner hierarchy and returns the next parent that is a
+        FHIRResource instance.
+        """
+        owner = self._owner
+        while owner is not None:
+            if isinstance(owner, self.__class__):
+                break
+            owner = owner._owner
+        return owner
     
     @classmethod
     def read(cls, rem_id, server):

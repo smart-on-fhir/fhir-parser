@@ -40,18 +40,15 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     
 {%- if klass.properties %}
     
-    def update_with_json(self, jsondict):
-        super({{ klass.name }}, self).update_with_json(jsondict)
+    def elementProperties(self):
+        js = super({{ klass.name }}, self).elementProperties()
+        js.extend([
         {%- for prop in klass.properties %}
-        if '{{ prop.orig_name }}' in jsondict:
-            {%- if prop.is_native %}
-            self.{{ prop.name }} = jsondict['{{ prop.orig_name }}']
-            
-            {%- else %}
-            self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
-                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.orig_name }}'], self)
-            {%- endif %}
+            ("{{ prop.name }}", "{{ prop.orig_name }}",
+            {%- if prop.module_name %} {{ prop.module_name }}.{% else %} {% endif %}{{ prop.class_name }}, {{ prop.is_array }}),
         {%- endfor %}
+        ])
+        return js
     
 {%- endif %}
 {%- endfor %}

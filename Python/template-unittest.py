@@ -18,15 +18,18 @@ class {{ class.name }}Tests(unittest.TestCase):
         datadir = os.environ.get('FHIR_UNITTEST_DATADIR') or ''
         with io.open(os.path.join(datadir, filename), 'r', encoding='utf-8') as handle:
             js = json.load(handle)
-        instance = {{ class.module }}.{{ class.name }}(js)
-        self.assertIsNotNone(instance, "Must have instantiated a test instance")
-        return instance
+        return {{ class.module }}.{{ class.name }}(js)
     
 {%- for tcase in tests %}
     
     def test{{ class.name }}{{ loop.index }}(self):
         inst = self.instantiate_from("{{ tcase.filename }}")
-        self.assertIsNotNone(inst, "Must have instantiated a {{ class }} instance")
+        self.assertIsNotNone(inst, "Must have instantiated a {{ class.name }} instance")
+        self.impl{{ class.name }}{{ loop.index }}(inst)
+        inst2 = {{ class.module }}.{{ class.name }}(inst.as_json())
+        self.impl{{ class.name }}{{ loop.index }}(inst2)
+    
+    def impl{{ class.name }}{{ loop.index }}(self, inst):
     {% for onetest in tcase.tests %}
     {%- if "str" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
@@ -40,7 +43,7 @@ class {{ class.name }}Tests(unittest.TestCase):
         {%- endif %}
     {%- else %}{% if "FHIRDate" == onetest.klass.name %}
         self.assertEqual(inst.{{ onetest.path }}.date, FHIRDate("{{ onetest.value }}").date)
-        self.assertEqual(inst.{{ onetest.path }}.isostring, "{{ onetest.value }}")
+        self.assertEqual(inst.{{ onetest.path }}.as_json(), "{{ onetest.value }}")
     {%- else %}
         # Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
     {%- endif %}{% endif %}{% endif %}{% endif %}

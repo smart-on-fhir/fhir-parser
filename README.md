@@ -55,7 +55,8 @@ Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 [x] Deserialize from JSON
 [x] Implement reference resolver (for contained resources)
 [ ] Implement reference resolver (for remote resources)
-[ ] Serialize to JSON
+[ ] Implement working with references in code
+[x] Serialize to JSON
 [x] Generate search parameter builder
 [x] Generate unit tests from JSON example files
 ```
