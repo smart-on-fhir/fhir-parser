@@ -2,6 +2,13 @@ Python FHIR Parser
 ==================
 
 A Python FHIR specification parser for model class generation.
+If you've come here because you want _Swift_ or _Python_ classes for FHIR data models, look at our client libraries instead:
+
+- [Swift-FHIR](https://github.com/smart-on-fhir/Swift-FHIR) and [Swift-SMART](https://github.com/smart-on-fhir/Swift-SMART)
+- Python [client-py](https://github.com/smart-on-fhir/client-py)
+
+### Tech ###
+
 The _generate.py_ script downloads [FHIR specification][fhir] files, parses the profiles and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
 Additionally, `FHIRUnitTest` (in _fhirunittest.py_) instances get created that can generate unit tests from provided FHIR examples.
 These representations are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
@@ -12,12 +19,12 @@ Unless you have a desire to understand how parsing works, you should be able to 
 The `master` branch is currently on _DSTU 2, May 2015 ballot_.  
 The `develop` branch is currently on _DSTU 2_ and WiP.
 
-See [tags](releases) for other specific FHIR versions.
+See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for other specific FHIR versions.
 
 ### Use ###
 
-1. Copy the file `settings.py` from the language's subdirectory into the project's root directory, 
-2. Adjust settings, if necessary
+1. Copy the file `settings.py` from the language's subdirectory into the project's root directory, then
+2. Adjust settings, especially those determining where the generated classes will be copied to, found at the top of `settings.py`.
 3. Install requirements by running `pip3` (or `pip`):
     ```bash
     pip3 install -r requirements.txt
