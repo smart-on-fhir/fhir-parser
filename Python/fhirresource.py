@@ -102,8 +102,59 @@ class FHIRResource(fhirelement.FHIRElement):
         ret = server.request_json(path)
         instance = cls(jsondict=ret)
         instance._server = server
-        
         return instance
+    
+    def create(self, server):
+        """ Attempt to create the receiver on the given server, using a POST
+        command.
+        
+        :param FHIRServer server: The server to create the receiver on
+        :returns: None or the response JSON on success
+        """
+        srv = server or self.server
+        if srv is None:
+            raise Exception("Cannot create a resource without a server")
+        if self.id:
+            raise Exception("This resource already has an id, cannot create")
+        
+        ret = srv.post_json(self.relativePath(), self.as_json())
+        if len(ret.text) > 0:
+            return ret.json()
+        return None
+    
+    def update(self, server=None):
+        """ Update the receiver's representation on the given server, issuing
+        a PUT command.
+        
+        :param FHIRServer server: The server to update the receiver on;
+            optional, will use the instance's `server` if needed.
+        :returns: None or the response JSON on success
+        """
+        srv = server or self.server
+        if srv is None:
+            raise Exception("Cannot update a resource that does not have a server")
+        if not self.id:
+            raise Exception("Cannot update a resource that does not have an id")
+        
+        ret = srv.put_json(self.relativePath(), self.as_json())
+        if len(ret.text) > 0:
+            return ret.json()
+        return None
+    
+    def delete(self):
+        """ Delete the receiver from the given server with a DELETE command.
+        
+        :returns: None or the response JSON on success
+        """
+        if self.server is None:
+            raise Exception("Cannot delete a resource that does not have a server")
+        if not self.id:
+            raise Exception("Cannot delete a resource that does not have an id")
+        
+        ret = self.server.delete_json(self.relativePath())
+        if len(ret.text) > 0:
+            return ret.json()
+        return None
     
     
     # MARK: Search
