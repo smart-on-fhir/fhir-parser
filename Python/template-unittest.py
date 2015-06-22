@@ -18,6 +18,7 @@ class {{ class.name }}Tests(unittest.TestCase):
         datadir = os.environ.get('FHIR_UNITTEST_DATADIR') or ''
         with io.open(os.path.join(datadir, filename), 'r', encoding='utf-8') as handle:
             js = json.load(handle)
+            self.assertEqual("{{ class.name }}", js["resourceType"])
         return {{ class.module }}.{{ class.name }}(js)
     
 {%- for tcase in tests %}
@@ -26,7 +27,10 @@ class {{ class.name }}Tests(unittest.TestCase):
         inst = self.instantiate_from("{{ tcase.filename }}")
         self.assertIsNotNone(inst, "Must have instantiated a {{ class.name }} instance")
         self.impl{{ class.name }}{{ loop.index }}(inst)
-        inst2 = {{ class.module }}.{{ class.name }}(inst.as_json())
+        
+        js = inst.as_json()
+        self.assertEqual("{{ class.name }}", js["resourceType"])
+        inst2 = {{ class.module }}.{{ class.name }}(js)
         self.impl{{ class.name }}{{ loop.index }}(inst2)
     
     def impl{{ class.name }}{{ loop.index }}(self, inst):
