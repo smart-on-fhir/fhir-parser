@@ -29,7 +29,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         """
     {%- for prop in klass.properties %}
         
-        self.{{ prop.name }} = {% if "bool" == prop.class_name %}False{% else %}None{% endif %}
+        self.{{ prop.name }} = None
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
         {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}

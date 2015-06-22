@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  Generated from FHIR {{ info.version }} ({{ info.filename }}) on {{ info.date }}.
+#  Generated from FHIR {{ info.version }} on {{ info.date }}.
 #  {{ info.year }}, SMART Health IT.
 
 
