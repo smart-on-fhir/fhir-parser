@@ -9,8 +9,8 @@ import os
 import io
 import unittest
 import json
-import {{ class.module }}
-from fhirdate import FHIRDate
+from . import {{ class.module }}
+from .fhirdate import FHIRDate
 
 
 class {{ class.name }}Tests(unittest.TestCase):

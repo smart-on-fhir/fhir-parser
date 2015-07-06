@@ -5,7 +5,7 @@
 #  {{ info.year }}, SMART Health IT.
 
 {% for imp in imports %}
-import {{ imp.module }}
+from . import {{ imp.module }}
 {%- endfor %}
 
 {%- for klass in classes %}

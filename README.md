@@ -63,6 +63,11 @@ Classes for Python are targeted towards Python 3 but will support the later 2.x 
 All resource classes will inherit from the `FHIRResource` base class, which is a subclass of `FHIRElement`.
 Dates are expressed as `FHIRDate` instances which can parse valid ISO dates.
 
+The generated classes will use relative imports in the form `from . import medication`.
+This avoids namespaces clashes but requires that you use them from within a package.
+See the [SMART Python Client][client-py] for a setup that works (all model classes are in a `models` subdirectory).
+
+
 ### Python TODO: ###
 
 ```text
@@ -89,3 +94,4 @@ isodate
 [jinja]: http://jinja.pocoo.org
 [swift]: https://developer.apple.com/swift/
 [swift-fhir]: https://github.com/smart-on-fhir/Swift-FHIR
+[client-py]: https://github.com/smart-on-fhir/client-py
