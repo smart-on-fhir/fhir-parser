@@ -91,17 +91,19 @@ public class FHIRElement: Printable
 					errors.append(fhir_generateJSONError("\(self) expects JSON property “id” to be `String`, but is \(exist.dynamicType)"))
 				}
 			}
+			
+			// extract contained resources
 			if let exist: AnyObject = js["contained"] {
 				presentKeys.addObject("contained")
 				if let arr = exist as? [FHIRJSON] {
 					var cont = contained ?? [String: FHIRContainedResource]()
 					for dict in arr {
 						let res = FHIRContainedResource(json: dict, owner: self)
-						if nil != res.id {
-							cont[res.id!] = res
+						if let res_id = res.id {
+							cont[res_id] = res
 						}
 						else {
-							println("Contained resource in \(self) without “_id” will be ignored")
+							println("Contained resource in \(self) without “id” will be ignored")
 						}
 					}
 					contained = cont
@@ -110,6 +112,8 @@ public class FHIRElement: Printable
 					errors.append(fhir_generateJSONError("\(self) expects JSON property “contained” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
 				}
 			}
+			
+			// instantiate (modifier-)extensions
 			if let exist: AnyObject = js["extension"] {
 				presentKeys.addObject("extension")
 				if let val = exist as? [FHIRJSON] {
@@ -134,7 +138,7 @@ public class FHIRElement: Printable
 	}
 	
 	/**
-		Represent the receiver in a FHIRJSON, ready to be used for JSON serialization.
+		Represent the receiver in FHIRJSON, ready to be used for JSON serialization.
 	 */
 	public func asJSON() -> FHIRJSON {
 		var json = FHIRJSON()
@@ -145,8 +149,12 @@ public class FHIRElement: Printable
 		}
 		if let contained = self.contained {
 			var arr = [FHIRJSON]()
-			for (key, val) in contained {
-				arr.append(val.json ?? FHIRJSON())		// TODO: check if it has been resolved, if so use `asJSON()`
+			for (key, cont) in contained {
+				let refid = cont.id ?? key
+				var resolved = resolvedReference(refid)
+				var json = resolved?.asJSON() ?? cont.json ?? FHIRJSON()
+				json["id"] = refid
+				arr.append(json)
 			}
 			json["contained"] = arr
 		}
@@ -201,7 +209,7 @@ public class FHIRElement: Printable
 	
 	/**
 		Instantiates an array of the receiver's type and returns it.
-		TODO: Returning [Self] is not yet possible (Xcode 6.2b3), too bad
+		TODO: Returning [Self] is not yet possible (Swift 1.2), too bad
 	 */
 	public final class func from(array: [FHIRJSON]) -> [FHIRElement] {
 		var arr = [FHIRElement]()
@@ -223,7 +231,7 @@ public class FHIRElement: Printable
 	}
 	
 	
-	// MARK: - Handling References
+	// MARK: - Contained Resources
 	
 	/** Returns the contained reference with the given id, if it exists. */
 	func containedReference(refid: String) -> FHIRContainedResource? {
@@ -232,6 +240,49 @@ public class FHIRElement: Printable
 		}
 		return _owner?.containedReference(refid)
 	}
+	
+	/**
+	Contains the given contained resource instance and returns the Reference element on success.
+	
+	:param containedResource: The instance to add to the `contained` dictionary
+	:returns: A `Reference` instance if containment was successful
+	*/
+	func containReference(containedResource: FHIRContainedResource) -> Reference? {
+		if let refid = containedResource.id where !refid.isEmpty {
+			var cont = contained ?? [String: FHIRContainedResource]()
+			cont[refid] = containedResource
+			contained = cont
+			
+			let ref = Reference(json: nil, owner: self)
+			ref.reference = "#\(refid)"
+			return ref
+		}
+		fhir_logIfDebug("cannot contain a FHIRContainedResource without a non-empty id, have: \(containedResource)")
+		return nil
+	}
+	
+	/**
+	Embeds the given resource as a contained resource with the given id.
+	
+	:param resource: The resource to contain
+	:param withId: The id to use as internal reference
+	:returns: A `Reference` instance if containment was successful
+	*/
+	public func containResource(resource: Resource, withId: String) -> Reference? {
+		if !withId.isEmpty {
+			let contRes = FHIRContainedResource(id: withId, json: resource.asJSON(), owner: self)
+			if let ref = containReference(contRes) {
+				resource._owner = self
+				didResolveReference(withId, resolved: resource)
+				return ref
+			}
+		}
+		fhir_logIfDebug("cannot contain a Resource with an empty id")
+		return nil
+	}
+	
+	
+	// MARK: - Resolving References
 	
 	/** Returns the resolved reference with the given id, if it has been resolved already. */
 	func resolvedReference(refid: String) -> Resource? {
@@ -257,8 +308,7 @@ public class FHIRElement: Printable
 	}
 	
 	/**
-		The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if
-		any.
+		The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if any.
 	 */
 	func owningResource() -> FHIRResource? {
 		var owner = _owner
