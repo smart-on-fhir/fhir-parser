@@ -55,7 +55,8 @@ class FHIRProfileRenderer(FHIRRenderer):
         """
         for filepath, module, contains in self.settings.manual_profiles:
             if os.path.exists(filepath):
-                tgt = os.path.join(self.settings.resource_base_target, os.path.basename(filepath))
+                resource_target_dir = os.path.dirname(self.settings.tpl_resource_target_ptrn)
+                tgt = os.path.join(resource_target_dir, os.path.basename(filepath))
                 logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
     

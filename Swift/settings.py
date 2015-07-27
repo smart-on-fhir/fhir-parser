@@ -28,7 +28,7 @@ resource_modules_lowercase = False							# whether all resource paths (i.e. modu
 tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source when writing resource implementations for profiles
 resource_default_base = 'FHIRResource'                      # the default superclass to use for main profile models
 contained_default_base = 'Element'                          # the default superclass to use for inline-defined (backbone) models
-manual_profiles = [                                         # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
+manual_profiles = [                                         # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Swift/FHIRElement.swift', None, ['Element', 'BackboneElement']),
     ('Swift/FHIRResource.swift', None, ['FHIRResource']),
     ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),

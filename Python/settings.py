@@ -28,7 +28,7 @@ resource_modules_lowercase = True                       # whether all resource p
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
 resource_default_base = 'FHIRResource'                  # the default superclass to use for main profile models
 contained_default_base = 'FHIRElement'                  # the default superclass to use for inline-defined (backbone) models
-manual_profiles = [                                     # all these profiles should be copied to `resource_base_target`: tuples of (path, module, profile-name-list)
+manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Python/fhirelement.py', 'fhirelement', [
         'boolean',
         'string', 'base64Binary', 'code', 'id',
