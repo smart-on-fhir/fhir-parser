@@ -21,7 +21,7 @@ public let FHIRJSONErrorDomain = "FHIRJSONError"
 /**
  *  Data encoded as a base-64 string.
  */
-public struct Base64Binary: StringLiteralConvertible, Printable, Equatable, Comparable
+public struct Base64Binary: StringLiteralConvertible, CustomStringConvertible, Equatable, Comparable
 {
 	public typealias UnicodeScalarLiteralType = Character
 	public typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
@@ -48,18 +48,18 @@ public struct Base64Binary: StringLiteralConvertible, Printable, Equatable, Comp
 	}
 	
 	public static func convertFromExtendedGraphemeClusterLiteral(value: String) -> Base64Binary {
-		return self(stringLiteral: value)
+		return self.init(stringLiteral: value)
 	}
 	
 	public static func convertFromStringLiteral(value: String) -> Base64Binary {
-		return self(stringLiteral: value)
+		return self.init(stringLiteral: value)
 	}
 	
 	
 	// MARK: - Printable
 	
 	public var description: String {
-		return "<Base64Binary; \(nil != value ? count(value!) : 0) chars>"
+		return "<Base64Binary; \(nil != value ? value!.characters.count : 0) chars>"
 	}
 }
 

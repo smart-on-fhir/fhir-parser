@@ -88,6 +88,7 @@ reservedmap = {
     'protocol': 'protocol_fhir',
     'extension': 'extension_fhir',
     'operator': 'operator_fhir',
+    'repeat': 'repeat_fhir',
     'modifier': 'modifier_fhir',          # `modifierExtension` is called "modifier" in JSON
     'description': 'description_fhir',    # Reserved for `Printable` classes
 }

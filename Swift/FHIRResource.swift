@@ -34,7 +34,7 @@ public class FHIRResource: FHIRElement
 	}
 	
 	override func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
-		if let resType = json?["resourceType"] as? String {
+		if let _ = json?["resourceType"] as? String {
 			presentKeys.addObject("resourceType")
 		}
 		return super.populateFromJSON(json, presentKeys: presentKeys)

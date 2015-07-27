@@ -65,9 +65,9 @@ public protocol FHIRServer
 	    This method is being called from the REST extension on `Resource`, with a JSON request handler and therefore expected to deliver a
 	    JSON response.
 	
-	    :param: path The REST path to request, relative to the server's base URL
-	    :param: handler The FHIRServerRequestHandler instance informing NSURLRequest creation
-	    :param: callback The callback to call when the request ends (success or failure)
+	    - parameter path: The REST path to request, relative to the server's base URL
+	    - parameter handler: The FHIRServerRequestHandler instance informing NSURLRequest creation
+	    - parameter callback: The callback to call when the request ends (success or failure)
 	 */
 	func performRequestAgainst<R: FHIRServerRequestHandler>(path: String, handler: R, callback: ((response: R.ResponseType) -> Void))
 	
@@ -81,8 +81,8 @@ public protocol FHIRServer
 	
 	    `Resource` has extensions to facilitate working with operations, be sure to take a look.
 	
-	    :param: operation The operation instance to perform
-	    :param: callback The callback to call when the request ends (success or failure)
+	    - parameter operation: The operation instance to perform
+	    - parameter callback: The callback to call when the request ends (success or failure)
 	 */
 	func performOperation(operation: FHIROperation, callback: ((response: FHIRServerJSONResponse) -> Void))
 }

@@ -12,7 +12,7 @@ import Foundation
 /**
  *  Abstract superclass for all FHIR data elements.
  */
-public class FHIRElement: Printable
+public class FHIRElement: CustomStringConvertible
 {
 	/// The name of the resource or element
 	public class var resourceName: String {
@@ -57,8 +57,8 @@ public class FHIRElement: Printable
 	/**
 		Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
 		
-		:param: json The JSON dictionary to pull data from
-		:returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
+		- parameter json: The JSON dictionary to pull data from
+		- returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
 			properties of the wrong type
 	 */
 	public final func populateFromJSON(json: FHIRJSON?) -> [NSError]? {
@@ -103,7 +103,7 @@ public class FHIRElement: Printable
 							cont[res_id] = res
 						}
 						else {
-							println("Contained resource in \(self) without “id” will be ignored")
+							print("Contained resource in \(self) without “id” will be ignored")
 						}
 					}
 					contained = cont
@@ -151,7 +151,7 @@ public class FHIRElement: Printable
 			var arr = [FHIRJSON]()
 			for (key, cont) in contained {
 				let refid = cont.id ?? key
-				var resolved = resolvedReference(refid)
+				let resolved = resolvedReference(refid)
 				var json = resolved?.asJSON() ?? cont.json ?? FHIRJSON()
 				json["id"] = refid
 				arr.append(json)
@@ -194,15 +194,15 @@ public class FHIRElement: Printable
 		Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
 		specified resource type, or instantiates the receiver's class otherwise.
 		
-		:param: json A FHIRJSON decoded from a JSON response
-		:param: owner The FHIRElement owning the new instance, if appropriate
-		:returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
+		- parameter json: A FHIRJSON decoded from a JSON response
+		- parameter owner: The FHIRElement owning the new instance, if appropriate
+		- returns: If possible the appropriate FHIRElement subclass, instantiated from the given JSON dictionary, Self otherwise
 	 */
 	public final class func instantiateFrom(json: FHIRJSON?, owner: FHIRElement?) -> FHIRElement {
 		if let type = json?["resourceType"] as? String {
 			return factory(type, json: json!, owner: owner)
 		}
-		let instance = self(json: json)		// must use 'required' init with dynamic type
+		let instance = self.init(json: json)		// must use 'required' init with dynamic type
 		instance._owner = owner
 		return instance
 	}
@@ -214,7 +214,7 @@ public class FHIRElement: Printable
 	public final class func from(array: [FHIRJSON]) -> [FHIRElement] {
 		var arr = [FHIRElement]()
 		for arrJSON in array {
-			arr.append(self(json: arrJSON))
+			arr.append(self.init(json: arrJSON))
 		}
 		return arr
 	}
@@ -245,7 +245,7 @@ public class FHIRElement: Printable
 	Contains the given contained resource instance and returns the Reference element on success.
 	
 	:param containedResource: The instance to add to the `contained` dictionary
-	:returns: A `Reference` instance if containment was successful
+	- returns: A `Reference` instance if containment was successful
 	*/
 	func containReference(containedResource: FHIRContainedResource) -> Reference? {
 		if let refid = containedResource.id where !refid.isEmpty {
@@ -266,7 +266,7 @@ public class FHIRElement: Printable
 	
 	:param resource: The resource to contain
 	:param withId: The id to use as internal reference
-	:returns: A `Reference` instance if containment was successful
+	- returns: A `Reference` instance if containment was successful
 	*/
 	public func containResource(resource: Resource, withId: String) -> Reference? {
 		if !withId.isEmpty {
@@ -295,8 +295,8 @@ public class FHIRElement: Printable
 	/**
 		Stores the resolved reference into the `_resolved` dictionary.
 	
-		:param: refid The reference identifier as String
-		:param: resolved The element that was resolved
+		- parameter refid: The reference identifier as String
+		- parameter resolved: The element that was resolved
 	 */
 	func didResolveReference(refid: String, resolved: Resource) {
 		if nil != _resolved {

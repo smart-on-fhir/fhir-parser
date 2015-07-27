@@ -12,7 +12,7 @@ import Foundation
 /**
     A protocol for all our date and time structs.
  */
-protocol DateAndTime: Printable, Comparable
+protocol DateAndTime: CustomStringConvertible, Comparable
 {
 	var nsDate: NSDate { get }
 }
@@ -69,7 +69,7 @@ public struct Date: DateAndTime
 	
 	/** :returns: Today's date */
 	public static func today() -> Date {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return date
 	}
 	
@@ -195,7 +195,7 @@ public struct Time: DateAndTime
 	
 	/** :returns: The clock time of right now. */
 	public static func now() -> Time {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return time
 	}
 	
@@ -438,15 +438,8 @@ class DateNSDateConverter
 	// MARK: Parsing
 	
 	func parse(date inDate: NSDate) -> (Date, Time, NSTimeZone) {
-		let comp = calendar.components(
-			.CalendarUnitYear
-				| .CalendarUnitMonth
-				| .CalendarUnitDay
-				| .CalendarUnitHour
-				| .CalendarUnitMinute
-				| .CalendarUnitSecond
-				| .CalendarUnitNanosecond
-				| .CalendarUnitTimeZone, fromDate: inDate)
+		let flags: NSCalendarUnit = [.Year, .Month, .Day, .Hour, .Minute, .Second, .Nanosecond, .TimeZone]
+		let comp = calendar.components(flags, fromDate: inDate)
 		
 		let date = Date(year: comp.year, month: UInt8(comp.month), day: UInt8(comp.day))
 		let zone = comp.timeZone ?? utc
@@ -467,11 +460,11 @@ class DateNSDateConverter
 		return _create(date: nil, time: time, timeZone: nil)
 	}
 	
-	func create(#date: Date, time: Time, timeZone: NSTimeZone) -> NSDate {
+	func create(date date: Date, time: Time, timeZone: NSTimeZone) -> NSDate {
 		return _create(date: date, time: time, timeZone: timeZone)
 	}
 	
-	func _create(#date: Date?, time: Time?, timeZone: NSTimeZone?) -> NSDate {
+	func _create(date date: Date?, time: Time?, timeZone: NSTimeZone?) -> NSDate {
 		let comp = NSDateComponents()
 		comp.timeZone = timeZone ?? utc
 		
@@ -583,8 +576,8 @@ class DateAndTimeParser
 								}
 							}
 							else if 4 == hourStr?.length {
-								tzhour = hourStr!.substringToIndex(2).toInt()!
-								tzmin = hourStr!.substringFromIndex(2).toInt()!
+								tzhour = Int(hourStr!.substringToIndex(2))!
+								tzmin = Int(hourStr!.substringFromIndex(2))!
 							}
 							
 							let offset = tzhour * 3600 + tzmin * 60
@@ -607,13 +600,13 @@ public extension NSDate
 {
 	/** Create a `Date` instance from the receiver. */
 	func fhir_asDate() -> Date {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return date
 	}
 	
 	/** Create a `Time` instance from the receiver. */
 	func fhir_asTime() -> Time {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return time
 	}
 	
