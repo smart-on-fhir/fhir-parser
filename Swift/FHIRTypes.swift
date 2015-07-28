@@ -134,7 +134,7 @@ public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 
 public func fhir_logIfDebug(log: String) {
 #if DEBUG
-	println("SwiftFHIR: \(log)")
+	print("SwiftFHIR: \(log)")
 #endif
 }
 
