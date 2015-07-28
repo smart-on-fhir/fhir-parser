@@ -6,8 +6,6 @@
 //  2014, SMART Health IT.
 //
 
-import Foundation
-
 
 /**
  *  Abstract superclass for all FHIR resource models.
@@ -33,11 +31,11 @@ public class FHIRResource: FHIRElement
 		super.init(json: json)
 	}
 	
-	override func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
+	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
 		if let _ = json?["resourceType"] as? String {
-			presentKeys.addObject("resourceType")
+			presentKeys.insert("resourceType")
 		}
-		return super.populateFromJSON(json, presentKeys: presentKeys)
+		return super.populateFromJSON(json, presentKeys: &presentKeys)
 	}
 	
 	/** Serialize the receiver to JSON. */

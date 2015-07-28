@@ -6,14 +6,11 @@
 //  2014, SMART Health IT.
 //
 
-import Foundation
-
 
 /**
  *  Contained resources are stored to instances of this class until they are resolved.
  *
- *  The id of contained resources will be referenced from their parents as URL fragment, meaning "med1" will be
- *  referenced as "#med1".
+ *  The id of contained resources will be referenced from their parents as URL fragment, meaning "med1" will be referenced as "#med1".
  *
  *  http://hl7.org/implement/standards/fhir/references.html#contained
  */

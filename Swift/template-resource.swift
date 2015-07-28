@@ -51,12 +51,12 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	}
 {% endif -%}
 {% if klass.properties %}	
-	override func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
-		var errors = super.populateFromJSON(json, presentKeys: presentKeys) ?? [NSError]()
+	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
 		{%- for prop in klass.properties %}
 			if let exist: AnyObject = js["{{ prop.orig_name }}"] {
-				presentKeys.addObject("{{ prop.orig_name }}")
+				presentKeys.insert("{{ prop.orig_name }}")
 				if let val = exist as? {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %} {
 					{%- if prop.class_name == prop.json_class %}
 					self.{{ prop.name }} = val
@@ -77,12 +77,12 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 					{%- endif %}{% endif %}{% endif %}{% endif %}
 				}
 				else {
-					errors.append(fhir_generateJSONError("\(self) expects JSON property \"{{ prop.orig_name }}\" to be {% if prop.is_array %}an array of {% endif %}`{{ prop.json_class }}`, but is \(exist.dynamicType)"))
+					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: exist.dynamicType))
 				}
 			}
 			{%- if prop.nonoptional and not prop.one_of_many %}
 			else {
-				errors.append(fhir_generateJSONError("\(self) expects nonoptional JSON property \"{{ prop.orig_name }}\" but it is missing"))
+				errors.append(FHIRJSONError(key: "{{ prop.orig_name }}"))
 			}
 			{%- endif %}
 		{%- endfor %}
@@ -91,7 +91,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 			// check if nonoptional expanded properties are present
 			{%- for exp, props in klass.expanded_nonoptionals.items() %}
 			if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
-				errors.append(fhir_generateJSONError("\(self) expects at least one of nonoptional JSON property \"{{ exp }}\" but none was found"))
+				errors.append(FHIRJSONError(key: "{{ exp }}*"))
 			}
 			{%- endfor %}
 		{%- endif %}

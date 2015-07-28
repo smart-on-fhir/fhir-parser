@@ -25,11 +25,11 @@ class {{ class.name }}Tests: FHIRModelTestCase
 {%- for tcase in tests %}
 	
 	func test{{ class.name }}{{ loop.index }}() throws {
-		let instance = try test{{ class.name }}{{ loop.index }}_impl()
-		try test{{ class.name }}{{ loop.index }}_impl(instance.asJSON())
+		let instance = try run{{ class.name }}{{ loop.index }}()
+		try run{{ class.name }}{{ loop.index }}(instance.asJSON())
 	}
 	
-	func test{{ class.name }}{{ loop.index }}_impl(json: FHIRJSON? = nil) throws -> {{ class.name }} {
+	func run{{ class.name }}{{ loop.index }}(json: FHIRJSON? = nil) throws -> {{ class.name }} {
 		let inst = (nil != json) ? instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
 		{%- if "String" == onetest.klass.name %}

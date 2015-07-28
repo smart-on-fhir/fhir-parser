@@ -6,8 +6,6 @@
 //  2014, SMART Health IT.
 //
 
-import Foundation
-
 
 /**
  *  Abstract superclass for all FHIR data elements.
@@ -46,7 +44,7 @@ public class FHIRElement: CustomStringConvertible
 	public required init(json: FHIRJSON?) {
 		if let errors = populateFromJSON(json) {
 			for error in errors {
-				fhir_logIfDebug(error.localizedDescription)
+				fhir_logIfDebug(error.description)
 			}
 		}
 	}
@@ -61,40 +59,45 @@ public class FHIRElement: CustomStringConvertible
 		- returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
 			properties of the wrong type
 	 */
-	public final func populateFromJSON(json: FHIRJSON?) -> [NSError]? {
-		let present = NSMutableSet()
-		var errors = populateFromJSON(json, presentKeys: present) ?? [NSError]()
+	public final func populateFromJSON(json: FHIRJSON?) -> [FHIRJSONError]? {
+		var present = Set<String>()
+		var errors = populateFromJSON(json, presentKeys: &present) ?? [FHIRJSONError]()
 		
 		// superfluous JSON entries?
-		let superfluous = json?.keys.array.filter() { !present.containsObject($0) }
+		let superfluous = json?.keys.array.filter() { !present.contains($0) }
 		if let supflu = superfluous where !supflu.isEmpty {
 			for sup in supflu {
-				errors.append(fhir_generateJSONError("\(self) has superfluous JSON property “\(sup)”, ignoring"))
+				errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
 			}
 		}
 		return errors.isEmpty ? nil : errors
 	}
 	
 	/**
-		Internal function to perform the actual JSON parsing and pass used key information from sub to superclass.
+		Internal function to perform the actual JSON parsing.
+ 
+		- parameter json: The JSON element to use to populate the receiver
+		- parameter presentKeys: An in-out parameter being filled with key names used.
+		- returns: An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
 	 */
-	func populateFromJSON(json: FHIRJSON?, presentKeys: NSMutableSet) -> [NSError]? {
+	func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
 		if let js = json {
-			var errors = [NSError]()
+			var errors = [FHIRJSONError]()
 			
 			if let exist: AnyObject = js["id"] {
-				presentKeys.addObject("id")
+				presentKeys.insert("id")
 				if let val = exist as? String {
 					id = val
 				}
 				else {
-					errors.append(fhir_generateJSONError("\(self) expects JSON property “id” to be `String`, but is \(exist.dynamicType)"))
+					String.Type.self
+					errors.append(FHIRJSONError(key: "id", wants: String.self, has: exist.dynamicType))
 				}
 			}
 			
 			// extract contained resources
 			if let exist: AnyObject = js["contained"] {
-				presentKeys.addObject("contained")
+				presentKeys.insert("contained")
 				if let arr = exist as? [FHIRJSON] {
 					var cont = contained ?? [String: FHIRContainedResource]()
 					for dict in arr {
@@ -109,27 +112,27 @@ public class FHIRElement: CustomStringConvertible
 					contained = cont
 				}
 				else {
-					errors.append(fhir_generateJSONError("\(self) expects JSON property “contained” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+					errors.append(FHIRJSONError(key: "contained", wants: Array<FHIRJSON>.self, has: exist.dynamicType))
 				}
 			}
 			
 			// instantiate (modifier-)extensions
 			if let exist: AnyObject = js["extension"] {
-				presentKeys.addObject("extension")
+				presentKeys.insert("extension")
 				if let val = exist as? [FHIRJSON] {
 					extension_fhir = Extension.from(val, owner: self) as? [Extension]
 				}
 				else {
-					errors.append(fhir_generateJSONError("\(self) expects JSON property “extension” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+					errors.append(FHIRJSONError(key: "extension", wants: Array<FHIRJSON>.self, has: exist.dynamicType))
 				}
 			}
 			if let exist: AnyObject = js["modifierExtension"] {
-				presentKeys.addObject("modifierExtension")
+				presentKeys.insert("modifierExtension")
 				if let val = exist as? [FHIRJSON] {
 					modifierExtension = Extension.from(val, owner: self) as? [Extension]
 				}
 				else {
-					errors.append(fhir_generateJSONError("\(self) expects JSON property “modifierExtension” to be an array of `FHIRJSON`, but is \(exist.dynamicType)"))
+					errors.append(FHIRJSONError(key: "modifierExtension", wants: Array<FHIRJSON>.self, has: exist.dynamicType))
 				}
 			}
 			return errors.isEmpty ? nil : errors
