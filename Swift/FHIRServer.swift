@@ -77,7 +77,7 @@ public protocol FHIRServer
 	    - parameter operation: The operation instance to perform
 	    - parameter callback: The callback to call when the request ends (success or failure)
 	 */
-	func performOperation(operation: FHIROperation, callback: ((response: FHIRServerJSONResponse) -> Void))
+	func performOperation(operation: FHIROperation, callback: ((response: FHIRServerResponse) -> Void))
 }
 
 
