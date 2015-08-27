@@ -26,17 +26,14 @@ public enum FHIRRequestType: String
 	/** Prepare a given mutable URL request with appropriate headers, methods and body values. */
 	func prepareRequest(req: NSMutableURLRequest, body: NSData? = nil) {
 		req.HTTPMethod = rawValue
-		req.setValue("application/json+fhir", forHTTPHeaderField: "Accept")
 		req.setValue("UTF-8", forHTTPHeaderField: "Accept-Charset")
 		
 		switch self {
 		case .GET:
 			break
 		case .PUT:
-			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
 			req.HTTPBody = body
 		case .POST:
-			req.setValue("application/json+fhir; charset=utf-8", forHTTPHeaderField: "Content-Type")
 			req.HTTPBody = body
 		case .DELETE:
 			break
@@ -56,20 +53,16 @@ public protocol FHIRServer
 	
 	// MARK: - HTTP Request
 	
-	/**
-	    Performs an HTTP request against a relative path on the receiver.
+	/*
+	This method should first execute `handlerForRequestOfType()` to obtain an appropriate request handler, then execute the prepared
+	request against the server.
 	
-	    The supplied request handler can provide request body data, depending on which class it is, and also determines the type of
-	    response and how response data is handled.
-	
-	    This method is being called from the REST extension on `Resource`, with a JSON request handler and therefore expected to deliver a
-	    JSON response.
-	
-	    - parameter path: The REST path to request, relative to the server's base URL
-	    - parameter handler: The FHIRServerRequestHandler instance informing NSURLRequest creation
-	    - parameter callback: The callback to call when the request ends (success or failure)
-	 */
-	func performRequestAgainst<R: FHIRServerRequestHandler>(path: String, handler: R, callback: ((response: R.ResponseType) -> Void))
+	:param type: The type of the request (GET, PUT, POST or DELETE)
+	:param path: The relative path on the server to be interacting against
+	:param resource: The resource to be involved in the request, if any
+	:param callback: A callback, likely called asynchronously, returning a response instance
+	*/
+	func performRequestOfType(type: FHIRRequestType, path: String, resource: FHIRResource?, callback: ((response: FHIRServerResponse) -> Void))
 	
 	
 	// MARK: - Operations
