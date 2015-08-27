@@ -53,10 +53,10 @@ public struct Date: DateAndTime
 	}
 	
 	/**
-	    Initializes a date with our `DateAndTimeParser`.
+	Initializes a date with our `DateAndTimeParser`.
 	
-	    Will fail unless the string contains at least a valid year.
-	 */
+	Will fail unless the string contains at least a valid year.
+	*/
 	public init?(string: String) {
 		let parsed = DateAndTimeParser.sharedParser.parse(string)
 		if nil == parsed.date {
@@ -67,7 +67,9 @@ public struct Date: DateAndTime
 		day = parsed.date!.day
 	}
 	
-	/** :returns: Today's date */
+	/**
+	- returns: Today's date
+	*/
 	public static func today() -> Date {
 		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return date
@@ -143,9 +145,9 @@ public struct Time: DateAndTime
 		}
 	}
 	
-	/** Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than
-	    24:00:00 or it will be capped.
-	 */
+	/**
+	Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than 24:00:00 or it will be capped.
+	*/
 	public init(hour: UInt8, minute: UInt8, second: Double?) {
 		var overflowMinute: UInt = 0
 		var overflowHour: UInt = 0
@@ -179,10 +181,10 @@ public struct Time: DateAndTime
 	}
 	
 	/**
-	    Initializes a time from a time string by passing it through `DateAndTimeParser`.
+	Initializes a time from a time string by passing it through `DateAndTimeParser`.
 	
-	    Will fail unless the string contains at least hour and minute.
-	 */
+	Will fail unless the string contains at least hour and minute.
+	*/
 	public init?(string: String) {
 		let parsed = DateAndTimeParser.sharedParser.parse(string, isTimeOnly: true)
 		if nil == parsed.time {
@@ -193,7 +195,9 @@ public struct Time: DateAndTime
 		second = parsed.time!.second
 	}
 	
-	/** :returns: The clock time of right now. */
+	/**
+	- returns: The clock time of right now.
+	*/
 	public static func now() -> Time {
 		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return time
@@ -255,10 +259,10 @@ public struct DateTime: DateAndTime
 	var timeZoneString: String?
 	
 	/**
-	    Designated initializer, takes a date and optionally a time and a timezone.
+	Designated initializer, takes a date and optionally a time and a timezone.
 	
-	    If time is given but no timezone, the instance is assigned the local time zone.
-	 */
+	If time is given but no timezone, the instance is assigned the local time zone.
+	*/
 	public init(date: Date, time: Time?, timeZone: NSTimeZone?) {
 		self.date = date
 		self.time = time
@@ -271,10 +275,10 @@ public struct DateTime: DateAndTime
 	}
 	
 	/**
-	    Uses `DateAndTimeParser` to initialize from a date-time string.
+	Uses `DateAndTimeParser` to initialize from a date-time string.
 	
-	    If time is given but no timezone, the instance is assigned the local time zone.
-	 */
+	If time is given but no timezone, the instance is assigned the local time zone.
+	*/
 	public init?(string: String) {
 		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
 		if nil == date {
@@ -357,7 +361,9 @@ public struct Instant: DateAndTime
 	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
 	var timeZoneString: String?
 	
-	/** :returns: The current date and time. */
+	/**
+	- returns: The current date and time.
+	*/
 	public static func now() -> Instant {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return Instant(date: date, time: time, timeZone: tz)
@@ -503,14 +509,14 @@ class DateAndTimeParser
 	static var sharedParser = DateAndTimeParser()
 	
 	/**
-	    Parses a date string in "YYYY[-MM[-DD]]" and a time string in "hh:mm[:ss[.sss]]" (extended ISO 8601) format,
-	    separated by "T" and followed by either "Z" or a valid time zone offset in the "±hh[:?mm]" format.
+	Parses a date string in "YYYY[-MM[-DD]]" and a time string in "hh:mm[:ss[.sss]]" (extended ISO 8601) format,
+	separated by "T" and followed by either "Z" or a valid time zone offset in the "±hh[:?mm]" format.
 	
-	    Does not currently check if the day exists in the given month.
+	Does not currently check if the day exists in the given month.
 	
-	    :param: string The date string to parse
-	    :param: isTimeOnly If true assumes that the string describes time only
-	 */
+	- param string: The date string to parse
+	- param isTimeOnly: If true assumes that the string describes time only
+	*/
 	func parse(string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: NSTimeZone?, tzString: String?) {
 		let scanner = NSScanner(string: string)
 		var date: Date?
