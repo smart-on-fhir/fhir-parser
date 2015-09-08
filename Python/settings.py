@@ -3,7 +3,7 @@
 from Python.mappings import *
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/2015May/'
+specification_url = 'http://hl7.org/fhir/2015Sep/'
 
 # Whether and where to put the generated class models
 write_resources = True

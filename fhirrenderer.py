@@ -47,8 +47,8 @@ class FHIRRenderer(object):
             # handle.write(rendered.encode('utf-8'))
 
 
-class FHIRProfileRenderer(FHIRRenderer):
-    """ Write classes for a profile.
+class FHIRStructureDefinitionRenderer(FHIRRenderer):
+    """ Write classes for a profile/structure-definition.
     """    
     def copy_files(self):
         """ Copy base resources to the target location, according to settings.
