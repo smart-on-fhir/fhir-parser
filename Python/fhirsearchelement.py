@@ -4,7 +4,7 @@
 #  Construct server search parameters.
 #  2014, SMART Health IT.
 
-import fhirsearch
+from . import fhirsearch
 
 
 class FHIRSearchElement(object):

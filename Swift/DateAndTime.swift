@@ -10,18 +10,18 @@ import Foundation
 
 
 /**
-	A protocol for all our date and time structs.
+    A protocol for all our date and time structs.
  */
-protocol DateAndTime: Printable, Comparable
+protocol DateAndTime: CustomStringConvertible, Comparable
 {
-	var nsDate: NSDate { get set }
+	var nsDate: NSDate { get }
 }
 
 
 /**
-	A date for use in human communication.
+    A date for use in human communication.
 
-	Month and day are optional and there are no timezones.
+    Month and day are optional and there are no timezones.
  */
 public struct Date: DateAndTime
 {
@@ -53,10 +53,10 @@ public struct Date: DateAndTime
 	}
 	
 	/**
-		Initializes a date with our `DateAndTimeParser`.
+	Initializes a date with our `DateAndTimeParser`.
 	
-		Will fail unless the string contains at least a valid year.
-	 */
+	Will fail unless the string contains at least a valid year.
+	*/
 	public init?(string: String) {
 		let parsed = DateAndTimeParser.sharedParser.parse(string)
 		if nil == parsed.date {
@@ -67,9 +67,11 @@ public struct Date: DateAndTime
 		day = parsed.date!.day
 	}
 	
-	/** :returns: Today's date */
+	/**
+	- returns: Today's date
+	*/
 	public static func today() -> Date {
-		let (date, tz, time) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return date
 	}
 	
@@ -77,15 +79,7 @@ public struct Date: DateAndTime
 	// MARK: Protocols
 	
 	public var nsDate: NSDate {
-		get {
-			return DateNSDateConverter.sharedConverter.create(self)
-		}
-		set {
-			let (date, tz, time) = DateNSDateConverter.sharedConverter.parse(date: newValue)
-			year = date.year
-			month = date.month
-			day = date.day
-		}
+		return DateNSDateConverter.sharedConverter.create(self)
 	}
 	
 	public var description: String {
@@ -118,9 +112,9 @@ public func ==(lhs: Date, rhs: Date) -> Bool {
 
 
 /**
-	A time during the day, optionally with seconds, usually for human communication.
+    A time during the day, optionally with seconds, usually for human communication.
 
-	Minimum of 00:00 and maximum of < 24:00, there is no timezone.
+    Minimum of 00:00 and maximum of < 24:00, there is no timezone.
  */
 public struct Time: DateAndTime
 {
@@ -151,9 +145,9 @@ public struct Time: DateAndTime
 		}
 	}
 	
-	/** Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than
-		24:00:00 or it will be capped.
-	 */
+	/**
+	Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than 24:00:00 or it will be capped.
+	*/
 	public init(hour: UInt8, minute: UInt8, second: Double?) {
 		var overflowMinute: UInt = 0
 		var overflowHour: UInt = 0
@@ -187,10 +181,10 @@ public struct Time: DateAndTime
 	}
 	
 	/**
-		Initializes a time from a time string by passing it through `DateAndTimeParser`.
+	Initializes a time from a time string by passing it through `DateAndTimeParser`.
 	
-		Will fail unless the string contains at least hour and minute.
-	 */
+	Will fail unless the string contains at least hour and minute.
+	*/
 	public init?(string: String) {
 		let parsed = DateAndTimeParser.sharedParser.parse(string, isTimeOnly: true)
 		if nil == parsed.time {
@@ -201,9 +195,11 @@ public struct Time: DateAndTime
 		second = parsed.time!.second
 	}
 	
-	/** :returns: The clock time of right now. */
+	/**
+	- returns: The clock time of right now.
+	*/
 	public static func now() -> Time {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return time
 	}
 	
@@ -211,15 +207,7 @@ public struct Time: DateAndTime
 	// MARK: Protocols
 	
 	public var nsDate: NSDate {
-		get {
-			return DateNSDateConverter.sharedConverter.create(self)
-		}
-		set {
-			let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: newValue)
-			hour = time.hour
-			minute = time.minute
-			second = time.second
-		}
+		return DateNSDateConverter.sharedConverter.create(self)
 	}
 	
 	public var description: String {
@@ -248,9 +236,9 @@ public func ==(lhs: Time, rhs: Time) -> Bool {
 
 
 /**
-	A date, optionally with time, as used in human communication.
-	
-	If a time is specified there must be a timezone; defaults to the system reported local timezone.
+    A date, optionally with time, as used in human communication.
+
+    If a time is specified there must be a timezone; defaults to the system reported local timezone.
  */
 public struct DateTime: DateAndTime
 {
@@ -271,10 +259,10 @@ public struct DateTime: DateAndTime
 	var timeZoneString: String?
 	
 	/**
-		Designated initializer, takes a date and optionally a time and a timezone.
+	Designated initializer, takes a date and optionally a time and a timezone.
 	
-		If time is given but no timezone, the instance is assigned the local time zone.
-	 */
+	If time is given but no timezone, the instance is assigned the local time zone.
+	*/
 	public init(date: Date, time: Time?, timeZone: NSTimeZone?) {
 		self.date = date
 		self.time = time
@@ -287,10 +275,10 @@ public struct DateTime: DateAndTime
 	}
 	
 	/**
-		Uses `DateAndTimeParser` to initialize from a date-time string.
+	Uses `DateAndTimeParser` to initialize from a date-time string.
 	
-		If time is given but no timezone, the instance is assigned the local time zone.
-	 */
+	If time is given but no timezone, the instance is assigned the local time zone.
+	*/
 	public init?(string: String) {
 		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
 		if nil == date {
@@ -308,18 +296,10 @@ public struct DateTime: DateAndTime
 	// MARK: Protocols
 	
 	public var nsDate: NSDate {
-		get {
-			if nil != time && nil != timeZone {
-				return DateNSDateConverter.sharedConverter.create(date: date, time: time!, timeZone: timeZone!)
-			}
-			return DateNSDateConverter.sharedConverter.create(date)
+		if nil != time && nil != timeZone {
+			return DateNSDateConverter.sharedConverter.create(date: date, time: time!, timeZone: timeZone!)
 		}
-		set {
-			let (dt, tm, tz) = DateNSDateConverter.sharedConverter.parse(date: newValue)
-			date = dt
-			time = tm
-			timeZone = tz
-		}
+		return DateNSDateConverter.sharedConverter.create(date)
 	}
 	
 	public var description: String {
@@ -346,7 +326,7 @@ public func ==(lhs: DateTime, rhs: DateTime) -> Bool {
 
 
 /**
-	An instant in time, known at least to the second and with a timezone, for machine times.
+    An instant in time, known at least to the second and with a timezone, for machine times.
  */
 public struct Instant: DateAndTime
 {
@@ -381,7 +361,9 @@ public struct Instant: DateAndTime
 	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
 	var timeZoneString: String?
 	
-	/** :returns: The current date and time. */
+	/**
+	- returns: The current date and time.
+	*/
 	public static func now() -> Instant {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
 		return Instant(date: date, time: time, timeZone: tz)
@@ -419,12 +401,7 @@ public struct Instant: DateAndTime
 	// MARK: Protocols
 	
 	public var nsDate: NSDate {
-		get {
-			return DateNSDateConverter.sharedConverter.create(date: date, time: time, timeZone: timeZone)
-		}
-		set {
-			(date, time, timeZone) = DateNSDateConverter.sharedConverter.parse(date: newValue)
-		}
+		return DateNSDateConverter.sharedConverter.create(date: date, time: time, timeZone: timeZone)
 	}
 	
 	public var description: String {
@@ -447,17 +424,12 @@ public func ==(lhs: Instant, rhs: Instant) -> Bool {
 
 
 /**
-	Converts between NSDate and our Date, Time, DateTime and Instance structs.
+    Converts between NSDate and our Date, Time, DateTime and Instance structs.
  */
 class DateNSDateConverter
 {
 	/// The singleton instance
-	class var sharedConverter: DateNSDateConverter {
-		struct Static {
-			static let instance = DateNSDateConverter()
-		}
-		return Static.instance
-	}
+	static var sharedConverter = DateNSDateConverter()
 	
 	let calendar: NSCalendar
 	let utc: NSTimeZone
@@ -465,21 +437,15 @@ class DateNSDateConverter
 	init() {
 		calendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
 		utc = NSTimeZone(abbreviation: "UTC")!
+		calendar.timeZone = utc
 	}
 	
 	
 	// MARK: Parsing
 	
 	func parse(date inDate: NSDate) -> (Date, Time, NSTimeZone) {
-		let comp = calendar.components(
-			.CalendarUnitYear
-				| .CalendarUnitMonth
-				| .CalendarUnitDay
-				| .CalendarUnitHour
-				| .CalendarUnitMinute
-				| .CalendarUnitSecond
-				| .CalendarUnitNanosecond
-				| .CalendarUnitTimeZone, fromDate: inDate)
+		let flags: NSCalendarUnit = [.Year, .Month, .Day, .Hour, .Minute, .Second, .Nanosecond, .TimeZone]
+		let comp = calendar.components(flags, fromDate: inDate)
 		
 		let date = Date(year: comp.year, month: UInt8(comp.month), day: UInt8(comp.day))
 		let zone = comp.timeZone ?? utc
@@ -500,11 +466,11 @@ class DateNSDateConverter
 		return _create(date: nil, time: time, timeZone: nil)
 	}
 	
-	func create(#date: Date, time: Time, timeZone: NSTimeZone) -> NSDate {
+	func create(date date: Date, time: Time, timeZone: NSTimeZone) -> NSDate {
 		return _create(date: date, time: time, timeZone: timeZone)
 	}
 	
-	func _create(#date: Date?, time: Time?, timeZone: NSTimeZone?) -> NSDate {
+	func _create(date date: Date?, time: Time?, timeZone: NSTimeZone?) -> NSDate {
 		let comp = NSDateComponents()
 		comp.timeZone = timeZone ?? utc
 		
@@ -535,27 +501,22 @@ class DateNSDateConverter
 
 
 /**
-	Parses Date and Time from strings in a narrow set of the extended ISO 8601 format.
+    Parses Date and Time from strings in a narrow set of the extended ISO 8601 format.
  */
 class DateAndTimeParser
 {
 	/// The singleton instance
-	class var sharedParser: DateAndTimeParser {
-		struct Static {
-			static let instance = DateAndTimeParser()
-		}
-		return Static.instance
-	}
+	static var sharedParser = DateAndTimeParser()
 	
 	/**
-		Parses a date string in "YYYY[-MM[-DD]]" and a time string in "hh:mm[:ss[.sss]]" (extended ISO 8601) format,
-		separated by "T" and followed by either "Z" or a valid time zone offset in the "±hh[:?mm]" format.
+	Parses a date string in "YYYY[-MM[-DD]]" and a time string in "hh:mm[:ss[.sss]]" (extended ISO 8601) format,
+	separated by "T" and followed by either "Z" or a valid time zone offset in the "±hh[:?mm]" format.
 	
-		Does not currently check if the day exists in the given month.
+	Does not currently check if the day exists in the given month.
 	
-		:param: string The date string to parse
-		:param: isTimeOnly If true assumes that the string describes time only
-	 */
+	- param string: The date string to parse
+	- param isTimeOnly: If true assumes that the string describes time only
+	*/
 	func parse(string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: NSTimeZone?, tzString: String?) {
 		let scanner = NSScanner(string: string)
 		var date: Date?
@@ -572,7 +533,6 @@ class DateAndTimeParser
 					var day = 0
 					if scanner.scanString("-", intoString: nil) && scanner.scanInteger(&day) && day <= 31 {
 						date = Date(year: year, month: UInt8(month), day: UInt8(day))
-						
 					}
 					else {
 						date = Date(year: year, month: UInt8(month), day: nil)
@@ -622,8 +582,8 @@ class DateAndTimeParser
 								}
 							}
 							else if 4 == hourStr?.length {
-								tzhour = hourStr!.substringToIndex(2).toInt()!
-								tzmin = hourStr!.substringFromIndex(2).toInt()!
+								tzhour = Int(hourStr!.substringToIndex(2))!
+								tzmin = Int(hourStr!.substringFromIndex(2))!
 							}
 							
 							let offset = tzhour * 3600 + tzmin * 60
@@ -640,7 +600,38 @@ class DateAndTimeParser
 
 
 /**
-	Extend NSTimeZone to report the offset in "+00:00" or "Z" (for UTC/GMT) format.
+    Extend NSDate to be able to return DateAndTime instances.
+ */
+public extension NSDate
+{
+	/** Create a `Date` instance from the receiver. */
+	func fhir_asDate() -> Date {
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: self)
+		return date
+	}
+	
+	/** Create a `Time` instance from the receiver. */
+	func fhir_asTime() -> Time {
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: self)
+		return time
+	}
+	
+	/** Create a `DateTime` instance from the receiver. */
+	func fhir_asDateTime() -> DateTime {
+		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
+		return DateTime(date: date, time: time, timeZone: tz)
+	}
+	
+	/** Create an `Instance` instance from the receiver. */
+	func fhir_asInstant() -> Instant {
+		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: self)
+		return Instant(date: date, time: time, timeZone: tz)
+	}
+}
+
+
+/**
+    Extend NSTimeZone to report the offset in "+00:00" or "Z" (for UTC/GMT) format.
  */
 extension NSTimeZone
 {

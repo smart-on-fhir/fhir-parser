@@ -5,7 +5,7 @@
 #  {{ info.year }}, SMART Health IT.
 
 {% for imp in imports %}
-import {{ imp.module }}
+from . import {{ imp.module }}
 {%- endfor %}
 
 {%- for klass in classes %}
@@ -29,7 +29,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         """
     {%- for prop in klass.properties %}
         
-        self.{{ prop.name }} = {% if "bool" == prop.class_name %}False{% else %}None{% endif %}
+        self.{{ prop.name }} = None
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
         {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
@@ -40,18 +40,15 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     
 {%- if klass.properties %}
     
-    def update_with_json(self, jsondict):
-        super({{ klass.name }}, self).update_with_json(jsondict)
+    def elementProperties(self):
+        js = super({{ klass.name }}, self).elementProperties()
+        js.extend([
         {%- for prop in klass.properties %}
-        if '{{ prop.orig_name }}' in jsondict:
-            {%- if prop.is_native %}
-            self.{{ prop.name }} = jsondict['{{ prop.orig_name }}']
-            
-            {%- else %}
-            self.{{ prop.name }} = {% if prop.module_name %}{{ prop.module_name }}.{% endif -%}
-                {{ prop.class_name }}.with_json_and_owner(jsondict['{{ prop.orig_name }}'], self)
-            {%- endif %}
+            ("{{ prop.name }}", "{{ prop.orig_name }}",
+            {%- if prop.module_name %} {{ prop.module_name }}.{% else %} {% endif %}{{ prop.class_name }}, {{ prop.is_array }}),
         {%- endfor %}
+        ])
+        return js
     
 {%- endif %}
 {%- endfor %}

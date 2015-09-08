@@ -12,11 +12,11 @@ import SwiftFHIR
 
 class {{ class.name }}Tests: FHIRModelTestCase
 {
-	func instantiateFrom(# filename: String) -> {{ class.name }} {
-		return instantiateFrom(json: readJSONFile(filename)!)
+	func instantiateFrom(filename filename: String) throws -> {{ class.name }} {
+		return instantiateFrom(json: try readJSONFile(filename)!)
 	}
 	
-	func instantiateFrom(# json: FHIRJSON) -> {{ class.name }} {
+	func instantiateFrom(json json: FHIRJSON) -> {{ class.name }} {
 		let instance = {{ class.name }}(json: json)
 		XCTAssertNotNil(instance, "Must have instantiated a test instance")
 		return instance
@@ -24,13 +24,13 @@ class {{ class.name }}Tests: FHIRModelTestCase
 	
 {%- for tcase in tests %}
 	
-	func test{{ class.name }}{{ loop.index }}() {
-		let instance = test{{ class.name }}{{ loop.index }}_impl()
-		test{{ class.name }}{{ loop.index }}_impl(json: instance.asJSON())
+	func test{{ class.name }}{{ loop.index }}() throws {
+		let instance = try run{{ class.name }}{{ loop.index }}()
+		try run{{ class.name }}{{ loop.index }}(instance.asJSON())
 	}
 	
-	func test{{ class.name }}{{ loop.index }}_impl(json: FHIRJSON? = nil) -> {{ class.name }} {
-		let inst = (nil != json) ? instantiateFrom(json: json!) : instantiateFrom(filename: "{{ tcase.filename }}")
+	func run{{ class.name }}{{ loop.index }}(json: FHIRJSON? = nil) throws -> {{ class.name }} {
+		let inst = (nil != json) ? instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
 		{%- if "String" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
@@ -45,7 +45,7 @@ class {{ class.name }}Tests: FHIRModelTestCase
 		{%- else %}{% if "Date" == onetest.klass.name or "Time" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}.description, "{{ onetest.value }}")
 		{%- else %}{% if "NSURL" == onetest.klass.name %}
-		XCTAssertEqual(inst.{{ onetest.path }}.absoluteString!, "{{ onetest.value }}")
+		XCTAssertEqual(inst.{{ onetest.path }}.absoluteString, "{{ onetest.value }}")
 		{%- else %}{% if "Base64Binary" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
 		{%- else %}

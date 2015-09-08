@@ -54,14 +54,32 @@ class FHIRSearch(object):
     def perform(self, server):
         """ Construct the search URL and execute it against the given server.
         
+        :param server: The server against which to perform the search
         :returns: A Bundle resource
         """
         if server is None:
             raise Exception("Need a server to perform search")
         
-        import bundle
+        from . import bundle
         res = server.request_json(self.construct())
-        return bundle.Bundle(res)
+        bundle = bundle.Bundle(res)
+        bundle._server = server
+        return bundle
+    
+    def perform_resources(self, server):
+        """ Performs the search by calling `perform`, then extracts all Bundle
+        entries and returns a list of Resource instances.
+        
+        :param server: The server against which to perform the search
+        :returns: A list of Resource instances
+        """
+        bundle = self.perform(server)
+        resources = []
+        if bundle is not None and bundle.entry is not None:
+            for entry in bundle.entry:
+                resources.append(entry.resource)
+            
+        return resources
 
 
 class FHIRSearchParam(object):
@@ -250,34 +268,3 @@ FHIRSearchParamHandler.announce_handler(FHIRSearchParamOperatorHandler)
 FHIRSearchParamHandler.announce_handler(FHIRSearchParamMultiHandler)
 FHIRSearchParamHandler.announce_handler(FHIRSearchParamTypeHandler)
 
-
-if '__main__' == __name__:
-    from patient import Patient
-    print('1 '+FHIRSearch(Patient, {'name': 'Willis'}).construct())
-    print('1 '+Patient.where({'name': 'Willis'}).construct())
-    print('1 '+Patient.where().name('Willis').construct())
-    print('= Patient?name=Willis')
-    print('')
-    print('2 '+FHIRSearch(Patient, {'name': {'$exact': 'Willis'}}).construct())
-    print('= Patient?name:exact=Willis')
-    print('')
-    print('3 '+FHIRSearch(Patient, {'name': {'$or': ['Willis', 'Wayne', 'Bruce']}}).construct())
-    print('= Patient?name=Willis,Wayne,Bruce')
-    print('')
-    print('4 '+FHIRSearch(Patient, {'name': {'$and': ['Willis', {'$exact': 'Bruce'}]}}).construct())
-    print('= Patient?name=Willis&name:exact=Bruce')
-    print('')
-    print('5 '+FHIRSearch(Patient, {'birthDate': {'$gt': '1950', '$lte': '1970'}}).construct())
-    print('= Patient?birthDate=>1950&birthDate=<=1970')
-    print('')
-    print('6 '+FHIRSearch(Patient, {'subject.name': {'$exact': 'Willis'}}).construct())
-    print('= Patient?subject.name:exact=Willis')
-    print('')
-    srch = FHIRSearch(Patient, {'subject': {'$type': 'Patient', 'name': 'Willis', 'birthDate': {'$gt': '1950', '$lte': '1970'}}})
-    print('7 '+srch.construct())
-    print('7 '+srch.construct())
-    print('= Patient?subject:Patient.name=Willis&subject:Patient.birthDate=>1950&subject:Patient.birthDate=<=1970')
-    print('')
-    print('8 '+FHIRSearch(Patient, {"name": {"$and": ["Willis", {"$exact": "Bruce"}]}, "birthDay": {"$and": [{"$lt": "1970", "$gte": "1950"}]}}).construct())
-    print('= Patient?name=Willis&name:exact=Bruce&birthDay=>=1950&birthDay=<1970')
-    

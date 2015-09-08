@@ -364,8 +364,7 @@ class FHIRProfile(object):
                 if prop_cls_name not in internal and not self.spec.class_name_is_native(prop_cls_name):
                     prop_cls = fhirclass.FHIRClass.with_name(prop_cls_name)
                     if prop_cls is None:
-                        # TODO: turn into exception once `nameReference` on element definition is implemented
-                        logger.error('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
+                        raise Exception('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
                     else:
                         prop.module_name = prop_cls.module
                         if not prop_cls_name in needed:
@@ -493,7 +492,7 @@ class FHIRProfileElement(object):
             if resolved is None:
                 raise Exception('Cannot resolve nameReference "{}" in "{}"'
                     .format(self.definition.name_reference, self.profile.url))
-            self.definition = resolved.definition
+            self.definition.update_from_reference(resolved.definition)
         
         self._did_resolve_dependencies = True
     
@@ -658,6 +657,15 @@ class FHIRElementDefinition(object):
         if 'slicing' in definition_dict:
             self.slicing = definition_dict['slicing']
         self.representation = definition_dict.get('representation')
+    
+    def update_from_reference(self, reference_definition):
+        self.element = reference_definition.element
+        self.types = reference_definition.types
+        self.name = reference_definition.name
+        self.constraint = reference_definition.constraint
+        self.mapping = reference_definition.mapping
+        self.slicing = reference_definition.slicing
+        self.representation = reference_definition.representation
     
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was

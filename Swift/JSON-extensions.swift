@@ -70,7 +70,7 @@ extension NSDecimalNumber
 		TODO: improve to avoid double precision issues
 	 */
 	public convenience init(json: NSNumber) {
-		if let periodIdx = find(json.stringValue, ".") {
+		if let _ = json.stringValue.characters.indexOf(".") {
 			self.init(string: NSString(format: "%.15g", json.doubleValue) as String)
 		}
 		else {
