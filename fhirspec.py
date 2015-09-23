@@ -85,11 +85,11 @@ class FHIRSpec(object):
     def found_profile(self, profile):
         if not profile or not profile.name:
             raise Exception("No name for profile {}".format(profile))
-        if profile.name in self.profiles:
+        if profile.name.lower() in self.profiles:
             logger.warning('Already have profile "{}", discarding'.format(profile.name))
             return False
         
-        self.profiles[profile.name] = profile
+        self.profiles[profile.name.lower()] = profile
         return True
     
     def handle_manual_profiles(self):
@@ -412,7 +412,10 @@ class FHIRStructureDefinitionStructure(object):
         self.parse_from(profile_dict)
     
     def parse_from(self, json_dict):
-        self.name = json_dict.get('name')
+        name = json_dict.get('name')
+        if not name:
+            raise Exception("Must find 'name' in profile dictionary but found nothing")
+        self.name = self.profile.spec.class_name_for_profile(name) 
         self.base = json_dict.get('base')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
