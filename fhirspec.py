@@ -4,6 +4,7 @@
 import io
 import os
 import re
+import sys
 import glob
 import json
 import datetime
@@ -15,12 +16,7 @@ import fhirrenderer
 
 # allow to skip some profiles by matching against their url (used while WiP)
 skip_because_unsupported = [
-    r'composition-measurereport-measurereport$',
-    r'provenance-ehrs-rle-ehrprovenance$',
-    r'provenance-hspcattribution-hspcattribution$',
-    r'consentdirective-consentdirective$',
-    r'do-uslab-uslabdo$',
-    r'diagnosticorder-daf-dafdiagnosticorder$',
+    r'SimpleQuantity',
 ]
 
 
@@ -34,7 +30,7 @@ class FHIRSpec(object):
         self.directory = directory
         self.settings = settings
         self.info = FHIRVersionInfo(self, directory)
-        self.profiles = {}              # profile-name: FHIRProfile()
+        self.profiles = {}              # profile-name: FHIRStructureDefinition()
         self.unit_tests = None          # FHIRUnitTestCollection()
         
         self.prepare()
@@ -50,7 +46,7 @@ class FHIRSpec(object):
     # MARK: Handling Profiles
     
     def read_profiles(self):
-        """ Find all (JSON) profiles and instantiate into FHIRProfile.
+        """ Find all (JSON) profiles and instantiate into FHIRStructureDefinition.
         """
         resources = []
         for filename in ['profiles-types.json', 'profiles-resources.json']: #, 'profiles-others.json']:
@@ -75,7 +71,7 @@ class FHIRSpec(object):
         
         # create profile instances
         for resource in resources:
-            profile = FHIRProfile(self, resource)
+            profile = FHIRStructureDefinition(self, resource)
             for pattern in skip_because_unsupported:
                 if re.search(pattern, profile.url) is not None:
                     logger.info('Skipping "{}"'.format(resource['url']))
@@ -88,12 +84,12 @@ class FHIRSpec(object):
     
     def found_profile(self, profile):
         if not profile or not profile.name:
-            raise Exception("No name for profile {}".format(prof))
-        if profile.name in self.profiles:
+            raise Exception("No name for profile {}".format(profile))
+        if profile.name.lower() in self.profiles:
             logger.warning('Already have profile "{}", discarding'.format(profile.name))
             return False
         
-        self.profiles[profile.name] = profile
+        self.profiles[profile.name.lower()] = profile
         return True
     
     def handle_manual_profiles(self):
@@ -102,7 +98,7 @@ class FHIRSpec(object):
         """
         for filepath, module, contains in self.settings.manual_profiles:
             for contained in contains:
-                profile = FHIRProfile(self, None)
+                profile = FHIRStructureDefinition(self, None)
                 profile.is_manual = True
                 
                 prof_dict = {
@@ -121,7 +117,7 @@ class FHIRSpec(object):
                     prof_dict['differential']['element'].append({'path': 'FHIRResource.extension', 'type': [{'code': 'Extension'}]})
                     prof_dict['differential']['element'].append({'path': 'FHIRResource.modifierExtension', 'type': [{'code': 'Extension'}]})
 
-                profile.structure = FHIRProfileStructure(profile, prof_dict)
+                profile.structure = FHIRStructureDefinitionStructure(profile, prof_dict)
                 if self.found_profile(profile):
                     profile.process_profile()
     
@@ -206,7 +202,7 @@ class FHIRSpec(object):
     
     def write(self):
         if self.settings.write_resources:
-            renderer = fhirrenderer.FHIRProfileRenderer(self, self.settings)
+            renderer = fhirrenderer.FHIRStructureDefinitionRenderer(self, self.settings)
             renderer.copy_files()
             renderer.render()
         
@@ -246,7 +242,7 @@ class FHIRVersionInfo(object):
                         self.version = v
 
 
-class FHIRProfile(object):
+class FHIRStructureDefinition(object):
     """ One FHIR profile.
     """
     
@@ -288,7 +284,7 @@ class FHIRProfile(object):
         # parse structure
         self.url = profile.get('url')
         logger.info('Parsing profile "{}"'.format(profile.get('name')))
-        self.structure = FHIRProfileStructure(self, profile)
+        self.structure = FHIRStructureDefinitionStructure(self, profile)
     
     def process_profile(self):
         """ Extract all elements and create classes.
@@ -298,7 +294,7 @@ class FHIRProfile(object):
             mapped = {}
             self.elements = []
             for elem_dict in struct:
-                element = FHIRProfileElement(self, elem_dict, self.main_element is None)
+                element = FHIRStructureDefinitionElement(self, elem_dict, self.main_element is None)
                 self.elements.append(element)
                 mapped[element.path] = element
                 
@@ -401,13 +397,12 @@ class FHIRProfile(object):
         self._did_finalize = True
 
 
-class FHIRProfileStructure(object):
+class FHIRStructureDefinitionStructure(object):
     """ The actual structure of a complete profile.
     """
     
     def __init__(self, profile, profile_dict):
         self.profile = profile
-        self.type = None
         self.name = None
         self.base = None
         self.subclass_of = None
@@ -417,10 +412,10 @@ class FHIRProfileStructure(object):
         self.parse_from(profile_dict)
     
     def parse_from(self, json_dict):
-        self.type = json_dict.get('type')
-        self.name = json_dict.get('name')
-        if self.name is None:
-            self.name = self.type
+        name = json_dict.get('name')
+        if not name:
+            raise Exception("Must find 'name' in profile dictionary but found nothing")
+        self.name = self.profile.spec.class_name_for_profile(name) 
         self.base = json_dict.get('base')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
@@ -432,7 +427,7 @@ class FHIRProfileStructure(object):
             self.differential = json_dict['differential'].get('element', [])
 
 
-class FHIRProfileElement(object):
+class FHIRStructureDefinitionElement(object):
     """ An element in a profile's structure.
     """
     
@@ -444,7 +439,7 @@ class FHIRProfileElement(object):
     ]
     
     def __init__(self, profile, element_dict, is_main_profile_element=False):
-        assert isinstance(profile, FHIRProfile)
+        assert isinstance(profile, FHIRStructureDefinition)
         self.profile = profile
         self.path = None
         self.parent = None
@@ -463,7 +458,7 @@ class FHIRProfileElement(object):
         if element_dict is not None:
             self.parse_from(element_dict)
         else:
-            self.definition = FHIRElementDefinition(self, None)
+            self.definition = FHIRStructureDefinitionElementDefinition(self, None)
     
     def parse_from(self, element_dict):
         self.path = element_dict['path']
@@ -473,7 +468,7 @@ class FHIRProfileElement(object):
         if '-' in prop_name:
             prop_name = ''.join([n[:1].upper() + n[1:] for n in prop_name.split('-')])
         
-        self.definition = FHIRElementDefinition(self, element_dict)
+        self.definition = FHIRStructureDefinitionElementDefinition(self, element_dict)
         self.definition.prop_name = prop_name
         
         self.n_min = element_dict.get('min')
@@ -613,7 +608,7 @@ class FHIRProfileElement(object):
         return self._superclass_name
 
 
-class FHIRElementDefinition(object):
+class FHIRStructureDefinitionElementDefinition(object):
     """ The definition of a FHIR element.
     """
     
@@ -692,7 +687,15 @@ class FHIRElementType(object):
     
     def parse_from(self, type_dict):
         self.code = type_dict.get('code')
-        self.profile = type_dict.get('profile')
+        if self.code is not None and not _is_string(self.code):
+            raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
+                .format(self.code, type(self.code)))
+        self.profiles = type_dict.get('profile')
+        if self.profiles is not None and \
+            (not isinstance(self.profiles, list) or 1 != len(self.profiles)):
+            raise Exception("Expecting a list of 1 for 'profile' definition of an element type, got {} in {}"
+                .format(self.profiles, type_dict))
+        self.profile = self.profiles[0] if self.profiles is not None else None
 
 
 class FHIRElementConstraint(object):
@@ -708,4 +711,10 @@ class FHIRElementMapping(object):
     def __init__(self, mapping_arr):
         pass
 
+
+def _is_string(element):
+    isstr = isinstance(element, str)
+    if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
+        isstr = isinstance(element, basestring)
+    return isstr
 

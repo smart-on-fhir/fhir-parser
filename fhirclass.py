@@ -94,7 +94,7 @@ class FHIRClassProperty(object):
     """
     
     def __init__(self, element, type_obj, type_name=None):
-        assert element and type_obj     # and must be instances of FHIRProfileElement and FHIRElementType
+        assert element and type_obj     # and must be instances of FHIRStructureDefinitionElement and FHIRElementType
         spec = element.profile.spec
         
         self.path = element.path

@@ -14,7 +14,7 @@ class FHIRLoader(object):
     """
     needs = {
         'version.info': 'version.info',
-        'profiles-resources.json': 'validation.zip',        # validation-min.zip does not include element descriptions wanted for class creation
+        'profiles-resources.json': 'validation-min.json.zip',
         'allergyintolerance-example.json': 'examples-json.zip',
     }
     

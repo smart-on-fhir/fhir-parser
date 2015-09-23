@@ -1,5 +1,5 @@
 //
-//  FHIRModelTestCase.swift
+//  XCTestCase+FHIR.swift
 //  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 8/27/14.
@@ -11,21 +11,21 @@ import SwiftFHIR
 
 
 /**
- *  Superclass for FHIR model tests providing a `readJSONFile(filename:)` method to read JSON files from disk.
+ *  Extension providing a `readJSONFile(filename:)` method to read JSON files from disk.
  */
-class FHIRModelTestCase: XCTestCase
+extension XCTestCase
 {
 	class var testsDirectory: String {
-		let dir = __FILE__
-		let proj = dir.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent.stringByDeletingLastPathComponent
+		let dir = __FILE__ as NSString
+		let proj = ((dir.stringByDeletingLastPathComponent as NSString).stringByDeletingLastPathComponent as NSString).stringByDeletingLastPathComponent as NSString
 		return proj.stringByAppendingPathComponent("fhir-parser/downloads")
 	}
 	
 	func readJSONFile(filename: String) throws -> FHIRJSON? {
 		let dir = self.dynamicType.testsDirectory
-		XCTAssertTrue(NSFileManager.defaultManager().fileExistsAtPath(dir), "You must either first download the FHIR spec or manually adjust `FHIRModelTestCase.testsDirectory` to point to your FHIR download directory")
+		XCTAssertTrue(NSFileManager.defaultManager().fileExistsAtPath(dir), "You must either first download the FHIR spec or manually adjust `XCTestCase.testsDirectory` to point to your FHIR download directory")
 		
-		let path = dir.stringByAppendingPathComponent(filename)
+		let path = (dir as NSString).stringByAppendingPathComponent(filename)
 		let data = NSData(contentsOfFile: path)
 		XCTAssertNotNil(data, "Unable to read \"\(path)")
 		if nil == data { return nil }

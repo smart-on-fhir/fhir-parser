@@ -16,6 +16,7 @@ classmap = {
     'decimal': 'float',
     
     'string': 'str',
+    'markdown': 'str',
     'id': 'str',
     'code': 'str',      # for now we're not generating enums for these
     'uri': 'str',

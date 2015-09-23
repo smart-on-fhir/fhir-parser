@@ -12,6 +12,7 @@ classmap = {
     'decimal': 'NSDecimalNumber',
     
     'string': 'String',
+    'markdown': 'String',
     'id': 'String',
     'code': 'String',       # for now we're not generating enums for these
     'uri': 'NSURL',

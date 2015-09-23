@@ -17,9 +17,9 @@ This script does its job for the most part, but it doesn't yet handle all FHIR p
 Unless you have a desire to understand how parsing works, you should be able to play with _Lang/settings.py_, _Lang/mappings.py_ and _Lang/templates*_ to achieve what you need.
 
 The `master` branch is currently on _DSTU 2, May 2015 ballot_.  
-The `develop` branch is currently on _DSTU 2_ and WiP.
+The `develop` branch is currently on _DSTU 2, Sept 2015 QA Preview_ and WiP.
 
-See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for other specific FHIR versions.
+See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for specific FHIR versions.
 
 ### Use ###
 
