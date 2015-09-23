@@ -56,7 +56,7 @@ tpl_searchparams_target = ''
 # unit tests
 tpl_unittest_source = 'Swift/template-unittest.swift'
 unittest_copyfiles = [
-    'Swift/FHIRModelTestCase.swift',
+    'Swift/XCTestCase+FHIR.swift',
     'Swift/DateAndTimeTests.swift'
 ]
 unittest_format_path_prepare = '{}!'            # used to format `path` before appending another path element - one placeholder for `path`

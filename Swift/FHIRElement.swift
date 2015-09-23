@@ -64,7 +64,7 @@ public class FHIRElement: CustomStringConvertible
 		var errors = populateFromJSON(json, presentKeys: &present) ?? [FHIRJSONError]()
 		
 		// superfluous JSON entries?
-		let superfluous = json?.keys.array.filter() { !present.contains($0) }
+		let superfluous = json?.keys.filter() { !present.contains($0) }
 		if let supflu = superfluous where !supflu.isEmpty {
 			for sup in supflu {
 				errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
