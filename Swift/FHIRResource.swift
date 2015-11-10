@@ -31,16 +31,9 @@ public class FHIRResource: FHIRElement
 		super.init(json: json)
 	}
 	
-	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
-		if let _ = json?["resourceType"] as? String {
-			presentKeys.insert("resourceType")
-		}
-		return super.populateFromJSON(json, presentKeys: &presentKeys)
-	}
-	
 	/** Serialize the receiver to JSON. */
-	override public func asJSON() -> FHIRJSON {
-		var json = super.asJSON()
+	override public func asJSON() -> FHIRJSONConvertible {
+		var json = super.asJSON() as! FHIRJSON
 		json["resourceType"] = self.dynamicType.resourceName
 		
 		return json

@@ -51,6 +51,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	}
 {% endif -%}
 {% if klass.properties %}	
+	{% if False %}
 	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
 		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
@@ -77,7 +78,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 					{%- endif %}{% endif %}{% endif %}{% endif %}
 				}
 				else {
-					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: exist.dynamicType))
+					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %}.self, has: exist.dynamicType))
 				}
 			}
 			{%- if prop.nonoptional and not prop.one_of_many %}
@@ -122,6 +123,72 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		{%- endfor %}
 		
 		return json
+	}
+	{% endif %}
+	
+	
+	// MARK: - Properties
+	
+	override public subscript(name: String) -> FHIRJSONConvertible? {
+		get {
+			switch name {
+			{%- for prop in klass.properties %}
+			case "{{ prop.orig_name }}":
+				return self.{{ prop.name }}?.asJSON()
+			{%- endfor %}
+			default:
+				return super[name]
+			}
+		}
+		set(newValue) {
+			switch name {
+			{%- for prop in klass.properties %}
+			case "{{ prop.orig_name }}":
+				{%- set full_json_class -%}
+					{% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %}
+				{%- endset %}
+				{%- set forced_json_class -%}
+					(val as! {{ full_json_class }})
+				{%- endset %}
+				guard let val = newValue where val is {{ full_json_class }} else {
+					_lastSubscriptSetterError = FHIRJSONError(key: "{{ prop.orig_name }}", wants: {{ full_json_class }}.self, has: newValue.dynamicType)
+					self.{{ prop.name }} = nil
+					return
+				}
+								
+				{%- if prop.class_name == prop.json_class %}		{# String, Int, Bool #}
+				self.{{ prop.name }} = {{ forced_json_class }}
+				{%- else %}
+				
+				{%- if prop.is_array %}{% if prop.is_native %}
+				self.{{ prop.name }} = {{ prop.class_name }}.from({{ forced_json_class }})
+				{%- else %}
+				self.{{ prop.name }} = {{ prop.class_name }}.from({{ forced_json_class }}, owner: self) as? [{{ prop.class_name }}]
+				{%- endif %}
+				
+				{%- else %}{% if prop.is_native %}
+				self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: {{ forced_json_class }})
+				{%- else %}{% if "Resource" == prop.class_name %}
+				self.{{ prop.name }} = Resource.instantiateFrom({{ forced_json_class }}, owner: self) as? Resource
+				{%- else %}
+				self.{{ prop.name }} = {{ prop.class_name }}(json: {{ forced_json_class }}, owner: self)
+				{%- endif %}{% endif %}{% endif %}{% endif %}
+			{%- endfor %}
+			default:
+				super[name] = newValue
+			}
+		}
+	}
+	
+	override public func elementProperties() -> [FHIRElementPropertyDefn] {
+		let mine: [FHIRElementPropertyDefn] = [
+		{%- for prop in klass.properties %}
+			FHIRElementPropertyDefn(name: "{{ prop.name }}", jsonName: "{{ prop.orig_name }}", type: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.is_array %}]{% endif %}.self, isArray: {% if prop.is_array %}true{% else %}false{% endif %}, mandatory: {% if prop.nonoptional %}true{% else %}false{% endif %}, oneOfMany: {% if prop.one_of_many %}"{{ prop.one_of_many|replace('[x]', '') }}"{% else %}nil{% endif %}),
+		{%- endfor %}
+		]
+		var elements = super.elementProperties()
+		elements.appendContentsOf(mine)
+		return elements
 	}
 {%- endif %}
 }

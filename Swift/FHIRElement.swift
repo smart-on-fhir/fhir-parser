@@ -8,10 +8,35 @@
 
 
 /**
+ *  Information about an element property.
+ */
+public struct FHIRElementPropertyDefn {
+	
+	/// The name of the property.
+	public var name: String
+	
+	/// The name of the property in JSON serialization.
+	public var jsonName: String
+	
+	/// The type of the property.
+	public var type: Any.Type
+	
+	/// Whether the property is an array.
+	public var isArray = false
+	
+	/// Whether the property cannot be null/empty.
+	public var mandatory = false
+	
+	/// Whether the property is one of several different properties of different type (e.g. valueBool, valueQuantity -> value)
+	public var oneOfMany: String? = nil
+}
+
+
+/**
  *  Abstract superclass for all FHIR data elements.
  */
-public class FHIRElement: CustomStringConvertible
-{
+public class FHIRElement: FHIRJSONConvertible, CustomStringConvertible {
+	
 	/// The name of the resource or element
 	public class var resourceName: String {
 		get { return "Element" }
@@ -37,10 +62,10 @@ public class FHIRElement: CustomStringConvertible
 	
 	
 	/**
-		The default initializer.
-		
-		Forwards to `populateFromJSON` and logs all JSON errors to console, if "DEBUG" is defined and true.
-	 */
+	The default initializer.
+	
+	Forwards to `populateFromJSON` and logs all JSON errors to console, if "DEBUG" is defined and true.
+	*/
 	public required init(json: FHIRJSON?) {
 		if let errors = populateFromJSON(json) {
 			for error in errors {
@@ -50,54 +75,135 @@ public class FHIRElement: CustomStringConvertible
 	}
 	
 	
-	// MARK: - JSON Capabilities
+	// MARK: - Properties
 	
-	/**
-		Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
-		
-		- parameter json: The JSON dictionary to pull data from
-		- returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
-			properties of the wrong type
-	 */
-	public final func populateFromJSON(json: FHIRJSON?) -> [FHIRJSONError]? {
-		var present = Set<String>()
-		var errors = populateFromJSON(json, presentKeys: &present) ?? [FHIRJSONError]()
-		
-		// superfluous JSON entries?
-		let superfluous = json?.keys.filter() { !present.contains($0) }
-		if let supflu = superfluous where !supflu.isEmpty {
-			for sup in supflu {
-				errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
+	var _lastSubscriptSetterError: FHIRJSONError?	// TODO: subscripts currently (Swift 2.1) are not throwable. Cheat by using this ivar
+	
+	public subscript(name: String) -> FHIRJSONConvertible? {
+		get {
+			switch name {
+			case "id":
+				return id?.asJSON()
+			case "contained":
+				if let contained = self.contained {
+					var arr = [FHIRJSON]()
+					for (key, cont) in contained {
+						let refid = cont.id ?? key
+						let resolved = resolvedReference(refid)
+						var json = resolved?.asJSON() ?? cont.json ?? FHIRJSON()
+						json["id"] = refid
+						arr.append(json)
+					}
+					return arr
+				}
+				return nil
+			case "extension":
+				return extension_fhir?.asJSON()
+			case "modifierExtension":
+				return modifierExtension?.asJSON()
+			default:
+				return nil
 			}
 		}
-		return errors.isEmpty ? nil : errors
+		set(newValue) {
+			switch name {
+			case "id":
+				guard let val = newValue where val is String else {
+					_lastSubscriptSetterError = FHIRJSONError(key: "id", wants: String.self, has: newValue.dynamicType)
+					self.id = nil
+					return
+				}
+				self.id = (val as! String)
+			case "contained":
+				guard let val = newValue where val is [String: FHIRContainedResource] else {
+					_lastSubscriptSetterError = FHIRJSONError(key: "contained", wants: [String: FHIRContainedResource].self, has: newValue.dynamicType)
+					self.contained = nil
+					return
+				}
+				self.contained = (val as! [String: FHIRContainedResource])
+			case "extension":
+				guard let val = newValue where val is [FHIRJSON] else {
+					_lastSubscriptSetterError = FHIRJSONError(key: "extension", wants: [FHIRJSON].self, has: newValue.dynamicType)
+					self.extension_fhir = nil
+					return
+				}
+				self.extension_fhir = Extension.from((val as! [FHIRJSON]), owner: self) as? [Extension]
+			case "modifierExtension":
+				guard let val = newValue where val is [FHIRJSON] else {
+					_lastSubscriptSetterError = FHIRJSONError(key: "modifierExtension", wants: [FHIRJSON].self, has: newValue.dynamicType)
+					self.modifierExtension = nil
+					return
+				}
+				self.modifierExtension = Extension.from((val as! [FHIRJSON]), owner: self) as? [Extension]
+			default:
+				break
+			}
+		}
 	}
 	
 	/**
-		Internal function to perform the actual JSON parsing.
- 
-		- parameter json: The JSON element to use to populate the receiver
-		- parameter presentKeys: An in-out parameter being filled with key names used.
-		- returns: An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
-	 */
-	func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+	Definition of all properties the receiver defines, including those defined by superclasses.
+	*/
+	public func elementProperties() -> [FHIRElementPropertyDefn] {
+		return [
+			FHIRElementPropertyDefn(name: "id", jsonName: "id", type: String.self, isArray: false, mandatory: false, oneOfMany: nil),
+			FHIRElementPropertyDefn(name: "contained", jsonName: "contained", type: FHIRContainedResource.self, isArray: true, mandatory: false, oneOfMany: nil),
+			FHIRElementPropertyDefn(name: "extension", jsonName: "extension", type: Extension.self, isArray: true, mandatory: false, oneOfMany: nil),
+			FHIRElementPropertyDefn(name: "modifierExtension", jsonName: "modifierExtension", type: Extension.self, isArray: true, mandatory: false, oneOfMany: nil),
+		]
+	}
+	
+	/**
+	Return a property definition for the property in question, if the receiver has such a property.
+	
+	- parameter property: Property name of the property to get the definition for; this is the "true" FHIR name, as it will appear in JSON
+	- returns: A `FHIRElementPropertyDefn` of the respective property, nil if the receiver nor its superclasses define this property
+	*/
+	public final func definitionOfProperty(property: String) -> FHIRElementPropertyDefn? {
+		for prop in elementProperties() {
+			if property == prop.jsonName {
+				return prop
+			}
+		}
+		return nil
+	}
+	
+	
+	// MARK: - JSON Capabilities
+	
+	/**
+	Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
+	
+	- parameter json: The JSON dictionary to pull data from
+	- returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
+	properties of the wrong type
+	*/
+	public final func populateFromJSON(json: FHIRJSON?) -> [FHIRJSONError]? {
 		if let js = json {
+			var present = Set<String>()
 			var errors = [FHIRJSONError]()
 			
-			if let exist: AnyObject = js["id"] {
-				presentKeys.insert("id")
-				if let val = exist as? String {
-					id = val
+			// loop all properties and assign
+			for prop in elementProperties() {
+				if "contained" == prop.jsonName {		// handle manually in a sec
+					continue
 				}
-				else {
-					String.Type.self
-					errors.append(FHIRJSONError(key: "id", wants: String.self, has: exist.dynamicType))
+				if let exist = js[prop.jsonName] as? FHIRJSONConvertible {
+					present.insert(prop.jsonName)
+					_lastSubscriptSetterError = nil
+					self[prop.jsonName] = exist
+					if let err = _lastSubscriptSetterError {
+						errors.append(err)
+					}
+				}
+				else if prop.mandatory {
+					errors.append(FHIRJSONError(key: prop.jsonName))
 				}
 			}
 			
 			// extract contained resources
 			if let exist: AnyObject = js["contained"] {
-				presentKeys.insert("contained")
+				present.insert("contained")
 				if let arr = exist as? [FHIRJSON] {
 					var cont = contained ?? [String: FHIRContainedResource]()
 					for dict in arr {
@@ -116,25 +222,13 @@ public class FHIRElement: CustomStringConvertible
 				}
 			}
 			
-			// instantiate (modifier-)extensions
-			if let exist: AnyObject = js["extension"] {
-				presentKeys.insert("extension")
-				if let val = exist as? [FHIRJSON] {
-					extension_fhir = Extension.from(val, owner: self) as? [Extension]
-				}
-				else {
-					errors.append(FHIRJSONError(key: "extension", wants: Array<FHIRJSON>.self, has: exist.dynamicType))
-				}
-			}
-			if let exist: AnyObject = js["modifierExtension"] {
-				presentKeys.insert("modifierExtension")
-				if let val = exist as? [FHIRJSON] {
-					modifierExtension = Extension.from(val, owner: self) as? [Extension]
-				}
-				else {
-					errors.append(FHIRJSONError(key: "modifierExtension", wants: Array<FHIRJSON>.self, has: exist.dynamicType))
-				}
-			}
+			// superfluous JSON entries?
+			_ = js.keys.filter() { !present.contains($0) }.map() { errors.append(FHIRJSONError(key: $0, has: js[$0]!.dynamicType)) }
+//			if let supflu = superfluous where !supflu.isEmpty {
+//				for sup in supflu {
+//					errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
+//				}
+//			}
 			return errors.isEmpty ? nil : errors
 		}
 		return nil
@@ -143,43 +237,16 @@ public class FHIRElement: CustomStringConvertible
 	/**
 		Represent the receiver in FHIRJSON, ready to be used for JSON serialization.
 	 */
-	public func asJSON() -> FHIRJSON {
+	public func asJSON() -> FHIRJSONConvertible {
 		var json = FHIRJSON()
 		//json["resourceType"] = self.dynamicType.resourceName		// we only do this for resources
 		
-		if let id = self.id {
-			json["id"] = id.asJSON()
-		}
-		if let contained = self.contained {
-			var arr = [FHIRJSON]()
-			for (key, cont) in contained {
-				let refid = cont.id ?? key
-				let resolved = resolvedReference(refid)
-				var json = resolved?.asJSON() ?? cont.json ?? FHIRJSON()
-				json["id"] = refid
-				arr.append(json)
+		for prop in elementProperties() {
+			if let exist = self[prop.jsonName] {
+				json[prop.jsonName] = (exist.asJSON() as! AnyObject)
 			}
-			json["contained"] = arr
 		}
-		if let extension_fhir = self.extension_fhir {
-			json["extension"] = Extension.asJSONArray(extension_fhir)
-		}
-		if let modifierExtension = self.modifierExtension {
-			json["modifierExtension"] = Extension.asJSONArray(modifierExtension)
-		}
-		
 		return json
-	}
-	
-	/**
-		Calls `asJSON()` on all elements in the array and returns the resulting array full of FHIRJSON dictionaries.
-	 */
-	public class func asJSONArray(array: [FHIRElement]) -> [FHIRJSON] {
-		var arr = [FHIRJSON]()
-		for element in array {
-			arr.append(element.asJSON())
-		}
-		return arr
 	}
 	
 	/**
