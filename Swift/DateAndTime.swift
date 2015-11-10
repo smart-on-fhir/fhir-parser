@@ -514,8 +514,8 @@ class DateAndTimeParser
 	
 	Does not currently check if the day exists in the given month.
 	
-	- param string: The date string to parse
-	- param isTimeOnly: If true assumes that the string describes time only
+	- parameter string: The date string to parse
+	- parameter isTimeOnly: If true assumes that the string describes time only
 	*/
 	func parse(string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: NSTimeZone?, tzString: String?) {
 		let scanner = NSScanner(string: string)

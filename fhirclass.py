@@ -109,7 +109,7 @@ class FHIRClassProperty(object):
         self.orig_name = name
         self.name = spec.safe_property_name(name)
         self.parent_name = element.parent_name
-        self.class_name = spec.class_name_for_property_type(type_name)
+        self.class_name = spec.class_name_for_type_if_property(type_name)
         self.module_name = None             # should only be set if it's an external module (think Python)
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = spec.class_name_is_native(self.class_name)

@@ -38,15 +38,13 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	public convenience init(
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
 		{%- if past_first_item %}, {% endif -%}
-		{{ nonop.name }}: {% if nonop.is_array %}[{% endif %}{{ nonop.class_name }}{% if nonop.is_array %}]{% endif %}?
+		{{ nonop.name }}: {% if nonop.is_array %}[{% endif %}{{ nonop.class_name }}{% if nonop.is_array %}]{% endif %}
 		{%- set past_first_item = True %}
 	{%- endif %}{% endfor -%}
 	) {
 		self.init(json: nil)
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
-		if nil != {{ nonop.name }} {
-			self.{{ nonop.name }} = {{ nonop.name }}
-		}
+		self.{{ nonop.name }} = {{ nonop.name }}
 	{%- endif %}{% endfor %}
 	}
 {% endif -%}

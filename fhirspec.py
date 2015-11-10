@@ -153,7 +153,7 @@ class FHIRSpec(object):
         mappedname = self.mapped_name_for_type(type_name, main_resource)
         return self.as_class_name(mappedname)
     
-    def class_name_for_property_type(self, type_name):
+    def class_name_for_type_if_property(self, type_name):
         classname = self.class_name_for_type(type_name)
         if not classname:
             return None
@@ -388,8 +388,7 @@ class FHIRStructureDefinition(object):
             if cls.superclass is None:
                 super_cls = fhirclass.FHIRClass.with_name(cls.superclass_name)
                 if super_cls is None:
-                    # TODO: turn into exception once we have all basic types and can parse all special cases (like "#class")
-                    logger.error('There is no class implementation for class named "{}" in profile "{}"'
+                    raise Exception('There is no class implementation for class named "{}" in profile "{}"'
                         .format(cls.superclass_name, self.url))
                 else:
                     cls.superclass = super_cls
@@ -563,8 +562,14 @@ class FHIRStructureDefinitionElement(object):
         if len(self.definition.types) > 0:
             props = []
             for type_obj in self.definition.types:
+                
+                # an inline class
+                if 'BackboneElement' == type_obj.code:
+                    props.append(fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class()))
+                    # TODO: look at http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name ?
+                
                 # the wildcard type: expand to all possible types, as defined in our mapping
-                if '*' == type_obj.code:
+                elif '*' == type_obj.code:
                     for exp_type in self.profile.spec.star_expand_types:
                         props.append(fhirclass.FHIRClassProperty(self, type_obj, exp_type))
                 else:

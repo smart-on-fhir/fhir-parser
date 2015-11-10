@@ -57,10 +57,10 @@ public protocol FHIRServer
 	This method should first execute `handlerForRequestOfType()` to obtain an appropriate request handler, then execute the prepared
 	request against the server.
 	
-	- param type: The type of the request (GET, PUT, POST or DELETE)
-	- param path: The relative path on the server to be interacting against
-	- param resource: The resource to be involved in the request, if any
-	- param callback: A callback, likely called asynchronously, returning a response instance
+	- parameter type: The type of the request (GET, PUT, POST or DELETE)
+	- parameter path: The relative path on the server to be interacting against
+	- parameter resource: The resource to be involved in the request, if any
+	- parameter callback: A callback, likely called asynchronously, returning a response instance
 	*/
 	func performRequestOfType(type: FHIRRequestType, path: String, resource: FHIRResource?, callback: ((response: FHIRServerResponse) -> Void))
 	

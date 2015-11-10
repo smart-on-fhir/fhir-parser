@@ -79,8 +79,9 @@ jsonmap_default = 'dict'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
-    'class': 'klass',
-    'import': 'importFrom',
-    'modifier': 'mod',          # `modifierExtension` is called "modifier" in JSON
+    'class': 'class_fhir',
+    'import': 'import_fhir',
+    'global': 'global_fhir',
+    'assert': 'assert_fhir',
 }
 

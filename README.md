@@ -89,6 +89,23 @@ The generated Python classes require the following packages to be installed:
 isodate
 ```
 
+## Tech Details
+
+This parser still applies some tricks, stemming from the evolving nature of FHIR's profile definitions.
+Some tricks may have become obsolete and should be cleaned up.
+
+### How are property names determined?
+
+Every “property” of a class, meaning every `element` in a profile snapshot, is represented as a `FHIRStructureDefinitionElement` instance.
+If an element itself defines a class, e.g. `Patient.animal`, calling the instance's `as_properties()` method returns a list of `FHIRClassProperty` instances – usually only one – that indicates a class was found in the profile.
+The class of this property is derived from `element.type`, which is expected to only contain one entry, in this matter:
+
+- If _type_ is `BackboneElement`, a class name is constructed from the parent element (in this case _Patient_) and the property name (in this case _animal_), camel-cased (in this case _PatientAnimal_).
+- If _type_ is `*`, a class for all classes found in settings` `star_expand_types` is created
+- Otherwise, the type is taken as-is (e.g. _CodeableConcept_) and mapped according to mappings' `classmap`, which is expected to be a valid FHIR class.
+
+> TODO: should `http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name` be respected?
+
 
 [fhir]: http://www.hl7.org/implement/standards/fhir/
 [jinja]: http://jinja.pocoo.org
