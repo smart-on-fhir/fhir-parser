@@ -87,6 +87,10 @@ class FHIRClass(object):
             if prop.nonoptional:
                 return True
         return False
+    
+    @property
+    def sorted_nonoptionals(self):
+        return sorted(self.expanded_nonoptionals.items())
 
 
 class FHIRClassProperty(object):

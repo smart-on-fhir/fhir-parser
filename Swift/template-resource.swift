@@ -60,7 +60,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 					self.{{ prop.name }} = val
 					{%- else %}
 					
-					{%- if prop.is_array %}{% if prop.is_native %}
+					{%- if prop.is_array %}{% if prop.is_native or 'FHIRElement' == prop.class_name %}
 					self.{{ prop.name }} = {{ prop.class_name }}.from(val)
 					{%- else %}
 					self.{{ prop.name }} = {{ prop.class_name }}.from(val, owner: self) as? [{{ prop.class_name }}]
@@ -87,7 +87,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 		{%- if klass.expanded_nonoptionals %}
 			
 			// check if nonoptional expanded properties are present
-			{%- for exp, props in klass.expanded_nonoptionals.items() %}
+			{%- for exp, props in klass.sorted_nonoptionals %}
 			if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
 				errors.append(FHIRJSONError(key: "{{ exp }}*"))
 			}

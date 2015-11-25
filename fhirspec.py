@@ -564,7 +564,7 @@ class FHIRStructureDefinitionElement(object):
             for type_obj in self.definition.types:
                 
                 # an inline class
-                if 'BackboneElement' == type_obj.code:
+                if 'BackboneElement' == type_obj.code or 'Element' == type_obj.code:        # data types don't use "BackboneElement"
                     props.append(fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class()))
                     # TODO: look at http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name ?
                 
