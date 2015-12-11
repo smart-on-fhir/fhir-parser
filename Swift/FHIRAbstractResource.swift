@@ -1,37 +1,35 @@
 //
-//  FHIRResource.swift
+//  FHIRAbstractResource.swift
 //  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 7/2/14.
 //  2014, SMART Health IT.
 //
 
+import Foundation
+
 
 /**
  *  Abstract superclass for all FHIR resource models.
  */
-public class FHIRResource: FHIRElement
-{
+public class FHIRAbstractResource: FHIRAbstractBase {
+	
 	/// A specific version id, if the instance was created using `vread`.
 	public var _versionId: String?
 	
 	/// If this instance lives on a server, this property represents that server.
 	public var _server: FHIRServer? {
-		get {
-			return __server ?? owningResource()?._server
-		}
-		set {
-			__server = newValue
-		}
+		get { return __server ?? owningResource()?._server }
+		set { __server = newValue }
 	}
 	var __server: FHIRServer?
 	
 	/** Initialize with a JSON object. */
-	public required init(json: FHIRJSON?) {
-		super.init(json: json)
+	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
+		super.init(json: json, owner: owner)
 	}
 	
-	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
 		if let _ = json?["resourceType"] as? String {
 			presentKeys.insert("resourceType")
 		}
@@ -39,7 +37,7 @@ public class FHIRResource: FHIRElement
 	}
 	
 	/** Serialize the receiver to JSON. */
-	override public func asJSON() -> FHIRJSON {
+	public override func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
 		json["resourceType"] = self.dynamicType.resourceName
 		
@@ -50,8 +48,7 @@ public class FHIRResource: FHIRElement
 	// MARK: - Printable
 	
 	override public var description: String {
-		let nilstr = "nil"
-		return "<\(self.dynamicType.resourceName)> \(id ?? nilstr) on \(__server?.baseURL ?? nilstr)"
+		return "<\(self.dynamicType.resourceName)> \(__server?.baseURL ?? "nil")"
 	}
 }
 

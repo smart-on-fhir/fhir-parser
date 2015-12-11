@@ -3,19 +3,19 @@
 from Swift.mappings import *
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/DSTU2/'
+specification_url = 'http://hl7.org/fhir/dstu2/'
 
 # Whether and where to put the generated class models
 write_resources = True
-tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one placeholder for the class name
+tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one "{}" placeholder for the class name
 
 # Whether and where to put the factory methods
 write_factory = write_resources        # required in Swift
-tpl_factory_target = '../Models/FHIRElement+Factory.swift'
+tpl_factory_target = '../Models/FHIRAbstractBase+Factory.swift'
 
 # Whether and where to write unit tests
 write_unittests = True
-tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'  # a pattern to determine the output files for unit tests; the one placeholder will be the class name
+tpl_unittest_target_ptrn = '../Tests/ModelTests/{}Tests.swift'  # a pattern to determine the output files for unit tests; the one placeholder will be the class name
 
 
 ##
@@ -24,14 +24,15 @@ tpl_unittest_target_ptrn = '../SwiftFHIRTests/ModelTests/{}Tests.swift'  # a pat
 
 
 # classes/resources
+default_base = {
+    'datatype': 'FHIRAbstractBase',
+    'resource': 'FHIRAbstractResource',
+}
 resource_modules_lowercase = False							# whether all resource paths (i.e. modules) should be lowercase
 tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source when writing resource implementations for profiles
-resource_default_base = 'FHIRResource'                      # the default superclass to use for main profile models
-contained_default_base = 'Element'                          # the default superclass to use for inline-defined (backbone) models
 manual_profiles = [                                         # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
-    ('Swift/FHIRElement.swift', None, ['Element', 'BackboneElement']),
-    ('Swift/FHIRResource.swift', None, ['FHIRResource']),
-    ('Swift/FHIRContainedResource.swift', None, ['FHIRContainedResource']),
+    ('Swift/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
+    ('Swift/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
     ('Swift/FHIRTypes.swift', None, [
     	'boolean',
     	'string', 'base64Binary', 'code', 'id',
@@ -42,6 +43,9 @@ manual_profiles = [                                         # all these profiles
         'date', 'dateTime', 'time', 'instant',
     ]),
     ('Swift/JSON-extensions.swift', None, []),
+    ('Swift/FHIRServer.swift', None, []),
+    ('Swift/FHIRServerResponse.swift', None, []),
+    ('Swift/FHIRError.swift', None, []),
 ]
 
 # factory methods

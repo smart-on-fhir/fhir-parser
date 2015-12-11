@@ -2,9 +2,7 @@
 
 # Which class names to map to resources and elements
 classmap = {
-    'Element': 'FHIRElement',
-    'BackboneElement': 'FHIRElement',
-    'Any': 'FHIRResource',
+    'Any': 'Resource',
     
     'boolean': 'Bool',
     'integer': 'Int',
@@ -64,9 +62,6 @@ natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecim
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
-    'FHIRElement': 'FHIRJSON',
-    'FHIRResource': 'FHIRJSON',
-    
     'Int': 'Int',
     'UInt': 'UInt',
     'Bool': 'Bool',

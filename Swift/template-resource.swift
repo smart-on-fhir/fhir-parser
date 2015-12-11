@@ -16,8 +16,7 @@ import Foundation
  *  {{ klass.formal|wordwrap(width=116, wrapstring="\n *  ") }}
 {%- endif %}
  */
-public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }}
-{
+public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
 {%- if klass.resource_name %}
 	override public class var resourceName: String {
 		get { return "{{ klass.resource_name }}" }
@@ -25,13 +24,13 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 {% endif -%}
 	
 {%- for prop in klass.properties %}	
-	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}
+	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}.
 	public var {{ prop.name }}: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.is_array %}]{% endif %}?
 {% endfor %}	
 	
 	/** Initialize with a JSON object. */
-	public required init(json: FHIRJSON?) {
-		super.init(json: json)
+	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
+		super.init(json: json, owner: owner)
 	}
 {% if klass.has_nonoptional %}	
 	/** Convenience initializer, taking all required properties as arguments. */
@@ -49,7 +48,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRElement') }
 	}
 {% endif -%}
 {% if klass.properties %}	
-	override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
 		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
 		{%- for prop in klass.properties %}

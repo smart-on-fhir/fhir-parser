@@ -108,15 +108,6 @@ class FHIRSpec(object):
                     }
                 }
                 
-                # manually add some properties that our base classes define to improve unit test generation
-                if 'FHIRElement' == contained:
-                    prof_dict['differential']['element'].append({'path': 'FHIRElement.extension', 'type': [{'code': 'Extension'}]})
-                    prof_dict['differential']['element'].append({'path': 'FHIRElement.modifierExtension', 'type': [{'code': 'Extension'}]})
-                if 'FHIRResource' == contained:
-                    prof_dict['differential']['element'].append({'path': 'FHIRResource.id', 'type': [{'code': 'id'}]})
-                    prof_dict['differential']['element'].append({'path': 'FHIRResource.extension', 'type': [{'code': 'Extension'}]})
-                    prof_dict['differential']['element'].append({'path': 'FHIRResource.modifierExtension', 'type': [{'code': 'Extension'}]})
-
                 profile.structure = FHIRStructureDefinitionStructure(profile, prof_dict)
                 if self.found_profile(profile):
                     profile.process_profile()
@@ -142,15 +133,11 @@ class FHIRSpec(object):
             return self.settings.classmap[classname]
         return classname[:1].upper() + classname[1:]
     
-    def mapped_name_for_type(self, type_name, main_resource=False):
-        if type_name is None:
-            if main_resource:
-                return self.settings.resource_default_base
-            return self.settings.contained_default_base
+    def mapped_name_for_type(self, type_name):
         return type_name
     
-    def class_name_for_type(self, type_name, main_resource=False):
-        mappedname = self.mapped_name_for_type(type_name, main_resource)
+    def class_name_for_type(self, type_name):
+        mappedname = self.mapped_name_for_type(type_name)
         return self.as_class_name(mappedname)
     
     def class_name_for_type_if_property(self, type_name):
@@ -387,7 +374,7 @@ class FHIRStructureDefinition(object):
         for cls in self.classes:
             if cls.superclass is None:
                 super_cls = fhirclass.FHIRClass.with_name(cls.superclass_name)
-                if super_cls is None:
+                if super_cls is None and cls.superclass_name is not None:
                     raise Exception('There is no class implementation for class named "{}" in profile "{}"'
                         .format(cls.superclass_name, self.url))
                 else:
@@ -404,6 +391,7 @@ class FHIRStructureDefinitionStructure(object):
         self.profile = profile
         self.name = None
         self.base = None
+        self.kind = None
         self.subclass_of = None
         self.snapshot = None
         self.differential = None
@@ -416,6 +404,7 @@ class FHIRStructureDefinitionStructure(object):
             raise Exception("Must find 'name' in profile dictionary but found nothing")
         self.name = self.profile.spec.class_name_for_profile(name) 
         self.base = json_dict.get('base')
+        self.kind = json_dict.get('kind')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
         
@@ -429,13 +418,6 @@ class FHIRStructureDefinitionStructure(object):
 class FHIRStructureDefinitionElement(object):
     """ An element in a profile's structure.
     """
-    
-    # properties with these names will be skipped as we implement them in our base classes
-    skip_properties = [
-        'id',
-        'contained',
-        'extension', 'modifierExtension',
-    ]
     
     def __init__(self, profile, element_dict, is_main_profile_element=False):
         assert isinstance(profile, FHIRStructureDefinition)
@@ -543,9 +525,6 @@ class FHIRStructureDefinitionElement(object):
         FHIRClassProperty instances, None otherwise.
         """
         assert self._did_resolve_dependencies
-        if self.definition.prop_name in self.skip_properties and not self.profile.is_manual:
-            return None
-        
         if self.is_main_profile_element or self.definition is None:
             return None
         
@@ -607,8 +586,9 @@ class FHIRStructureDefinitionElement(object):
                 type_code = self.profile.structure.subclass_of
             elif len(tps) > 0:
                 type_code = tps[0].code
-            # else type stays None, which will apply the default class name
-            self._superclass_name = self.profile.spec.class_name_for_type(type_code, self.is_main_profile_element)
+            elif self.profile.structure.kind:
+                type_code = self.profile.spec.settings.default_base.get(self.profile.structure.kind)
+            self._superclass_name = self.profile.spec.class_name_for_type(type_code)
         
         return self._superclass_name
 

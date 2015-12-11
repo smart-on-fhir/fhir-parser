@@ -6,6 +6,8 @@
 //  2014, SMART Health IT.
 //
 
+import Foundation
+
 
 /**
  *  A JSON dictionary, with `String` keys and `AnyObject` values.
@@ -15,8 +17,8 @@ public typealias FHIRJSON = [String: AnyObject]
 /**
 	Errors thrown during JSON parsing.
  */
-public struct FHIRJSONError: ErrorType, CustomStringConvertible
-{
+public struct FHIRJSONError: ErrorType, CustomStringConvertible {
+	
 	public let _domain = "FHIRJSONError"
 	
 	public var _code: Int {
@@ -132,9 +134,13 @@ public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
 
 // MARK: - Helper Functiosn
 
-public func fhir_logIfDebug(log: String) {
+public func fhir_logIfDebug(@autoclosure message: () -> String, function: String = __FUNCTION__, file: NSString = __FILE__, line: Int = __LINE__) {
 #if DEBUG
-	print("SwiftFHIR: \(log)")
+	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  \(message())")
 #endif
+}
+
+public func fhir_warn(@autoclosure message: () -> String, function: String = __FUNCTION__, file: NSString = __FILE__, line: Int = __LINE__) {
+	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  WARNING: \(message())")
 }
 
