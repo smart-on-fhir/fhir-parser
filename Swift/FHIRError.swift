@@ -10,8 +10,8 @@ import Foundation
 
 
 /**
-    Our FHIR errors.
- */
+FHIR errors.
+*/
 public enum FHIRError: ErrorType, CustomStringConvertible {
 	case Error(String)
 	
@@ -80,12 +80,66 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 }
 
 
-extension String {
-	/**
-	Convenience getter using `NSLocalizedString()` with no comment.
-	*/
-	public var fhir_localized: String {
-		return NSLocalizedString(self, comment: "")
+/**
+Errors thrown during JSON parsing.
+*/
+public struct FHIRJSONError: ErrorType, CustomStringConvertible {
+	
+	public let _domain = "FHIRJSONError"
+	
+	public var _code: Int {
+		return code.rawValue
 	}
+	
+	public var code: FHIRJSONErrorType
+	
+	/// The JSON property key generating the error.
+	public var key: String
+	
+	/// The type expected for values of this key.
+	public var wants: Any.Type?
+	
+	/// The type received for this key.
+	public var has: Any.Type?
+	
+	
+	init(code: FHIRJSONErrorType, key: String) {
+		self.code = code
+		self.key = key
+	}
+	
+	public init(key: String) {
+		self.init(code: .MissingKey, key: key)
+	}
+	
+	public init(key: String, has: Any.Type) {
+		self.init(code: .UnknownKey, key: key)
+		self.has = has
+	}
+	
+	public init(key: String, wants: Any.Type, has: Any.Type) {
+		self.init(code: .WrongValueForKey, key: key)
+		self.wants = wants
+		self.has = has
+	}
+	
+	public var description: String {
+		let nul = Any.self
+		switch code {
+		case .MissingKey:
+			return "Expecting nonoptional JSON property “\(key)” but it is missing"
+		case .UnknownKey:
+			return "Superfluous JSON property “\(key)” of type \(has ?? nul), ignoring"
+		case .WrongValueForKey:
+			return "Expecting JSON property “\(key)” to be `\(wants ?? nul)`, but is \(has ?? nul)"
+		}
+	}
+}
+
+
+public enum FHIRJSONErrorType: Int {
+	case MissingKey
+	case UnknownKey
+	case WrongValueForKey
 }
 

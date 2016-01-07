@@ -16,6 +16,7 @@ public enum FHIRRequestType: String {
 	case GET = "GET"
 	case PUT = "PUT"
 	case POST = "POST"
+	case PATCH = "PATCH"
 	case DELETE = "DELETE"
 	case OPTIONS = "OPTIONS"
 	
@@ -30,6 +31,8 @@ public enum FHIRRequestType: String {
 		case .PUT:
 			req.HTTPBody = body
 		case .POST:
+			req.HTTPBody = body
+		case .PATCH:
 			req.HTTPBody = body
 		case .DELETE:
 			break
