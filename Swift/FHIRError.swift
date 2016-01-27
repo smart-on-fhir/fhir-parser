@@ -85,12 +85,7 @@ Errors thrown during JSON parsing.
 */
 public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	
-	public let _domain = "FHIRJSONError"
-	
-	public var _code: Int {
-		return code.rawValue
-	}
-	
+	/// The error type.
 	public var code: FHIRJSONErrorType
 	
 	/// The JSON property key generating the error.
@@ -118,7 +113,7 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	}
 	
 	public init(key: String, wants: Any.Type, has: Any.Type) {
-		self.init(code: .WrongValueForKey, key: key)
+		self.init(code: .WrongValueTypeForKey, key: key)
 		self.wants = wants
 		self.has = has
 	}
@@ -130,7 +125,7 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 			return "Expecting nonoptional JSON property “\(key)” but it is missing"
 		case .UnknownKey:
 			return "Superfluous JSON property “\(key)” of type \(has ?? nul), ignoring"
-		case .WrongValueForKey:
+		case .WrongValueTypeForKey:
 			return "Expecting JSON property “\(key)” to be `\(wants ?? nul)`, but is \(has ?? nul)"
 		}
 	}
@@ -140,6 +135,6 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 public enum FHIRJSONErrorType: Int {
 	case MissingKey
 	case UnknownKey
-	case WrongValueForKey
+	case WrongValueTypeForKey
 }
 
