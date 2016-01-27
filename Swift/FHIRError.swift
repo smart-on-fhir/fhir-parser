@@ -3,7 +3,7 @@
 //  SwiftFHIR
 //
 //  Created by Pascal Pfiffner on 11/24/15.
-//  2015, SMART Platforms.
+//  2015, SMART Health IT.
 //
 
 import Foundation
@@ -20,6 +20,7 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 	case ResourceWithoutId
 	case ResourceAlreadyHasId
 	case ResourceFailedToInstantiate(String)
+	case ResourceCannotContainItself
 	
 	case RequestCannotPrepareBody
 	case RequestNotSent(String)
@@ -51,6 +52,8 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 			return "The resource already have an id, cannot proceed".fhir_localized
 		case .ResourceFailedToInstantiate(let path):
 			return "\("Failed to instantiate resource when trying to read from".fhir_localized): «\(path)»"
+		case .ResourceCannotContainItself:
+			return "A resource cannot contain itself"
 		
 		case .RequestCannotPrepareBody:
 			return "`FHIRServerRequestHandler` cannot prepare request body data".fhir_localized
