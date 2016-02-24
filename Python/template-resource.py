@@ -4,12 +4,14 @@
 #  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
 #  {{ info.year }}, SMART Health IT.
 
-{% for imp in imports %}
-from . import {{ imp.module }}
-{%- endfor %}
-
+{%- set imported = {} %}
 {%- for klass in classes %}
 
+
+{% if klass.superclass in imports and klass.superclass.module not in imported -%}
+from . import {{ klass.superclass.module }}
+{% set _ = imported.update({klass.superclass.module: True}) %}
+{% endif -%}
 
 class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.module }}.{% endif -%}
     {{ klass.superclass.name|default('object')}}):
@@ -53,4 +55,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
 {%- endif %}
 {%- endfor %}
 
+{% for imp in imports %}{% if imp.module not in imported %}
+from . import {{ imp.module }}
+{%- endif %}{% endfor %}
 

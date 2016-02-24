@@ -4,35 +4,36 @@
 #  Base class for FHIR resources.
 #  2014, SMART Health IT.
 
-from . import fhirelement
-from . import fhirdate
-from . import fhirsearch
-from . import fhirelementfactory
+from . import fhirabstractbase
 
 
-class FHIRResource(fhirelement.FHIRElement):
-    """ Extends the FHIRElement base class with server talking capabilities.
+class FHIRAbstractResource(fhirabstractbase.FHIRAbstractBase):
+    """ Extends the FHIRAbstractBase with server talking capabilities.
     """
-    resource_name = 'Resource'
+    resource_name = 'FHIRAbstractResource'
     
     def __init__(self, jsondict=None):
         self._server = None
         """ The server the instance was read from. """
         
-        super(FHIRResource, self).__init__(jsondict)
+        super(FHIRAbstractResource, self).__init__(jsondict)
     
     @classmethod
-    def with_json(cls, jsonobj):
-        """ Overridden to use a factory if called on the base resource and
-        "resourceType" is defined in the JSON.
+    def _with_json_dict(cls, jsondict):
+        """ Overridden to use a factory if called when "resourceType" is
+        defined in the JSON but does not match the receiver's resource_name.
         """
-        if 'Resource' == cls.resource_name:     # cannot use isinstance(cls, FHIRResource) because of module mismatch
-            if isinstance(jsonobj, dict) and 'resourceType' in jsonobj:
-                return fhirelementfactory.FHIRElementFactory.instantiate(jsonobj['resourceType'], jsonobj)
-        return super(FHIRResource, cls).with_json(jsonobj)
+        if not isinstance(jsondict, dict):
+            raise Exception("Cannot use this method with anything but a JSON dictionary, got {}"
+                .format(jsondict))
+        
+        res_type = jsondict.get('resourceType')
+        if res_type and res_type != cls.resource_name:
+            return fhirelementfactory.FHIRElementFactory.instantiate(res_type, jsondict)
+        return super(FHIRAbstractResource, cls)._with_json_dict(jsondict)
     
     def as_json(self):
-        js = super(FHIRResource, self).as_json()
+        js = super(FHIRAbstractResource, self).as_json()
         js['resourceType'] = self.resource_name
         return js
     
@@ -56,15 +57,6 @@ class FHIRResource(fhirelement.FHIRElement):
             owningRes = self.owningResource()
             self._server = owningRes.server if owningRes is not None else None
         return self._server
-    
-    def owningResource(self):
-        """ Walks the owner hierarchy and returns the next parent that is a
-        FHIRResource instance.
-        """
-        owner = self._owner
-        while owner is not None and not hasattr(owner, "_server"):
-            owner = owner._owner
-        return owner
     
     @classmethod
     def read(cls, rem_id, server):
@@ -188,3 +180,7 @@ class FHIRResource(fhirelement.FHIRElement):
         """
         return fhirsearch.FHIRSearch(cls, struct)
 
+
+from . import fhirdate
+from . import fhirsearch
+from . import fhirelementfactory

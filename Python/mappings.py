@@ -2,8 +2,7 @@
 
 # Which class names to map to resources and elements
 classmap = {
-    'Element': 'FHIRElement',
-    'Any': 'FHIRResource',
+    'Any': 'Resource',
     
     'boolean': 'bool',
     'integer': 'int',
@@ -28,7 +27,7 @@ classmap = {
 
 # Classes to be replaced with different ones at resource rendering time
 replacemap = {
-    'Reference': 'FHIRReference',
+    'Reference': 'FHIRReference',     # `FHIRReference` adds dereferencing capabilities
 }
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be

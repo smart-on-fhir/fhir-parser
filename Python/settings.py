@@ -24,20 +24,21 @@ tpl_unittest_target_ptrn = '../models/{}_tests.py'     # a pattern to determine 
 
 
 # classes/resources
+default_base = {
+    'datatype': 'FHIRAbstractBase',
+    'resource': 'FHIRAbstractResource',
+}
 resource_modules_lowercase = True                       # whether all resource paths (i.e. modules) should be lowercase
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
-resource_default_base = 'FHIRResource'                  # the default superclass to use for main profile models
-contained_default_base = 'FHIRElement'                  # the default superclass to use for inline-defined (backbone) models
 manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
-    ('Python/fhirelement.py', 'fhirelement', [
+    ('Python/fhirabstractbase.py', 'fhirabstractbase', [
         'boolean',
         'string', 'base64Binary', 'code', 'id',
         'decimal', 'integer', 'unsignedInt', 'positiveInt',
         'uri', 'oid', 'uuid',
-        'Element',
+        'FHIRAbstractBase',
     ]),
-    ('Python/fhirresource.py', 'fhirresource', ['FHIRResource']),
-    ('Python/fhircontainedresource.py', 'fhircontainedresource', ['ContainedResource']),
+    ('Python/fhirabstractresource.py', 'fhirabstractresource', ['FHIRAbstractResource']),
     ('Python/fhirreference.py', 'fhirreference', ['FHIRReference']),
     ('Python/fhirdate.py', 'fhirdate', ['date', 'dateTime', 'instant', 'time']),
     ('Python/fhirsearch.py', 'fhirsearch', ['FHIRSearch']),
