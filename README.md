@@ -11,15 +11,15 @@ This work is licensed under the [APACHE license][license].
 
 ### Tech ###
 
-The _generate.py_ script downloads [FHIR specification][fhir] files, parses the profiles and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
+The _generate.py_ script downloads [FHIR specification][fhir] files, parses the profiles (using _fhirspec.py_) and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
 Additionally, `FHIRUnitTest` (in _fhirunittest.py_) instances get created that can generate unit tests from provided FHIR examples.
 These representations are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
 
 This script does its job for the most part, but it doesn't yet handle all FHIR pecularities and there's no guarantee the output is correct or complete.
 Unless you have a desire to understand how parsing works, you should be able to play with _Lang/settings.py_, _Lang/mappings.py_ and _Lang/templates*_ to achieve what you need.
 
-The `master` branch is currently on _DSTU 2, May 2015 ballot_.  
-The `develop` branch is currently on _DSTU 2, Sept 2015 QA Preview_ and WiP.
+The `master` branch is currently on _DSTU 2, v1.0.2_.  
+The `develop` branch is on par with _master_, but points to the continuous integration build, currently on _1.3.0_.
 
 See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for specific FHIR versions.
 
