@@ -3,7 +3,7 @@
 from Swift.mappings import *
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7-fhir.github.io'
+specification_url = 'http://hl7.org/fhir/dstu2/'
 
 # Whether and where to put the generated class models
 write_resources = True
