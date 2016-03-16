@@ -68,14 +68,10 @@ See the [SMART Python Client][client-py] for a setup that works (all model class
 ### Python TODO: ###
 
 ```text
-[x] Generate Python classes
-[x] Deserialize from JSON
 [x] Implement reference resolver (for contained resources)
 [ ] Implement reference resolver (for remote resources)
 [ ] Implement working with references in code
-[x] Serialize to JSON
-[x] Generate search parameter builder
-[x] Generate unit tests from JSON example files
+[ ] Handle `_name` in JSON for primitive types
 ```
 
 ### Requirements ###
