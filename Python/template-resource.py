@@ -47,7 +47,10 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         js.extend([
         {%- for prop in klass.properties %}
             ("{{ prop.name }}", "{{ prop.orig_name }}",
-            {%- if prop.module_name %} {{ prop.module_name }}.{% else %} {% endif %}{{ prop.class_name }}, {{ prop.is_array }}),
+            {%- if prop.module_name %} {{ prop.module_name }}.{% else %} {% endif %}{{ prop.class_name }}, {# #}
+            {{- prop.is_array }},
+            {%- if prop.one_of_many %} "{{ prop.one_of_many }}"{% else %} None{% endif %}, {# #}
+            {{- prop.nonoptional }}),
         {%- endfor %}
         ])
         return js

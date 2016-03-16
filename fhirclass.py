@@ -107,7 +107,7 @@ class FHIRClassProperty(object):
             type_name = type_obj.code
         name = element.definition.prop_name
         if '[x]' in name:
-            self.one_of_many = name
+            self.one_of_many = name.replace('[x]', '')
             name = name.replace('[x]', '{}{}'.format(type_name[:1].upper(), type_name[1:]))
         
         self.orig_name = name

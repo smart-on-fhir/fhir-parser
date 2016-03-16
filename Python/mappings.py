@@ -78,6 +78,7 @@ jsonmap_default = 'dict'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
+    'for': 'for_fhir',
     'class': 'class_fhir',
     'import': 'import_fhir',
     'global': 'global_fhir',
