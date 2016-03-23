@@ -82,7 +82,7 @@ extension String {
 /**
 Execute a `print()`, prepending filename, line and function/method name, if `DEBUG` is defined.
 */
-public func fhir_logIfDebug(@autoclosure message: () -> String, function: String = __FUNCTION__, file: NSString = __FILE__, line: Int = __LINE__) {
+public func fhir_logIfDebug(@autoclosure message: () -> String, function: String = #function, file: NSString = #file, line: Int = #line) {
 #if DEBUG
 	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  \(message())")
 #endif
@@ -91,7 +91,7 @@ public func fhir_logIfDebug(@autoclosure message: () -> String, function: String
 /**
 Execute a `print()`, prepending filename, line and function/method name and "WARNING" prepended.
 */
-public func fhir_warn(@autoclosure message: () -> String, function: String = __FUNCTION__, file: NSString = __FILE__, line: Int = __LINE__) {
+public func fhir_warn(@autoclosure message: () -> String, function: String = #function, file: NSString = #file, line: Int = #line) {
 	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  WARNING: \(message())")
 }
 
