@@ -44,6 +44,12 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     
     def elementProperties(self):
         js = super({{ klass.name }}, self).elementProperties()
+        {%- if 'element' == klass.module and 'Element' == klass.name %}
+        {%- for imp in imports %}{% if imp.module not in imported %}
+        from . import {{ imp.module }}
+        {%- set _ = imported.update({imp.module: True}) %}
+        {%- endif %}{% endfor %}
+        {%- endif %}
         js.extend([
         {%- for prop in klass.properties %}
             ("{{ prop.name }}", "{{ prop.orig_name }}",
