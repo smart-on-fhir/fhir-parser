@@ -114,8 +114,8 @@ class FHIRAbstractBase(object):
                     .format(miss, self))
         
         # were there superfluous dictionary keys?
-        if len(jsondict.keys() - found) > 0:
-            for supflu in jsondict.keys() - found:
+        if len(set(jsondict.keys()) - found) > 0:
+            for supflu in set(jsondict.keys()) - found:
                 logging.warning("Superfluous entry '{}' in JSON for {}"
                     .format(supflu, self))
     
