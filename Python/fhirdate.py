@@ -61,7 +61,10 @@ class FHIRDate(object):
         """
         return cls.with_json(jsonobj)
 
-    def as_json(self):
+    def as_json(self, cast=False):
+        if cast:
+            return self.date
         if self.origval is not None:
             return self.origval
         return self.isostring
+
