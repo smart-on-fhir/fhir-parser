@@ -53,9 +53,15 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
     def copy_files(self):
         """ Copy base resources to the target location, according to settings.
         """
+        resource_target_dir = os.path.dirname(self.settings.tpl_resource_target_ptrn)
+        if os.path.isdir(resource_target_dir):
+            shutil.rmtree(resource_target_dir)
+
+        if not os.path.isdir(resource_target_dir):
+            os.mkdir(resource_target_dir)
+
         for filepath, module, contains in self.settings.manual_profiles:
             if os.path.exists(filepath):
-                resource_target_dir = os.path.dirname(self.settings.tpl_resource_target_ptrn)
                 tgt = os.path.join(resource_target_dir, os.path.basename(filepath))
                 logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
@@ -142,11 +148,11 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
     split words apart if they are longer than `width`.
     """
     if not s:
-    	return s
+        return s
     
     if not wrapstring:
         wrapstring = environment.newline_sequence
-    
+
     accumulator = []
     # Workaround: pre-split the string
     for component in re.split(r"\r?\n", s):

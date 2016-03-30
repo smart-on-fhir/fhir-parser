@@ -7,15 +7,15 @@ specification_url = 'http://hl7.org/fhir/dstu2/'
 
 # Whether and where to put the generated class models
 write_resources = True
-tpl_resource_target_ptrn = '../models/{}.py'            # where to write the generated class files to, with one placeholder for the class name
+tpl_resource_target_ptrn = 'models/{}.py'            # where to write the generated class files to, with one placeholder for the class name
 
 # Whether and where to put the factory methods
 write_factory = True
-tpl_factory_target = '../models/fhirelementfactory.py'
+tpl_factory_target = 'models/fhirelementfactory.py'
 
 # Whether and where to write unit tests
 write_unittests = True
-tpl_unittest_target_ptrn = '../models/{}_tests.py'     # a pattern to determine the output files for unit tests; the one placeholder will be the class name
+tpl_unittest_target_ptrn = 'models/{}_tests.py'     # a pattern to determine the output files for unit tests; the one placeholder will be the class name
 
 
 ##
