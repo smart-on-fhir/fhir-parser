@@ -136,12 +136,14 @@ class FHIRAbstractBase(object):
             if val is None:
                 continue
             if is_list:
-                if len(val) > 0:
-                    found.add(of_many or jsname)
-                js[jsname] = [v.as_json() if hasattr(v, 'as_json') else v for v in val]
+                if isinstance(val, list):
+                    if len(val) > 0:
+                        found.add(of_many or jsname)
+                        js[jsname] = [v.as_json() if hasattr(v, 'as_json') else v for v in val]
             else:
-                found.add(of_many or jsname)
-                js[jsname] = val.as_json() if hasattr(val, 'as_json') else val
+                if not isinstance(val, list):
+                    found.add(of_many or jsname)
+                    js[jsname] = val.as_json() if hasattr(val, 'as_json') else val
         
         # any missing non-optionals?
         if len(nonoptionals - found) > 0:
