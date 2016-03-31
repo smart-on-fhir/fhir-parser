@@ -12,7 +12,7 @@ class FHIRElementFactory(object):
     """
 
     @classmethod
-    def instantiate(cls, resource_name, jsondict):
+    def instantiate(cls, resource_name, jsondict, cast=False):
         """ Instantiate a resource of the type correlating to "resource_name".
 
         :param str resource_name: The name/type of the resource to instantiate
@@ -22,7 +22,7 @@ class FHIRElementFactory(object):
 
         klass = cls.get_class(resource_name)
         if klass:
-            return klass(jsondict)
+            return klass(jsondict, cast)
         return None
 
     @classmethod
