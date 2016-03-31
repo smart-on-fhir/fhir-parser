@@ -7,15 +7,15 @@ specification_url = 'http://hl7.org/fhir/dstu2/'
 
 # Whether and where to put the generated class models
 write_resources = True
-tpl_resource_target_ptrn = '../Models/{}.swift'             # where to write the generated class files to, with one "{}" placeholder for the class name
+tpl_resource_target_ptrn = '{}/{}.swift'             # where to write the generated class files to, with one "{}" placeholder for the class name
 
 # Whether and where to put the factory methods
 write_factory = write_resources        # required in Swift
-tpl_factory_target = '../Models/FHIRAbstractBase+Factory.swift'
+tpl_factory_target = '{}/FHIRAbstractBase+Factory.swift'
 
 # Whether and where to write unit tests
 write_unittests = True
-tpl_unittest_target_ptrn = '../Tests/ModelTests/{}Tests.swift'  # a pattern to determine the output files for unit tests; the one placeholder will be the class name
+tpl_unittest_target_ptrn = '{}/Tests/{}Tests.swift'  # a pattern to determine the output files for unit tests; the one placeholder will be the class name
 
 
 ##

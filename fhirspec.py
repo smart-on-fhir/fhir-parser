@@ -187,20 +187,20 @@ class FHIRSpec(object):
                 profiles.append(profile)
         return profiles
     
-    def write(self):
+    def write(self, output):
         if self.settings.write_resources:
             renderer = fhirrenderer.FHIRStructureDefinitionRenderer(self, self.settings)
-            renderer.copy_files()
-            renderer.render()
+            renderer.copy_files(output)
+            renderer.render(output)
         
         if self.settings.write_factory:
             renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
-            renderer.render()
+            renderer.render(output)
         
         if self.settings.write_unittests:
             self.parse_unit_tests()
             renderer = fhirrenderer.FHIRUnitTestRenderer(self, self.settings)
-            renderer.render()
+            renderer.render(output)
 
 
 class FHIRVersionInfo(object):

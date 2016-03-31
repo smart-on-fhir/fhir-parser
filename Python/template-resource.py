@@ -26,7 +26,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     resource_name = "{{ klass.resource_name }}"
 {%- endif %}
     
-    def __init__(self, jsondict=None):
+    def __init__(self, jsondict=None, cast=False):
         """ Initialize all valid properties.
         """
     {%- for prop in klass.properties %}
@@ -38,7 +38,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
     {%- endfor %}
         
-        super({{ klass.name }}, self).__init__(jsondict)
+        super({{ klass.name }}, self).__init__(jsondict, cast)
     
 {%- if klass.properties %}
     
