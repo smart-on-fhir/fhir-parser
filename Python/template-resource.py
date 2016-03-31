@@ -26,8 +26,12 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     resource_name = "{{ klass.resource_name }}"
 {%- endif %}
     
-    def __init__(self, jsondict=None):
+    def __init__(self, jsondict=None, strict=True):
         """ Initialize all valid properties.
+        
+        :raises: TypeError
+        :param dict jsondict: The JSON dictionary to use for initialization
+        :param bool strict: If True (the default), invalid variables will raise a TypeError
         """
     {%- for prop in klass.properties %}
         
@@ -38,7 +42,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
         {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
     {%- endfor %}
         
-        super({{ klass.name }}, self).__init__(jsondict)
+        super({{ klass.name }}, self).__init__(jsondict=jsondict, strict=strict)
     
 {%- if klass.properties %}
     

@@ -10,7 +10,14 @@ class FHIRAbstractBase(object):
     """ Abstract base class for all FHIR elements.
     """
     
-    def __init__(self, jsondict=None):
+    def __init__(self, jsondict=None, strict=True):
+        """ Initializer. If strict is true, raises on errors, otherwise uses
+        `logging.warning()`.
+        
+        :raises: TypeError
+        :param dict jsondict: The JSON dictionary to use for initialization
+        :param bool strict: If True (the default), invalid variables will raise a TypeError
+        """
         
         self._resolved = None
         """ Dictionary of resolved resources. """
@@ -19,7 +26,13 @@ class FHIRAbstractBase(object):
         """ Points to the parent resource, if there is one. """
         
         if jsondict is not None:
-            self.update_with_json(jsondict)
+            errs = self.update_with_json(jsondict)
+            if errs is not None:
+                if strict:
+                    raise TypeError("\n".join(errs))
+                else:
+                    for err in errs:
+                        logging.warning(err)
     
     
     # MARK: Instantiation from JSON
@@ -32,22 +45,24 @@ class FHIRAbstractBase(object):
         resource type is not the receiving classes type, uses
         `FHIRElementFactory` to return a correct class instance.
         
+        :raises: TypeError on anything but dict or list of dicts
         :param jsonobj: A dict or list of dicts to instantiate from
         :returns: An instance or a list of instances created from JSON data
         """
         if isinstance(jsonobj, dict):
             return cls._with_json_dict(jsonobj)
         
-        arr = []
-        for jsondict in jsonobj:
-            arr.append(cls._with_json_dict(jsondict))
-        return arr
+        if isinstance(jsonobj, list):
+            return [cls._with_json_dict(jsondict) for jsondict in jsonobj]
+        
+        raise TypeError("`cls.with_json()` only takes dict or list of dict objects, but you provided {}"
+            .format(type(jsonobj)))
     
     @classmethod
     def _with_json_dict(cls, jsondict):
         if not isinstance(jsondict, dict):
-            raise Exception("Cannot use this method with anything but a JSON dictionary, got {}"
-                .format(jsondict))
+            raise TypeError("Cannot use this method with anything but a JSON dictionary, got {}"
+                .format(type(jsondict)))
         return cls(jsondict)
     
     @classmethod
@@ -56,7 +71,8 @@ class FHIRAbstractBase(object):
         "owner" of the instantiated elements. The "owner" is the resource
         containing the receiver and is used to resolve contained resources.
         
-        :param dict jsonobj: Decoded JSON dictionary
+        :raises: TypeError on anything but dict or list of dicts
+        :param dict jsonobj: Decoded JSON dictionary (or list thereof)
         :param FHIRElement owner: The owning parent
         :returns: An instance or a list of instances created from JSON data
         """
@@ -80,11 +96,15 @@ class FHIRAbstractBase(object):
     
     def update_with_json(self, jsondict):
         """ Update the receiver with data in a JSON dictionary.
+        
+        :param dict jsondict: The JSON dictionary to use to update the receiver
+        :returns: None on success, a list of errors if there were errors
         """
         if jsondict is None:
             return
+        errs = []
         if not isinstance(jsondict, dict):
-            logging.warning("Non-dict type {} fed to `update_with_json` on {}"
+            errs.append("Non-dict type '{}' fed to `update_with_json` on {}"
                 .format(type(jsondict), type(self)))
             return
         
@@ -97,11 +117,30 @@ class FHIRAbstractBase(object):
                     nonoptionals.add(of_many or jsname)
                 continue
             
+            # got a value, test and assign
+            value = jsondict[jsname]
             if hasattr(typ, 'with_json_and_owner'):
-                setattr(self, name, typ.with_json_and_owner(jsondict[jsname], self))
+                try:
+                    setattr(self, name, typ.with_json_and_owner(value, self))
+                except TypeError as e:
+                    errs.append(str(e))
             else:
-                setattr(self, name, jsondict[jsname])
-                # TODO: look at `_name` if this is a primitive
+                testval = value
+                if is_list:
+                    if not isinstance(value, list):
+                        errs.append("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
+                            .format(type(value), name, type(self), typ))
+                    if len(value) > 0:
+                        testval = value[0]
+                
+                # test if the value is of the required type (allow both int and float)
+                if not self._matches_type(testval, typ):
+                    errs.append("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
+                        .format(type(testval), name, type(self), typ))
+                else:
+                    setattr(self, name, value)
+                    # TODO: look at `_name` if this is a primitive
+                
             found.add(jsname)
             found.add('_'+jsname)
             if of_many is not None:
@@ -110,14 +149,16 @@ class FHIRAbstractBase(object):
         # were there missing non-optional entries?
         if len(nonoptionals - found) > 0:
             for miss in nonoptionals - found:
-                logging.warning("Non-optional property '{}' on {} is missing from JSON"
+                errs.append("Non-optional property '{}' on {} is missing from JSON"
                     .format(miss, self))
         
         # were there superfluous dictionary keys?
         if len(set(jsondict.keys()) - found) > 0:
             for supflu in set(jsondict.keys()) - found:
-                logging.warning("Superfluous entry '{}' in JSON for {}"
+                errs.append("Superfluous entry '{}' in JSON for {}"
                     .format(supflu, self))
+        
+        return errs if len(errs) > 0 else None
     
     def as_json(self):
         """ Serializes to JSON by inspecting `elementProperties()` and creating
@@ -136,19 +177,36 @@ class FHIRAbstractBase(object):
             if val is None:
                 continue
             if is_list:
+                if not isinstance(val, list):
+                   raise TypeError("Expecting property \"{}\" on {} to be list, but is '{}'"
+                       .format(name, type(self), type(val)))
                 if len(val) > 0:
+                    if not self._matches_type(val[0], typ):
+                        raise TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
+                            .format(name, type(self), typ, type(val[0])))
                     found.add(of_many or jsname)
-                js[jsname] = [v.as_json() if hasattr(v, 'as_json') else v for v in val]
+                    js[jsname] = [v.as_json() if hasattr(v, 'as_json') else v for v in val]
             else:
+                if not self._matches_type(val, typ):
+                    raise TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
+                        .format(name, type(self), typ, type(val)))
                 found.add(of_many or jsname)
                 js[jsname] = val.as_json() if hasattr(val, 'as_json') else val
         
         # any missing non-optionals?
         if len(nonoptionals - found) > 0:
-            for nonop in nonoptionals - found:
-                logging.warning("Element '{}' is not optional, you should provide a value for it on {}"
-                    .format(nonop, self))
+            raise TypeError("\n".join(["Element '{}' is not optional, you should provide a value for it on {}"
+                    .format(nonop, type(self)) for nonop in nonoptionals - found]))
         return js
+    
+    def _matches_type(self, value, typ):
+        if value is None:
+            return True
+        if isinstance(value, typ):
+            return True
+        if int == typ or float == typ:
+            return (isinstance(value, int) or isinstance(value, float))
+        return False
     
     
     # MARK: Handling References

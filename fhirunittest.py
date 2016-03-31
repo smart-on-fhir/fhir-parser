@@ -102,7 +102,7 @@ class FHIRUnitTest(object):
         """
         tests = []
         for key, val in self.content.items():
-            if 'resourceType' == key:
+            if 'resourceType' == key or 'fhir_comments' == key or '_' == key[:1]:
                 continue
             
             prop = self.klass.property_for(key)
