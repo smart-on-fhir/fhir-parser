@@ -317,14 +317,6 @@ class FHIRStructureDefinition(object):
                 if element.definition.id == ident:
                     return element
         return None
-        
-    
-    def element_with_name(self, name):
-        if self.elements is not None:
-            for element in self.elements:
-                if element.definition.name == name:
-                    return element
-        return None
     
     
     # MARK: Class Handling
@@ -460,17 +452,7 @@ class FHIRStructureDefinitionElement(object):
         if '-' in prop_name:
             prop_name = ''.join([n[:1].upper() + n[1:] for n in prop_name.split('-')])
         
-        if 'contentReference' in element_dict:
-            ref = element_dict['contentReference']
-            if '#' != ref[:1]:
-                raise Exception("Only relative 'contentReference' element definitions are supported right now")
-            elem = self.profile.element_with_id(ref[1:])
-            if elem is None:
-                raise Exception("There is no element definiton with id \"{}\", as referenced by {} in {}"
-                    .format(ref, self.path, self.profile.url))
-            self.definition = elem.definition
-        else:
-            self.definition = FHIRStructureDefinitionElementDefinition(self, element_dict)
+        self.definition = FHIRStructureDefinitionElementDefinition(self, element_dict)
         self.definition.prop_name = prop_name
         
         self.n_min = element_dict.get('min')
@@ -481,14 +463,8 @@ class FHIRStructureDefinitionElement(object):
             self.represents_class = True
         if not self.represents_class and self.children is not None and len(self.children) > 0:
             self.represents_class = True
-        
-        # resolve name reference
-        if self.definition.name_reference:
-            resolved = self.profile.element_with_name(self.definition.name_reference)
-            if resolved is None:
-                raise Exception('Cannot resolve nameReference "{}" in "{}"'
-                    .format(self.definition.name_reference, self.profile.url))
-            self.definition.update_from_reference(resolved.definition)
+        if self.definition is not None:
+            self.definition.resolve_dependencies()
         
         self._did_resolve_dependencies = True
     
@@ -496,6 +472,7 @@ class FHIRStructureDefinitionElement(object):
     # MARK: Hierarchy
     
     def add_child(self, element):
+        assert isinstance(element, FHIRStructureDefinitionElement)
         element.parent = self
         if self.children is None:
             self.children = [element]
@@ -623,7 +600,8 @@ class FHIRStructureDefinitionElementDefinition(object):
         self.types = []
         self.name = None
         self.prop_name = None
-        self.name_reference = None
+        self.content_reference = None
+        self._content_referenced = None
         self.short = None
         self.formal = None
         self.comment = None
@@ -638,13 +616,13 @@ class FHIRStructureDefinitionElementDefinition(object):
             self.parse_from(definition_dict)
     
     def parse_from(self, definition_dict):
-        self.id = definition_dict.get('id', self.id)
+        self.id = definition_dict.get('id')
         self.types = []
         for type_dict in definition_dict.get('type', []):
             self.types.append(FHIRElementType(type_dict))
         
         self.name = definition_dict.get('name')
-        self.name_reference = definition_dict.get('nameReference')
+        self.content_reference = definition_dict.get('contentReference')
         
         self.short = definition_dict.get('short')
         self.formal = definition_dict.get('definition')
@@ -660,20 +638,25 @@ class FHIRStructureDefinitionElementDefinition(object):
             self.slicing = definition_dict['slicing']
         self.representation = definition_dict.get('representation')
     
-    def update_from_reference(self, reference_definition):
-        self.element = reference_definition.element
-        self.types = reference_definition.types
-        self.name = reference_definition.name
-        self.constraint = reference_definition.constraint
-        self.mapping = reference_definition.mapping
-        self.slicing = reference_definition.slicing
-        self.representation = reference_definition.representation
+    def resolve_dependencies(self):
+        # update the definition from a reference, if there is one
+        if self.content_reference is not None:
+            if '#' != self.content_reference[:1]:
+                raise Exception("Only relative 'contentReference' element definitions are supported right now")
+            elem = self.element.profile.element_with_id(self.content_reference[1:])
+            if elem is None:
+                raise Exception("There is no element definiton with id \"{}\", as referenced by {} in {}"
+                    .format(self.content_reference, self.path, self.profile.url))
+            self._content_referenced = elem.definition
     
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was
         defining a class. This means it uses "name", if present, and the last
         "path" component otherwise.
         """
+        if self._content_referenced is not None:
+            return self._content_referenced.name_if_class()
+        
         with_name = self.name or self.prop_name
         classname = self.element.profile.spec.class_name_for_type(with_name)
         if self.element.parent is not None:
