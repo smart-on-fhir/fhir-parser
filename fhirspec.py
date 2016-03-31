@@ -308,6 +308,17 @@ class FHIRStructureDefinition(object):
                 self.found_class(sub)
             self.targetname = snap_class.name
     
+    def element_with_id(self, ident):
+        """ Returns a FHIRStructureDefinitionElementDefinition with the given
+        id, if found. Used to retrieve elements defined via `contentReference`.
+        """
+        if self.elements is not None:
+            for element in self.elements:
+                if element.definition.id == ident:
+                    return element
+        return None
+        
+    
     def element_with_name(self, name):
         if self.elements is not None:
             for element in self.elements:
@@ -449,12 +460,21 @@ class FHIRStructureDefinitionElement(object):
         if '-' in prop_name:
             prop_name = ''.join([n[:1].upper() + n[1:] for n in prop_name.split('-')])
         
-        self.definition = FHIRStructureDefinitionElementDefinition(self, element_dict)
+        if 'contentReference' in element_dict:
+            ref = element_dict['contentReference']
+            if '#' != ref[:1]:
+                raise Exception("Only relative 'contentReference' element definitions are supported right now")
+            elem = self.profile.element_with_id(ref[1:])
+            if elem is None:
+                raise Exception("There is no element definiton with id \"{}\", as referenced by {} in {}"
+                    .format(ref, self.path, self.profile.url))
+            self.definition = elem.definition
+        else:
+            self.definition = FHIRStructureDefinitionElementDefinition(self, element_dict)
         self.definition.prop_name = prop_name
         
         self.n_min = element_dict.get('min')
         self.n_max = element_dict.get('max')
-    
     
     def resolve_dependencies(self):
         if self.is_main_profile_element:
@@ -598,6 +618,7 @@ class FHIRStructureDefinitionElementDefinition(object):
     """
     
     def __init__(self, element, definition_dict):
+        self.id = None
         self.element = element
         self.types = []
         self.name = None
@@ -617,6 +638,7 @@ class FHIRStructureDefinitionElementDefinition(object):
             self.parse_from(definition_dict)
     
     def parse_from(self, definition_dict):
+        self.id = definition_dict.get('id', self.id)
         self.types = []
         for type_dict in definition_dict.get('type', []):
             self.types.append(FHIRElementType(type_dict))
