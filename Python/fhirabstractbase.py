@@ -6,6 +6,28 @@
 import logging
 
 
+class FHIRValidationError(Exception):
+    """ Exception raised when one or more errors occurred during model
+    validation.
+    """
+    
+    def __init__(self, errors):
+        """ Initializer.
+        
+        :param errors: List of Exception instances. Also accepts a string,
+            which is converted to a TypeError.
+        """
+        if not isinstance(errors, list):
+            errors = [TypeError(errors)]
+        message = "\n".join([str(e) for e in errors])
+        
+        super(FHIRValidationError, self).__init__(message)
+        
+        self.errors = errors
+        """ A list of validation errors encountered. Typically contains
+        TypeError, KeyError, possibly AttributeError and others. """
+
+
 class FHIRAbstractBase(object):
     """ Abstract base class for all FHIR elements.
     """
@@ -14,8 +36,8 @@ class FHIRAbstractBase(object):
         """ Initializer. If strict is true, raises on errors, otherwise uses
         `logging.warning()`.
         
-        :raises: TypeError
-        :param dict jsondict: The JSON dictionary to use for initialization
+        :raises: FHIRValidationError on validation errors, unless strict is False
+        :param dict jsondict: A JSON dictionary to use for initialization
         :param bool strict: If True (the default), invalid variables will raise a TypeError
         """
         
@@ -26,12 +48,13 @@ class FHIRAbstractBase(object):
         """ Points to the parent resource, if there is one. """
         
         if jsondict is not None:
-            errs = self.update_with_json(jsondict)
-            if errs is not None:
-                if strict:
-                    raise TypeError("\n".join(errs))
-                else:
-                    for err in errs:
+            if strict:
+                self.update_with_json(jsondict)
+            else:
+                try:
+                    self.update_with_json(jsondict)
+                except FHIRValidationError as e:
+                    for err in e.errors:
                         logging.warning(err)
     
     
@@ -46,6 +69,7 @@ class FHIRAbstractBase(object):
         `FHIRElementFactory` to return a correct class instance.
         
         :raises: TypeError on anything but dict or list of dicts
+        :raises: FHIRValidationError if instantiation fails
         :param jsonobj: A dict or list of dicts to instantiate from
         :returns: An instance or a list of instances created from JSON data
         """
@@ -55,14 +79,20 @@ class FHIRAbstractBase(object):
         if isinstance(jsonobj, list):
             return [cls._with_json_dict(jsondict) for jsondict in jsonobj]
         
-        raise TypeError("`cls.with_json()` only takes dict or list of dict objects, but you provided {}"
-            .format(type(jsonobj)))
+        raise TypeError("`with_json()` on {} only takes dict or list of dict, but you provided {}"
+            .format(cls, type(jsonobj)))
     
     @classmethod
     def _with_json_dict(cls, jsondict):
+        """ Internal method to instantiate from JSON dictionary.
+        
+        :raises: TypeError on anything but dict
+        :raises: FHIRValidationError if instantiation fails
+        :returns: An instance created from dictionary data
+        """
         if not isinstance(jsondict, dict):
-            raise TypeError("Cannot use this method with anything but a JSON dictionary, got {}"
-                .format(type(jsondict)))
+            raise TypeError("Can only use `_with_json_dict()` on {} with a dictionary, got {}"
+                .format(type(self), type(jsondict)))
         return cls(jsondict)
     
     @classmethod
@@ -72,6 +102,7 @@ class FHIRAbstractBase(object):
         containing the receiver and is used to resolve contained resources.
         
         :raises: TypeError on anything but dict or list of dicts
+        :raises: FHIRValidationError if instantiation fails
         :param dict jsonobj: Decoded JSON dictionary (or list thereof)
         :param FHIRElement owner: The owning parent
         :returns: An instance or a list of instances created from JSON data
@@ -97,18 +128,19 @@ class FHIRAbstractBase(object):
     def update_with_json(self, jsondict):
         """ Update the receiver with data in a JSON dictionary.
         
+        :raises: FHIRValidationError on validation errors
         :param dict jsondict: The JSON dictionary to use to update the receiver
         :returns: None on success, a list of errors if there were errors
         """
         if jsondict is None:
             return
-        errs = []
+        
         if not isinstance(jsondict, dict):
-            errs.append("Non-dict type '{}' fed to `update_with_json` on {}"
+            raise FHIRValidationError("Non-dict type {} fed to `update_with_json` on {}"
                 .format(type(jsondict), type(self)))
-            return
         
         # loop all registered properties and instantiate
+        errs = []
         found = set(['resourceType', 'fhir_comments'])
         nonoptionals = set()
         for name, jsname, typ, is_list, of_many, not_optional in self.elementProperties():
@@ -117,26 +149,27 @@ class FHIRAbstractBase(object):
                     nonoptionals.add(of_many or jsname)
                 continue
             
-            # got a value, test and assign
+            # got a value, test if it is of the required type and assign
             value = jsondict[jsname]
             if hasattr(typ, 'with_json_and_owner'):
                 try:
                     setattr(self, name, typ.with_json_and_owner(value, self))
+                except FHIRValidationError as e:
+                    errs.extend(e.errors)
                 except TypeError as e:
-                    errs.append(str(e))
+                    errs.append(e)
             else:
                 testval = value
                 if is_list:
                     if not isinstance(value, list):
-                        errs.append("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
-                            .format(type(value), name, type(self), typ))
+                        errs.append(TypeError("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
+                            .format(type(value), name, type(self), typ)))
                     if len(value) > 0:
                         testval = value[0]
                 
-                # test if the value is of the required type (allow both int and float)
                 if not self._matches_type(testval, typ):
-                    errs.append("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
-                        .format(type(testval), name, type(self), typ))
+                    errs.append(TypeError("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
+                        .format(type(testval), name, type(self), typ)))
                 else:
                     setattr(self, name, value)
                     # TODO: look at `_name` if this is a primitive
@@ -149,22 +182,31 @@ class FHIRAbstractBase(object):
         # were there missing non-optional entries?
         if len(nonoptionals - found) > 0:
             for miss in nonoptionals - found:
-                errs.append("Non-optional property '{}' on {} is missing from JSON"
-                    .format(miss, self))
+                errs.append(KeyError("Non-optional property '{}' on {} is missing from JSON"
+                    .format(miss, self)))
         
         # were there superfluous dictionary keys?
         if len(set(jsondict.keys()) - found) > 0:
             for supflu in set(jsondict.keys()) - found:
-                errs.append("Superfluous entry '{}' in JSON for {}"
-                    .format(supflu, self))
+                errs.append(AttributeError("Superfluous entry '{}' in JSON for {}"
+                    .format(supflu, self)))
         
-        return errs if len(errs) > 0 else None
+        if len(errs) > 0:
+            raise FHIRValidationError(errs)
     
     def as_json(self):
         """ Serializes to JSON by inspecting `elementProperties()` and creating
-        a JSON dictionary of all registered properties.
+        a JSON dictionary of all registered properties. Checks:
+        
+        - whether required properties are not None (and lists not empty)
+        - whether not-None properties are of the correct type
+        
+        :raises: FHIRValidationError if properties have the wrong type or if
+            required properties are empty
+        :returns: A validated dict object that can be JSON serialized
         """
         js = {}
+        errs = []
         
         # JSONify all registered properties
         found = set()
@@ -173,30 +215,46 @@ class FHIRAbstractBase(object):
             if not_optional:
                 nonoptionals.add(of_many or jsname)
             
-            val = getattr(self, name)
-            if val is None:
+            value = getattr(self, name)
+            if value is None:
                 continue
+            
             if is_list:
-                if not isinstance(val, list):
-                   raise TypeError("Expecting property \"{}\" on {} to be list, but is '{}'"
-                       .format(name, type(self), type(val)))
-                if len(val) > 0:
-                    if not self._matches_type(val[0], typ):
-                        raise TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
-                            .format(name, type(self), typ, type(val[0])))
-                    found.add(of_many or jsname)
-                    js[jsname] = [v.as_json() if hasattr(v, 'as_json') else v for v in val]
+                if not isinstance(value, list):
+                   errs.append(TypeError("Expecting property \"{}\" on {} to be list, but is '{}'"
+                       .format(name, type(self), type(value))))
+                elif len(value) > 0:
+                    if not self._matches_type(value[0], typ):
+                        errs.append(TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
+                            .format(name, type(self), typ, type(value[0]))))
+                    else:
+                        lst = []
+                        for v in value:
+                            try:
+                                lst.append(v.as_json() if hasattr(v, 'as_json') else v)
+                            except FHIRValidationError as e:
+                                errs.extend(e.errors)
+                        found.add(of_many or jsname)
+                        js[jsname] = lst
             else:
-                if not self._matches_type(val, typ):
-                    raise TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
-                        .format(name, type(self), typ, type(val)))
-                found.add(of_many or jsname)
-                js[jsname] = val.as_json() if hasattr(val, 'as_json') else val
+                if not self._matches_type(value, typ):
+                    errs.append(TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
+                        .format(name, type(self), typ, type(value))))
+                else:
+                    try:
+                        found.add(of_many or jsname)
+                        js[jsname] = value.as_json() if hasattr(value, 'as_json') else value
+                    except FHIRValidationError as e:
+                        errs.extend(e.errors)
         
         # any missing non-optionals?
         if len(nonoptionals - found) > 0:
-            raise TypeError("\n".join(["Element '{}' is not optional, you should provide a value for it on {}"
-                    .format(nonop, type(self)) for nonop in nonoptionals - found]))
+            for nonop in nonoptionals - found:
+                errs.append(KeyError("Property '{}' on {} is not optional, you must provide a value for it"
+                    .format(nonop, self)))
+        
+        if len(errs) > 0:
+            raise FHIRValidationError(errs)
         return js
     
     def _matches_type(self, value, typ):
