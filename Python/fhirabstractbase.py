@@ -11,21 +11,32 @@ class FHIRValidationError(Exception):
     validation.
     """
     
-    def __init__(self, errors):
+    def __init__(self, errors, path=None):
         """ Initializer.
         
         :param errors: List of Exception instances. Also accepts a string,
             which is converted to a TypeError.
+        :param str path: The property path on the object where errors occurred
         """
         if not isinstance(errors, list):
             errors = [TypeError(errors)]
-        message = "\n".join([str(e) for e in errors])
+        msgs = "\n  ".join([str(e).replace("\n", "\n  ") for e in errors])
+        message = "{}:\n  {}".format(path or "{root}", msgs)
         
         super(FHIRValidationError, self).__init__(message)
         
         self.errors = errors
         """ A list of validation errors encountered. Typically contains
         TypeError, KeyError, possibly AttributeError and others. """
+        
+        self.path = path
+        """ The path on the object where the errors occurred. """
+    
+    def prefixed(self, path_prefix):
+        """ Creates a new instance of the receiver, with the given path prefix
+        applied. """
+        path = '{}.{}'.format(path_prefix, self.path) if self.path is not None else path_prefix
+        return self.__class__(self.errors, path)
 
 
 class FHIRAbstractBase(object):
@@ -149,31 +160,37 @@ class FHIRAbstractBase(object):
                     nonoptionals.add(of_many or jsname)
                 continue
             
-            # got a value, test if it is of the required type and assign
+            # bring the value in shape
+            err = None
             value = jsondict[jsname]
             if hasattr(typ, 'with_json_and_owner'):
                 try:
-                    setattr(self, name, typ.with_json_and_owner(value, self))
-                except FHIRValidationError as e:
-                    errs.extend(e.errors)
-                except TypeError as e:
-                    errs.append(e)
-            else:
+                    value = typ.with_json_and_owner(value, self)
+                except Exception as e:
+                    value = None
+                    err = e
+            
+            # got a value, test if it is of required type and assign
+            if value is not None:
                 testval = value
                 if is_list:
                     if not isinstance(value, list):
-                        errs.append(TypeError("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
-                            .format(type(value), name, type(self), typ)))
-                    if len(value) > 0:
-                        testval = value[0]
+                        err = TypeError("Wrong type {} for list property \"{}\" on {}, expecting a list of {}"
+                            .format(type(value), name, type(self), typ))
+                        testval = None
+                    else:
+                        testval = value[0] if value and len(value) > 0 else None
                 
-                if not self._matches_type(testval, typ):
-                    errs.append(TypeError("Wrong type '{}' for entry \"{}\" on {}, expecting '{}'"
-                        .format(type(testval), name, type(self), typ)))
+                if testval is not None and not self._matches_type(testval, typ):
+                    err = TypeError("Wrong type {} for property \"{}\" on {}, expecting {}"
+                        .format(type(testval), name, type(self), typ))
                 else:
                     setattr(self, name, value)
                     # TODO: look at `_name` if this is a primitive
-                
+            
+            if err is not None:
+                errs.append(err.prefixed(name) if isinstance(err, FHIRValidationError) else FHIRValidationError([err], name))
+
             found.add(jsname)
             found.add('_'+jsname)
             if of_many is not None:
@@ -182,13 +199,13 @@ class FHIRAbstractBase(object):
         # were there missing non-optional entries?
         if len(nonoptionals - found) > 0:
             for miss in nonoptionals - found:
-                errs.append(KeyError("Non-optional property '{}' on {} is missing from JSON"
+                errs.append(KeyError("Non-optional property \"{}\" on {} is missing"
                     .format(miss, self)))
         
         # were there superfluous dictionary keys?
         if len(set(jsondict.keys()) - found) > 0:
             for supflu in set(jsondict.keys()) - found:
-                errs.append(AttributeError("Superfluous entry '{}' in JSON for {}"
+                errs.append(AttributeError("Superfluous entry \"{}\" in data for {}"
                     .format(supflu, self)))
         
         if len(errs) > 0:
@@ -215,42 +232,46 @@ class FHIRAbstractBase(object):
             if not_optional:
                 nonoptionals.add(of_many or jsname)
             
+            err = None
             value = getattr(self, name)
             if value is None:
                 continue
             
             if is_list:
                 if not isinstance(value, list):
-                   errs.append(TypeError("Expecting property \"{}\" on {} to be list, but is '{}'"
-                       .format(name, type(self), type(value))))
+                   err = TypeError("Expecting property \"{}\" on {} to be list, but is {}"
+                       .format(name, type(self), type(value)))
                 elif len(value) > 0:
                     if not self._matches_type(value[0], typ):
-                        errs.append(TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
-                            .format(name, type(self), typ, type(value[0]))))
+                        err = TypeError("Expecting property \"{}\" on {} to be {}, but is {}"
+                            .format(name, type(self), typ, type(value[0])))
                     else:
                         lst = []
                         for v in value:
                             try:
                                 lst.append(v.as_json() if hasattr(v, 'as_json') else v)
                             except FHIRValidationError as e:
-                                errs.extend(e.errors)
+                                err = e.prefixed(name)
                         found.add(of_many or jsname)
                         js[jsname] = lst
             else:
                 if not self._matches_type(value, typ):
-                    errs.append(TypeError("Expecting property \"{}\" on {} to be {}, but is '{}'"
-                        .format(name, type(self), typ, type(value))))
+                    err = TypeError("Expecting property \"{}\" on {} to be {}, but is {}"
+                        .format(name, type(self), typ, type(value)))
                 else:
                     try:
                         found.add(of_many or jsname)
                         js[jsname] = value.as_json() if hasattr(value, 'as_json') else value
                     except FHIRValidationError as e:
-                        errs.extend(e.errors)
+                        err = e.prefixed(name)
+            
+            if err is not None:
+                errs.append(err if isinstance(err, FHIRValidationError) else FHIRValidationError([err], name))
         
         # any missing non-optionals?
         if len(nonoptionals - found) > 0:
             for nonop in nonoptionals - found:
-                errs.append(KeyError("Property '{}' on {} is not optional, you must provide a value for it"
+                errs.append(KeyError("Property \"{}\" on {} is not optional, you must provide a value for it"
                     .format(nonop, self)))
         
         if len(errs) > 0:
