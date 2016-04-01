@@ -29,8 +29,8 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     def __init__(self, jsondict=None, strict=True):
         """ Initialize all valid properties.
         
-        :raises: TypeError
-        :param dict jsondict: The JSON dictionary to use for initialization
+        :raises: FHIRValidationError on validation errors, unless strict is False
+        :param dict jsondict: A JSON dictionary to use for initialization
         :param bool strict: If True (the default), invalid variables will raise a TypeError
         """
     {%- for prop in klass.properties %}
