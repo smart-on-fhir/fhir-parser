@@ -80,6 +80,7 @@ jsonmap_default = 'FHIRJSON'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
+    'for': 'for_fhir',
     'class': 'class_fhir',
     'import': 'import_fhir',
     'protocol': 'protocol_fhir',
