@@ -10,8 +10,8 @@ import XCTest
 import SwiftFHIR
 
 
-class DateTests: XCTestCase
-{
+class DateTests: XCTestCase {
+	
 	func testParsing() {
 		var d = Date(string: "2015")
 		XCTAssertFalse(nil == d)
@@ -96,8 +96,8 @@ class DateTests: XCTestCase
 }
 
 
-class TimeTests: XCTestCase
-{
+class TimeTests: XCTestCase {
+	
 	func testParsing() {
 		var t = Time(string: "18")
 		XCTAssertTrue(nil == t)
@@ -114,7 +114,19 @@ class TimeTests: XCTestCase
 		XCTAssertEqual(UInt8(44), t!.minute)
 		XCTAssertTrue(nil == t!.second)
 		
+		t = Time(string: "00:00:00")
+		XCTAssertFalse(nil == t)
+		XCTAssertEqual(UInt8(0), t!.hour)
+		XCTAssertEqual(UInt8(0), t!.minute)
+		XCTAssertEqual(0.0, t!.second)
+		
 		t = Time(string: "18:44:88")
+		XCTAssertFalse(nil == t)
+		XCTAssertEqual(UInt8(18), t!.hour)
+		XCTAssertEqual(UInt8(44), t!.minute)
+		XCTAssertTrue(nil == t!.second)
+		
+		t = Time(string: "18:44:-4")
 		XCTAssertFalse(nil == t)
 		XCTAssertEqual(UInt8(18), t!.hour)
 		XCTAssertEqual(UInt8(44), t!.minute)
@@ -124,25 +136,32 @@ class TimeTests: XCTestCase
 		XCTAssertFalse(nil == t)
 		XCTAssertEqual(UInt8(18), t!.hour)
 		XCTAssertEqual(UInt8(44), t!.minute)
-		XCTAssertEqual(2.0, t!.second!)
+		XCTAssertEqual(2.0, t!.second)
 		
 		t = Time(string: "18:44:02.2912")
 		XCTAssertFalse(nil == t)
 		XCTAssertEqual(UInt8(18), t!.hour)
 		XCTAssertEqual(UInt8(44), t!.minute)
-		XCTAssertEqual(2.2912, t!.second!)
+		XCTAssertEqual(2.2912, t!.second)
 		
 		t = Time(string: "18:74:28.0381")
 		XCTAssertTrue(nil == t)
 		
-//		t = Time(string: "18:-32:28.0381")		// this causes a weird crash in a code section that isn't run
-//		XCTAssertTrue(nil == t)
+		t = Time(string: "18:-32:28.0381")
+		XCTAssertTrue(nil == t)
 		
 		t = Time(string: "18:44:-28.0381")
 		XCTAssertFalse(nil == t)
 		XCTAssertEqual(UInt8(18), t!.hour)
 		XCTAssertEqual(UInt8(44), t!.minute)
 		XCTAssertTrue(nil == t!.second)
+		
+		t = Time(string: "18:44:28.038100")
+		XCTAssertFalse(nil == t)
+		XCTAssertEqual(UInt8(18), t!.hour)
+		XCTAssertEqual(UInt8(44), t!.minute)
+		XCTAssertEqual(28.0381, t!.second)
+		XCTAssertEqual(t!.description, "18:44:28.038100", "must preserve precision")
 		
 		t = Time(string: "abc")
 		XCTAssertTrue(nil == t)
@@ -167,11 +186,34 @@ class TimeTests: XCTestCase
 		XCTAssertFalse(a == b)
 		XCTAssertTrue(a == a)
 		
+		a = Time(string: "19:00:04")!
+		b = Time(string: "07:11:05")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
+		a = Time(string: "19:11:04")!
+		b = Time(string: "19:11")!
+		XCTAssertTrue(a > b)
+		XCTAssertFalse(a == b)
+		XCTAssertTrue(a == a)
+		
 		a = Time(string: "19:11:04.0002")!
 		b = Time(string: "19:11:04")!
 		XCTAssertTrue(a > b)
 		XCTAssertFalse(a == b)
 		XCTAssertTrue(a == a)
+		
+		a = Time(string: "19:11:04.0002")!
+		b = Time(hour: 19, minute: 11, second: 4.0002)
+		XCTAssertFalse(a > b)
+		XCTAssertTrue(a == b)
+		
+		a = Time(string: "19:11:04.000200")!
+		b = Time(hour: 19, minute: 11, second: 4.0002)
+		XCTAssertFalse(a > b)
+		XCTAssertFalse(a < b)
+		XCTAssertFalse(a == b)
 	}
 	
 	func testConversion() {
@@ -182,8 +224,8 @@ class TimeTests: XCTestCase
 }
 
 
-class DateTimeTests: XCTestCase
-{
+class DateTimeTests: XCTestCase {
+	
 	func testParseAllCorrect() {
 		var d = DateTime(string: "2015")
 		XCTAssertFalse(nil == d)
@@ -277,6 +319,19 @@ class DateTimeTests: XCTestCase
 		XCTAssertEqual(UInt8(2), d!.time!.hour)
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
+		XCTAssertFalse(nil == d!.timeZone)
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		
+		d = DateTime(string: "2015-03-28T02:33:29.128500-05:30")
+		XCTAssertFalse(nil == d)
+		XCTAssertEqual(2015, d!.date.year)
+		XCTAssertEqual(UInt8(3), d!.date.month!)
+		XCTAssertEqual(UInt8(28), d!.date.day!)
+		XCTAssertFalse(nil == d!.time)
+		XCTAssertEqual(UInt8(2), d!.time!.hour)
+		XCTAssertEqual(UInt8(33), d!.time!.minute)
+		XCTAssertEqual(29.1285, d!.time!.second!)
+		XCTAssertEqual("2015-03-28T02:33:29.128500-05:30", d!.description)
 		XCTAssertFalse(nil == d!.timeZone)
 		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
