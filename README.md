@@ -25,8 +25,8 @@ See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for specific F
 
 ### Use ###
 
-1. Copy the file `settings.py` from the language's subdirectory into the project's root directory, then
-2. Adjust settings, especially those determining where the generated classes will be copied to, found at the top of `settings.py`.
+1. Create the file `settings.py` at the root of the project where you first import the reference settings using `from Lang.settings import *` (or simply copy the file `settings.py` from the language's subdirectory into the project's root directory), then
+2. Adjust settings, especially those determining where the generated classes will be copied to, found at the top of the reference settings.
 3. Install requirements by running `pip3` (or `pip`):
     ```bash
     pip3 install -r requirements.txt

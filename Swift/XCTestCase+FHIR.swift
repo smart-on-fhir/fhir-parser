@@ -13,10 +13,10 @@ import SwiftFHIR
 /**
  *  Extension providing a `readJSONFile(filename:)` method to read JSON files from disk.
  */
-extension XCTestCase
-{
+extension XCTestCase {
+	
 	class var testsDirectory: String {
-		let dir = __FILE__ as NSString
+		let dir = #file as NSString
 		let proj = ((dir.stringByDeletingLastPathComponent as NSString).stringByDeletingLastPathComponent as NSString).stringByDeletingLastPathComponent as NSString
 		return proj.stringByAppendingPathComponent("fhir-parser/downloads")
 	}
