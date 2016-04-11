@@ -4,8 +4,6 @@
 #  Generated from FHIR {{ info.version }} on {{ info.date }}.
 #  {{ info.year }}, SMART Health IT.
 
-from . import element
-
 
 class FHIRElementFactory(object):
     """ Factory class to instantiate resources by resource name.
@@ -24,5 +22,6 @@ class FHIRElementFactory(object):
             from . import {{ klass.module }}
             return {{ klass.module }}.{{ klass.name }}(jsondict)
         {%- endif %}{% endfor %}
-        return element.Element(json)
+        from . import element
+        return element.Element(jsondict)
 
