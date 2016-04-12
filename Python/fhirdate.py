@@ -17,13 +17,17 @@ class FHIRDate(object):
 
     def __init__(self, jsonval=None, cast=False):
         self.date = None
-        if jsonval is not None:
+        if isinstance(jsonval, str):
             try:
                 if 'T' in jsonval:
                     self.date = isodate.parse_datetime(jsonval)
                 else:
                     self.date = isodate.parse_date(jsonval)
             except ValueError: pass
+        elif isinstance(jsonval, (datetime.date, datetime.datetime)):
+            self.date = jsonval
+        elif isinstance(jsonval, int):
+            self.date = datetime.datetime.utcfromtimestamp(jsonval).replace(tzinfo=None)
         if cast:
             self.origval = self.date
         else:
