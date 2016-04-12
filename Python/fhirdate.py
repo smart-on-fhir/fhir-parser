@@ -17,7 +17,7 @@ class FHIRDate(object):
 
     def __init__(self, jsonval=None, cast=False):
         self.date = None
-        if isinstance(jsonval, str):
+        if isinstance(jsonval, str) or (sys.version_info[0] < 3 and isinstance(jsonval, basestring)):
             try:
                 if 'T' in jsonval:
                     self.date = isodate.parse_datetime(jsonval)
@@ -50,16 +50,13 @@ class FHIRDate(object):
     def with_json(cls, jsonobj, cast=False):
         """ Initialize a date from an ISO date string.
         """
-        isstr = isinstance(jsonobj, str)
-        if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
-            isstr = isinstance(jsonobj, basestring)
-        if isstr:
+        if isinstance(jsonobj, list):
+            arr = []
+            for jsonval in jsonobj:
+                arr.append(cls(jsonval, cast))
+            return arr
+        else:
             return cls(jsonobj, cast)
-
-        arr = []
-        for jsonval in jsonobj:
-            arr.append(cls(jsonval, cast))
-        return arr
 
     @classmethod
     def with_json_and_owner(cls, jsonobj, owner, cast=False):
