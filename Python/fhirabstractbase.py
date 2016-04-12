@@ -156,6 +156,8 @@ class FHIRAbstractBase(object):
         return js
 
     def _cast(self, value, typ):
+        if not isinstance(value, str):
+            return value
         if typ == bool:
             if value.lower() in ['0', 'no', 'false', 'off', 'disable']:
                 return False
