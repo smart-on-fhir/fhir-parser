@@ -23,6 +23,7 @@ class FHIRDate(object):
                     self.date = isodate.parse_datetime(jsonval)
                 else:
                     self.date = isodate.parse_date(jsonval)
+                    self.date = datetime.datetime(self.date.year, self.date.month, self.date.day)
             except ValueError: pass
         elif isinstance(jsonval, (datetime.date, datetime.datetime)):
             self.date = jsonval
