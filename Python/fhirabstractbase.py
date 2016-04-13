@@ -156,19 +156,20 @@ class FHIRAbstractBase(object):
         return js
 
     def _cast(self, value, typ):
-        if not isinstance(value, str):
+        if type(value) == typ:
             return value
         if typ == bool:
-            if value.lower() in ['0', 'no', 'false', 'off', 'disable']:
-                return False
-            elif value.lower() in ['1', 'yes', 'true', 'on', 'enable']:
-                return True
-            else:
-                return None
-        if typ == str:
-            return value
-        else:
+            if isinstance(value, str):
+                if value.lower() in ['0', 'no', 'zero', 'false', 'off', 'disable']:
+                    return False
+                elif value.lower() in ['1', 'yes', 'one', 'true', 'on', 'enable']:
+                    return True
+                else:
+                    return None
+        try:
             return typ(value)
+        except TypeError:
+            return None
 
     # MARK: Handling References
 
