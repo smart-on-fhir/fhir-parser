@@ -148,11 +148,29 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	
 	/**
 	The resource owning the receiver; used during reference resolving and to look up the instance's `_server`, if any.
+	
+	- returns: The owning `DomainResource` instance or nil
 	*/
 	public func owningResource() -> DomainResource? {
 		var owner = _owner
 		while nil != owner {
 			if let owner = owner as? DomainResource {
+				return owner
+			}
+			owner = owner?._owner
+		}
+		return nil
+	}
+	
+	/**
+	Returns the receiver's owning Bundle, if it has one.
+	
+	- returns: The owning `Bundle` instance or nil
+	*/
+	public func owningBundle() -> Bundle? {
+		var owner = _owner
+		while nil != owner {
+			if let owner = owner as? Bundle {
 				return owner
 			}
 			owner = owner?._owner
