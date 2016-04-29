@@ -51,7 +51,9 @@ public protocol FHIRServer {
 	/** A server object must always have a base URL. */
 	var baseURL: NSURL { get }
 	
-	/** Designated initializer. */
+	/**
+	Designated initializer. Should make sure that the base URL ends with a "/"!
+	*/
 	init(baseURL base: NSURL, auth: [String: AnyObject]?)
 	
 	

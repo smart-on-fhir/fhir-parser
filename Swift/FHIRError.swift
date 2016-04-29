@@ -100,21 +100,34 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	/// The type received for this key.
 	public var has: Any.Type?
 	
+	/// A problem description.
+	public var problem: String?
 	
+	
+	/** Designated initializer. */
 	init(code: FHIRJSONErrorType, key: String) {
 		self.code = code
 		self.key = key
 	}
 	
+	/** Initializer to use when a given JSON key is missing. */
 	public init(key: String) {
 		self.init(code: .MissingKey, key: key)
 	}
 	
+	/** Initializer to use when a given JSON key is present but is not expected. */
 	public init(key: String, has: Any.Type) {
 		self.init(code: .UnknownKey, key: key)
 		self.has = has
 	}
 	
+	/** Initializer to use when there is a problem with a given JSON key (other than the key missing or being unknown). */
+	public init(key: String, problem: String) {
+		self.init(code: .ProblemWithValueForKey, key: key)
+		self.problem = problem
+	}
+	
+	/** Initializer to use when the given JSON key is of a wrong type. */
 	public init(key: String, wants: Any.Type, has: Any.Type) {
 		self.init(code: .WrongValueTypeForKey, key: key)
 		self.wants = wants
@@ -130,6 +143,8 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 			return "Superfluous JSON property “\(key)” of type \(has ?? nul), ignoring"
 		case .WrongValueTypeForKey:
 			return "Expecting JSON property “\(key)” to be `\(wants ?? nul)`, but is \(has ?? nul)"
+		case .ProblemWithValueForKey:
+			return "Problem with JSON property “\(key)”: \(problem ?? "(problem not described)")"
 		}
 	}
 }
@@ -139,5 +154,6 @@ public enum FHIRJSONErrorType: Int {
 	case MissingKey
 	case UnknownKey
 	case WrongValueTypeForKey
+	case ProblemWithValueForKey
 }
 

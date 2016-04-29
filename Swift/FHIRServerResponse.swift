@@ -10,9 +10,9 @@ import Foundation
 
 
 /**
-    Encapsulates a server response, which can also indicate that there was no response or not even a request, in which case the `error`
-    property carries the only useful information.
- */
+Encapsulates a server response, which can also indicate that there was no response or not even a request, in which case the `error`
+property carries the only useful information.
+*/
 public protocol FHIRServerResponse {
 	
 	/// The HTTP status code.
@@ -43,6 +43,14 @@ public protocol FHIRServerResponse {
 	
 	func responseResource<T: Resource>(expectType: T.Type) -> T?
 	
+	/**
+	The response ideally inspects response headers and updates resource data like `id` and `meta` accordingly. If the response body carries
+	resource data, it should update the resource.
+	
+	This method must not be called if the response has a non-nil error.
+	
+	- parameter resource: The resource to apply response data to
+	*/
 	func applyToResource(resource: Resource)
 	
 	static func noneReceived() -> Self

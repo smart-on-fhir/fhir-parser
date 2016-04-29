@@ -30,8 +30,11 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	}
 	
 	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
-		if let _ = json?["resourceType"] as? String {
+		if let type = json?["resourceType"] as? String {
 			presentKeys.insert("resourceType")
+			if type != self.dynamicType.resourceName {
+				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(self.dynamicType.resourceName)” but is “\(type)”")]
+			}
 		}
 		return super.populateFromJSON(json, presentKeys: &presentKeys)
 	}
