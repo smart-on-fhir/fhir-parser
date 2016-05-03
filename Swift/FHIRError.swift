@@ -24,9 +24,12 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 	
 	case RequestCannotPrepareBody
 	case RequestNotSent(String)
+	case RequestError(Int, String)
 	case NoRequestHandlerAvailable(String)
 	case NoResponseReceived
-	case RequestError(Int, String)
+	case ResponseLocationHeaderResourceTypeMismatch(String, String)
+	case ResponseNoResourceReceived
+	case ResponseResourceTypeMismatch(String, String)
 	
 	case OperationConfigurationError(String)
 	case OperationInputParameterMissing(String)
@@ -53,23 +56,29 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 		case .ResourceFailedToInstantiate(let path):
 			return "\("Failed to instantiate resource when trying to read from".fhir_localized): «\(path)»"
 		case .ResourceCannotContainItself:
-			return "A resource cannot contain itself"
+			return "A resource cannot contain itself".fhir_localized
 		
 		case .RequestCannotPrepareBody:
 			return "`FHIRServerRequestHandler` cannot prepare request body data".fhir_localized
 		case .RequestNotSent(let reason):
 			return "\("Request not sent".fhir_localized): \(reason)"
+		case .RequestError(let status, let message):
+			return "\("Error".fhir_localized) \(status): \(message)"
 		case .NoRequestHandlerAvailable(let type):
 			return "\("No request handler is available for requests of type".fhir_localized) “\(type)”"
 		case .NoResponseReceived:
 			return "No response received".fhir_localized
-		case .RequestError(let status, let message):
-			return "Error \(status): \(message)"
+		case .ResponseLocationHeaderResourceTypeMismatch(let location, let expectedType):
+			return "\("“Location” header resource type mismatch. Expecting".fhir_localized) “\(expectedType)” \("in".fhir_localized) “\(location)”"
+		case .ResponseNoResourceReceived:
+			return "No resource data was received with the response".fhir_localized
+		case .ResponseResourceTypeMismatch(let receivedType, let expectedType):
+			return "Returned resource is of wrong type, expected “\(expectedType)” but received “\(receivedType)”"
 		
 		case .OperationConfigurationError(let message):
 			return message
 		case .OperationInputParameterMissing(let name):
-			return "Operation is missing input parameter “\(name)”"
+			return "\("Operation is missing input parameter".fhir_localized): “\(name)”"
 		case .OperationNotSupported(let name):
 			return "\("Operation is not supported".fhir_localized): \(name)"
 			

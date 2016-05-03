@@ -483,7 +483,7 @@ public func ==(lhs: Instant, rhs: Instant) -> Bool {
 extension Instant {
 	
 	/**
-	Attempts to parse an instant from RFC1123-formatted date strings, usually used by HTTP headers:
+	Attempts to parse an Instant from RFC1123-formatted date strings, usually used by HTTP headers:
 	
 	- "EEE',' dd MMM yyyy HH':'mm':'ss z"
 	- "EEEE',' dd'-'MMM'-'yy HH':'mm':'ss z" (RFC850)

@@ -44,14 +44,26 @@ public protocol FHIRServerResponse {
 	func responseResource<T: Resource>(expectType: T.Type) -> T?
 	
 	/**
-	The response ideally inspects response headers and updates resource data like `id` and `meta` accordingly. If the response body carries
-	resource data, it should update the resource.
+	The response should inspect response headers and update resource data like `id` and `meta` accordingly.
 	
 	This method must not be called if the response has a non-nil error.
 	
+	- throws: The method should only throw on severe cases, like if Location headers were returned that don't match the resource type
 	- parameter resource: The resource to apply response data to
 	*/
-	func applyToResource(resource: Resource)
+	func applyResponseHeadersToResource(resource: Resource) throws
+	
+	/**
+	The response should apply response body data to the given resource. It should throw `FHIRError.ResponseNoResourceReceived` if there was
+	no response data.
+	
+	This method must not be called if the response has a non-nil error.
+	
+	- throws:   The method should throw if resource data was returned that doesn't match the given resource's type, but also if there was no
+	            response data at all (`FHIRError.ResponseNoResourceReceived` in that case)
+	- parameter resource: The resource to apply response data to
+	*/
+	func applyResponseBodyToResource(resource: Resource) throws
 	
 	static func noneReceived() -> Self
 }
