@@ -480,6 +480,42 @@ public func ==(lhs: Instant, rhs: Instant) -> Bool {
 	return (lhd.compare(rhd) == .OrderedSame)
 }
 
+extension Instant {
+	
+	/**
+	Attempts to parse an instant from RFC1123-formatted date strings, usually used by HTTP headers:
+	
+	- "EEE',' dd MMM yyyy HH':'mm':'ss z"
+	- "EEEE',' dd'-'MMM'-'yy HH':'mm':'ss z" (RFC850)
+	- "EEE MMM d HH':'mm':'ss yyyy"
+	
+	Created by taking liberally from Marcus Rohrmoser's blogpost at http://blog.mro.name/2009/08/nsdateformatter-http-header/
+	
+	- parameter httpDate: The date string to parse
+	- returns: An Instant if parsing was successful, nil otherwise
+	*/
+	public static func fromHttpDate(httpDate: String) -> Instant? {
+		let formatter = NSDateFormatter()
+		formatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+		formatter.timeZone = NSTimeZone(abbreviation: "GMT")
+		formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
+		if let date = formatter.dateFromString(httpDate) {
+			return date.fhir_asInstant()
+		}
+		
+		formatter.dateFormat = "EEEE',' dd'-'MMM'-'yy HH':'mm':'ss z"
+		if let date = formatter.dateFromString(httpDate) {
+			return date.fhir_asInstant()
+		}
+		
+		formatter.dateFormat = "EEE MMM d HH':'mm':'ss yyyy"
+		if let date = formatter.dateFromString(httpDate) {
+			return date.fhir_asInstant()
+		}
+		return nil
+	}
+}
+
 
 /**
 Converts between NSDate and our Date, Time, DateTime and Instance structs.

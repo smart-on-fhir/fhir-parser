@@ -490,8 +490,8 @@ class DateTimeTests: XCTestCase {
 }
 
 
-class InstantTests: XCTestCase
-{
+class InstantTests: XCTestCase {
+	
 	func testParseSuccess() {
 		var d = Instant(string: "2015")
 		XCTAssertTrue(nil == d)
@@ -575,6 +575,51 @@ class InstantTests: XCTestCase
 		let inst = Instant(string: "1981-03-28T15:42:03-0500")!
 		let ns = inst.nsDate
 		XCTAssertEqual(inst, ns.fhir_asInstant(), "Conversion to NSDate and back again must not alter `Instant`")
+	}
+	
+	func testHttpDateParsing() {
+		if let instant = Instant.fromHttpDate("Fri, 14 Aug 2009 14:45:31 GMT") {
+			XCTAssertEqual(instant.date.year, 2009)
+			XCTAssertEqual(instant.date.month, 8)
+			XCTAssertEqual(instant.time.hour, 14)
+			XCTAssertEqual(instant.time.minute, 45)
+		}
+		else {
+			XCTAssertTrue(false, "Failed to parse perfectly fine HTTP date")
+		}
+		
+		if let instant = Instant.fromHttpDate("Sun, 06 Nov 1994 08:49:37 GMT") {
+			XCTAssertEqual(instant.date.year, 1994)
+			XCTAssertEqual(instant.date.month, 11)
+			XCTAssertEqual(instant.time.hour, 8)
+			XCTAssertEqual(instant.time.minute, 49)
+			XCTAssertEqual(instant.time.second, 37.0)
+		}
+		else {
+			XCTAssertTrue(false, "Failed to parse perfectly fine HTTP date")
+		}
+		
+		if let instant = Instant.fromHttpDate("Sunday, 06-Nov-94 08:49:37 GMT") {
+			XCTAssertEqual(instant.date.year, 1994)
+			XCTAssertEqual(instant.date.month, 11)
+			XCTAssertEqual(instant.time.hour, 8)
+			XCTAssertEqual(instant.time.minute, 49)
+			XCTAssertEqual(instant.time.second, 37.0)
+		}
+		else {
+			XCTAssertTrue(false, "Failed to parse perfectly fine HTTP date")
+		}
+		
+		if let instant = Instant.fromHttpDate("Wed Nov 16 08:49:37 1994") {
+			XCTAssertEqual(instant.date.year, 1994)
+			XCTAssertEqual(instant.date.month, 11)
+			XCTAssertEqual(instant.time.hour, 8)
+			XCTAssertEqual(instant.time.minute, 49)
+			XCTAssertEqual(instant.time.second, 37.0)
+		}
+		else {
+			XCTAssertTrue(false, "Failed to parse perfectly fine HTTP date")
+		}
 	}
 }
 
