@@ -299,6 +299,15 @@ public struct DateTime: DateAndTime {
 	var timeZoneString: String?
 	
 	/**
+	This very date and time.
+	
+	- returns: A DateTime instance representing current date and time.
+	*/
+	public static func now() -> DateTime {
+		return DateTime(date: Date.today(), time: Time.now(), timeZone: NSTimeZone(abbreviation: "UTC")!)
+	}
+	
+	/**
 	Designated initializer, takes a date and optionally a time and a timezone.
 	
 	If time is given but no timezone, the instance is assigned the local time zone.
@@ -410,7 +419,9 @@ public struct Instant: DateAndTime {
 	var timeZoneString: String?
 	
 	/**
-	- returns: The current date and time.
+	This very instant.
+	
+	- returns: An Instant instance representing current date and time.
 	*/
 	public static func now() -> Instant {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: NSDate())
