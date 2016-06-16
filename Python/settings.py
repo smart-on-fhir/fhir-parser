@@ -3,8 +3,8 @@
 from Python.mappings import *
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/2016May/'
-#specification_url = 'http://hl7-fhir.github.io'
+#specification_url = 'http://hl7.org/fhir/2016May/'
+specification_url = 'http://hl7-fhir.github.io'
 
 # Whether and where to put the generated class models
 write_resources = True
@@ -26,8 +26,8 @@ tpl_unittest_target_ptrn = '../models/{}_tests.py'     # a pattern to determine 
 
 # classes/resources
 default_base = {
-    'datatype': 'FHIRAbstractBase',
-    'resource': 'FHIRAbstractResource',
+    'complex-type': 'FHIRAbstractBase',                 # for "Element"
+    'resource': 'FHIRAbstractResource',                 # for "Resource"
 }
 resource_modules_lowercase = True                       # whether all resource paths (i.e. modules) should be lowercase
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles

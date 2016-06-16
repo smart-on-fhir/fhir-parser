@@ -406,7 +406,7 @@ class FHIRStructureDefinitionStructure(object):
         if not name:
             raise Exception("Must find 'name' in profile dictionary but found nothing")
         self.name = self.profile.spec.class_name_for_profile(name) 
-        self.base = json_dict.get('base')
+        self.base = json_dict.get('baseType')
         self.kind = json_dict.get('kind')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
