@@ -20,6 +20,7 @@ Unless you have a desire to understand how parsing works, you should be able to 
 
 The `master` branch is currently on _DSTU 2, v1.0.2_.  
 The `develop` branch is on par with _master_, but points to the continuous integration build, currently on _1.4.0_.
+There may be tags for specific freezes, see [releases](https://github.com/smart-on-fhir/fhir-parser/releases).
 
 See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for specific FHIR versions.
 
