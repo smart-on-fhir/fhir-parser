@@ -70,6 +70,7 @@ See the [SMART Python Client][client-py] for a setup that works (all model class
 
 ```text
 [x] Implement reference resolver (for contained resources)
+[x] Implement reference resolver (for bundled resources)
 [ ] Implement reference resolver (for remote resources)
 [ ] Implement working with references in code
 [ ] Handle `_name` in JSON for primitive types

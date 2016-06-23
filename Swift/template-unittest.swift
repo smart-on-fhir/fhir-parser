@@ -10,8 +10,8 @@ import XCTest
 import SwiftFHIR
 
 
-class {{ class.name }}Tests: XCTestCase
-{
+class {{ class.name }}Tests: XCTestCase {
+	
 	func instantiateFrom(filename filename: String) throws -> {{ class.name }} {
 		return instantiateFrom(json: try readJSONFile(filename))
 	}
@@ -25,10 +25,12 @@ class {{ class.name }}Tests: XCTestCase
 {%- for tcase in tests %}
 	
 	func test{{ class.name }}{{ loop.index }}() {
-		let instance = try? run{{ class.name }}{{ loop.index }}()
-		XCTAssertNotNil(instance, "Must instantiate {{ class.name }}")
-		if let instance = instance {
-			try! run{{ class.name }}{{ loop.index }}(instance.asJSON())
+		do {
+			let instance = try run{{ class.name }}{{ loop.index }}()
+			try run{{ class.name }}{{ loop.index }}(instance.asJSON())
+		}
+		catch {
+			XCTAssertTrue(false, "Must instantiate and test {{ class.name }} successfully, but threw")
 		}
 	}
 	

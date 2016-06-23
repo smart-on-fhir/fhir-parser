@@ -24,9 +24,12 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 	
 	case RequestCannotPrepareBody
 	case RequestNotSent(String)
+	case RequestError(Int, String)
 	case NoRequestHandlerAvailable(String)
 	case NoResponseReceived
-	case RequestError(Int, String)
+	case ResponseLocationHeaderResourceTypeMismatch(String, String)
+	case ResponseNoResourceReceived
+	case ResponseResourceTypeMismatch(String, String)
 	
 	case OperationConfigurationError(String)
 	case OperationInputParameterMissing(String)
@@ -53,23 +56,29 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 		case .ResourceFailedToInstantiate(let path):
 			return "\("Failed to instantiate resource when trying to read from".fhir_localized): «\(path)»"
 		case .ResourceCannotContainItself:
-			return "A resource cannot contain itself"
+			return "A resource cannot contain itself".fhir_localized
 		
 		case .RequestCannotPrepareBody:
 			return "`FHIRServerRequestHandler` cannot prepare request body data".fhir_localized
 		case .RequestNotSent(let reason):
 			return "\("Request not sent".fhir_localized): \(reason)"
+		case .RequestError(let status, let message):
+			return "\("Error".fhir_localized) \(status): \(message)"
 		case .NoRequestHandlerAvailable(let type):
 			return "\("No request handler is available for requests of type".fhir_localized) “\(type)”"
 		case .NoResponseReceived:
 			return "No response received".fhir_localized
-		case .RequestError(let status, let message):
-			return "Error \(status): \(message)"
+		case .ResponseLocationHeaderResourceTypeMismatch(let location, let expectedType):
+			return "\("“Location” header resource type mismatch. Expecting".fhir_localized) “\(expectedType)” \("in".fhir_localized) “\(location)”"
+		case .ResponseNoResourceReceived:
+			return "No resource data was received with the response".fhir_localized
+		case .ResponseResourceTypeMismatch(let receivedType, let expectedType):
+			return "Returned resource is of wrong type, expected “\(expectedType)” but received “\(receivedType)”"
 		
 		case .OperationConfigurationError(let message):
 			return message
 		case .OperationInputParameterMissing(let name):
-			return "Operation is missing input parameter “\(name)”"
+			return "\("Operation is missing input parameter".fhir_localized): “\(name)”"
 		case .OperationNotSupported(let name):
 			return "\("Operation is not supported".fhir_localized): \(name)"
 			
@@ -100,21 +109,34 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	/// The type received for this key.
 	public var has: Any.Type?
 	
+	/// A problem description.
+	public var problem: String?
 	
+	
+	/** Designated initializer. */
 	init(code: FHIRJSONErrorType, key: String) {
 		self.code = code
 		self.key = key
 	}
 	
+	/** Initializer to use when a given JSON key is missing. */
 	public init(key: String) {
 		self.init(code: .MissingKey, key: key)
 	}
 	
+	/** Initializer to use when a given JSON key is present but is not expected. */
 	public init(key: String, has: Any.Type) {
 		self.init(code: .UnknownKey, key: key)
 		self.has = has
 	}
 	
+	/** Initializer to use when there is a problem with a given JSON key (other than the key missing or being unknown). */
+	public init(key: String, problem: String) {
+		self.init(code: .ProblemWithValueForKey, key: key)
+		self.problem = problem
+	}
+	
+	/** Initializer to use when the given JSON key is of a wrong type. */
 	public init(key: String, wants: Any.Type, has: Any.Type) {
 		self.init(code: .WrongValueTypeForKey, key: key)
 		self.wants = wants
@@ -130,6 +152,8 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 			return "Superfluous JSON property “\(key)” of type \(has ?? nul), ignoring"
 		case .WrongValueTypeForKey:
 			return "Expecting JSON property “\(key)” to be `\(wants ?? nul)`, but is \(has ?? nul)"
+		case .ProblemWithValueForKey:
+			return "Problem with JSON property “\(key)”: \(problem ?? "(problem not described)")"
 		}
 	}
 }
@@ -139,5 +163,6 @@ public enum FHIRJSONErrorType: Int {
 	case MissingKey
 	case UnknownKey
 	case WrongValueTypeForKey
+	case ProblemWithValueForKey
 }
 

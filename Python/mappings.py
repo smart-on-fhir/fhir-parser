@@ -83,5 +83,6 @@ reservedmap = {
     'import': 'import_fhir',
     'global': 'global_fhir',
     'assert': 'assert_fhir',
+    'except': 'except_fhir',
 }
 

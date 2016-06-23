@@ -28,9 +28,9 @@ default_base = {
     'datatype': 'FHIRAbstractBase',
     'resource': 'FHIRAbstractResource',
 }
-resource_modules_lowercase = False							# whether all resource paths (i.e. modules) should be lowercase
-tpl_resource_source = 'Swift/template-resource.swift'		# the template to use as source when writing resource implementations for profiles
-manual_profiles = [                                         # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
+resource_modules_lowercase = False                      # whether all resource paths (i.e. modules) should be lowercase
+tpl_resource_source = 'Swift/template-resource.swift'   # the template to use as source when writing resource implementations for profiles
+manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Swift/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
     ('Swift/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
     ('Swift/FHIRTypes.swift', None, [
