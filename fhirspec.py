@@ -86,7 +86,7 @@ class FHIRSpec(object):
         if not profile or not profile.name:
             raise Exception("No name for profile {}".format(profile))
         if profile.name.lower() in self.profiles:
-            logger.warning('Already have profile "{}", discarding'.format(profile.name))
+            logger.debug('Already have profile "{}", discarding'.format(profile.name))
             return False
         
         self.profiles[profile.name.lower()] = profile
