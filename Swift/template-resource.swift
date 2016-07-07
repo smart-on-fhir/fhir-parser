@@ -48,8 +48,8 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
-		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
+	public override func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+		var errors = super.populate(fromJSON: json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
 		{%- for prop in klass.properties %}
 			if let exist: AnyObject = js["{{ prop.orig_name }}"] {
@@ -60,15 +60,15 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 					{%- else %}
 					
 					{%- if prop.is_array %}{% if prop.is_native or 'FHIRElement' == prop.class_name %}
-					self.{{ prop.name }} = {{ prop.class_name }}.from(val)
+					self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val)
 					{%- else %}
-					self.{{ prop.name }} = {{ prop.class_name }}.from(val, owner: self) as? [{{ prop.class_name }}]
+					self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val, owner: self) as? [{{ prop.class_name }}]
 					{%- endif %}
 					
 					{%- else %}{% if prop.is_native %}
 					self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
 					{%- else %}{% if "Resource" == prop.class_name %}
-					self.{{ prop.name }} = Resource.instantiateFrom(val, owner: self) as? Resource
+					self.{{ prop.name }} = Resource.instantiate(fromJSON: val, owner: self) as? Resource
 					{%- else %}
 					self.{{ prop.name }} = {{ prop.class_name }}(json: val, owner: self)
 					{%- endif %}{% endif %}{% endif %}{% endif %}

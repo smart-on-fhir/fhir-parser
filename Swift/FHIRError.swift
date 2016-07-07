@@ -12,80 +12,82 @@ import Foundation
 /**
 FHIR errors.
 */
-public enum FHIRError: ErrorType, CustomStringConvertible {
-	case Error(String)
+public enum FHIRError: ErrorProtocol, CustomStringConvertible {
+	case error(String)
 	
-	case ResourceLocationUnknown
-	case ResourceWithoutServer
-	case ResourceWithoutId
-	case ResourceAlreadyHasId
-	case ResourceFailedToInstantiate(String)
-	case ResourceCannotContainItself
+	case resourceLocationUnknown
+	case resourceWithoutServer
+	case resourceWithoutId
+	case resourceAlreadyHasId
+	case resourceFailedToInstantiate(String)
+	case resourceCannotContainItself
 	
-	case RequestCannotPrepareBody
-	case RequestNotSent(String)
-	case RequestError(Int, String)
-	case NoRequestHandlerAvailable(String)
-	case NoResponseReceived
-	case ResponseLocationHeaderResourceTypeMismatch(String, String)
-	case ResponseNoResourceReceived
-	case ResponseResourceTypeMismatch(String, String)
+	case requestCannotPrepareBody
+	case requestNotSent(String)
+	case requestError(Int, String)
+	case noRequestHandlerAvailable(String)
+	case noResponseReceived
+	case responseLocationHeaderResourceTypeMismatch(String, String)
+	case responseNoResourceReceived
 	
-	case OperationConfigurationError(String)
-	case OperationInputParameterMissing(String)
-	case OperationNotSupported(String)
+	/// The resource type received (1st String) does not match the expected type (2nd String).
+	case responseResourceTypeMismatch(String, String)
 	
-	case SearchResourceTypeNotDefined
+	case operationConfigurationError(String)
+	case operationInputParameterMissing(String)
+	case operationNotSupported(String)
+	
+	case searchResourceTypeNotDefined
 	
 	/// JSON parsing failed for reason in 1st argument, full JSON string is 2nd argument.
-	case JSONParsingError(String, String)
+	case jsonParsingError(String, String)
 	
 	public var description: String {
 		switch self {
-		case .Error(let message):
+		case .error(let message):
 			return message
 		
-		case .ResourceLocationUnknown:
+		case .resourceLocationUnknown:
 			return "The location of the resource is not known".fhir_localized
-		case .ResourceWithoutServer:
+		case .resourceWithoutServer:
 			return "The resource does not have a server instance assigned".fhir_localized
-		case .ResourceWithoutId:
+		case .resourceWithoutId:
 			return "The resource does not have an id, cannot proceed".fhir_localized
-		case .ResourceAlreadyHasId:
+		case .resourceAlreadyHasId:
 			return "The resource already have an id, cannot proceed".fhir_localized
-		case .ResourceFailedToInstantiate(let path):
+		case .resourceFailedToInstantiate(let path):
 			return "\("Failed to instantiate resource when trying to read from".fhir_localized): «\(path)»"
-		case .ResourceCannotContainItself:
+		case .resourceCannotContainItself:
 			return "A resource cannot contain itself".fhir_localized
 		
-		case .RequestCannotPrepareBody:
+		case .requestCannotPrepareBody:
 			return "`FHIRServerRequestHandler` cannot prepare request body data".fhir_localized
-		case .RequestNotSent(let reason):
+		case .requestNotSent(let reason):
 			return "\("Request not sent".fhir_localized): \(reason)"
-		case .RequestError(let status, let message):
+		case .requestError(let status, let message):
 			return "\("Error".fhir_localized) \(status): \(message)"
-		case .NoRequestHandlerAvailable(let type):
+		case .noRequestHandlerAvailable(let type):
 			return "\("No request handler is available for requests of type".fhir_localized) “\(type)”"
-		case .NoResponseReceived:
+		case .noResponseReceived:
 			return "No response received".fhir_localized
-		case .ResponseLocationHeaderResourceTypeMismatch(let location, let expectedType):
+		case .responseLocationHeaderResourceTypeMismatch(let location, let expectedType):
 			return "\("“Location” header resource type mismatch. Expecting".fhir_localized) “\(expectedType)” \("in".fhir_localized) “\(location)”"
-		case .ResponseNoResourceReceived:
+		case .responseNoResourceReceived:
 			return "No resource data was received with the response".fhir_localized
-		case .ResponseResourceTypeMismatch(let receivedType, let expectedType):
+		case .responseResourceTypeMismatch(let receivedType, let expectedType):
 			return "Returned resource is of wrong type, expected “\(expectedType)” but received “\(receivedType)”"
 		
-		case .OperationConfigurationError(let message):
+		case .operationConfigurationError(let message):
 			return message
-		case .OperationInputParameterMissing(let name):
+		case .operationInputParameterMissing(let name):
 			return "\("Operation is missing input parameter".fhir_localized): “\(name)”"
-		case .OperationNotSupported(let name):
+		case .operationNotSupported(let name):
 			return "\("Operation is not supported".fhir_localized): \(name)"
 			
-		case .SearchResourceTypeNotDefined:
+		case .searchResourceTypeNotDefined:
 			return "Cannot find the resource type against which to run the search".fhir_localized
 		
-		case .JSONParsingError(let reason, let raw):
+		case .jsonParsingError(let reason, let raw):
 			return "\("Failed to parse JSON".fhir_localized): \(reason)\n\(raw)"
 		}
 	}
@@ -95,7 +97,7 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 /**
 Errors thrown during JSON parsing.
 */
-public struct FHIRJSONError: ErrorType, CustomStringConvertible {
+public struct FHIRJSONError: ErrorProtocol, CustomStringConvertible {
 	
 	/// The error type.
 	public var code: FHIRJSONErrorType
@@ -121,24 +123,24 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	
 	/** Initializer to use when a given JSON key is missing. */
 	public init(key: String) {
-		self.init(code: .MissingKey, key: key)
+		self.init(code: .missingKey, key: key)
 	}
 	
 	/** Initializer to use when a given JSON key is present but is not expected. */
 	public init(key: String, has: Any.Type) {
-		self.init(code: .UnknownKey, key: key)
+		self.init(code: .unknownKey, key: key)
 		self.has = has
 	}
 	
 	/** Initializer to use when there is a problem with a given JSON key (other than the key missing or being unknown). */
 	public init(key: String, problem: String) {
-		self.init(code: .ProblemWithValueForKey, key: key)
+		self.init(code: .problemWithValueForKey, key: key)
 		self.problem = problem
 	}
 	
 	/** Initializer to use when the given JSON key is of a wrong type. */
 	public init(key: String, wants: Any.Type, has: Any.Type) {
-		self.init(code: .WrongValueTypeForKey, key: key)
+		self.init(code: .wrongValueTypeForKey, key: key)
 		self.wants = wants
 		self.has = has
 	}
@@ -146,13 +148,13 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	public var description: String {
 		let nul = Any.self
 		switch code {
-		case .MissingKey:
+		case .missingKey:
 			return "Expecting nonoptional JSON property “\(key)” but it is missing"
-		case .UnknownKey:
+		case .unknownKey:
 			return "Superfluous JSON property “\(key)” of type \(has ?? nul), ignoring"
-		case .WrongValueTypeForKey:
+		case .wrongValueTypeForKey:
 			return "Expecting JSON property “\(key)” to be `\(wants ?? nul)`, but is \(has ?? nul)"
-		case .ProblemWithValueForKey:
+		case .problemWithValueForKey:
 			return "Problem with JSON property “\(key)”: \(problem ?? "(problem not described)")"
 		}
 	}
@@ -160,9 +162,9 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 
 
 public enum FHIRJSONErrorType: Int {
-	case MissingKey
-	case UnknownKey
-	case WrongValueTypeForKey
-	case ProblemWithValueForKey
+	case missingKey
+	case unknownKey
+	case wrongValueTypeForKey
+	case problemWithValueForKey
 }
 

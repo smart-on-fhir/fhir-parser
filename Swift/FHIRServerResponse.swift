@@ -22,7 +22,7 @@ public protocol FHIRServerResponse {
 	var headers: [String: String] { get }
 	
 	/// The response body data.
-	var body: NSData? { get }
+	var body: Data? { get }
 	
 	/// The request's operation outcome, if any.
 	var outcome: OperationOutcome? { get }
@@ -34,24 +34,24 @@ public protocol FHIRServerResponse {
 	/**
 	Instantiate a FHIRServerResponse from an NS(HTTP)URLResponse, NSData and an NSError.
 	*/
-	init(response: NSURLResponse, data: NSData?, urlError: NSError?)
+	init(response: URLResponse, data: Data?, urlError: NSError?)
 	
-	init(error: ErrorType)
+	init(error: ErrorProtocol)
 	
 	
 	// MARK: - Responses
 	
-	func responseResource<T: Resource>(expectType: T.Type) -> T?
+	func responseResource<T: Resource>(_ expectType: T.Type) -> T?
 	
 	/**
 	The response should inspect response headers and update resource data like `id` and `meta` accordingly.
 	
 	This method must not be called if the response has a non-nil error.
 	
-	- throws: The method should only throw on severe cases, like if Location headers were returned that don't match the resource type
+	- throws:   The method should only throw on severe cases, like if Location headers were returned that don't match the resource type
 	- parameter resource: The resource to apply response data to
 	*/
-	func applyResponseHeadersToResource(resource: Resource) throws
+	func applyHeadersTo(resource: Resource) throws
 	
 	/**
 	The response should apply response body data to the given resource. It should throw `FHIRError.ResponseNoResourceReceived` if there was
@@ -63,7 +63,7 @@ public protocol FHIRServerResponse {
 	            response data at all (`FHIRError.ResponseNoResourceReceived` in that case)
 	- parameter resource: The resource to apply response data to
 	*/
-	func applyResponseBodyToResource(resource: Resource) throws
+	func applyBodyTo(resource: Resource) throws
 	
 	static func noneReceived() -> Self
 }

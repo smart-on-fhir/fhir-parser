@@ -3,6 +3,7 @@
 # Which class names to map to resources and elements
 classmap = {
     'Any': 'Resource',
+    'Protocol': 'ProtocolFHIR',
     
     'boolean': 'Bool',
     'integer': 'Int',
@@ -14,14 +15,14 @@ classmap = {
     'markdown': 'String',
     'id': 'String',
     'code': 'String',       # for now we're not generating enums for these
-    'uri': 'NSURL',
+    'uri': 'URL',
     'oid': 'String',
     'uuid': 'String',
     'xhtml': 'String',
     'base64Binary': 'Base64Binary',
 }
 
-# Classes to be replaced with different ones at resource rendering time
+# Classes of properties to be replaced with different ones at resource rendering time
 replacemap = {}
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
@@ -58,7 +59,7 @@ starexpandtypes = {
 }
 
 # Which class names are native to the language (or can be treated this way)
-natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
+natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'URL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -73,7 +74,7 @@ jsonmap = {
     'DateTime': 'String',
     'Instant': 'String',
     'NSDecimalNumber': 'NSNumber',
-    'NSURL': 'String',
+    'URL': 'String',
     'Base64Binary': 'String',
 }
 jsonmap_default = 'FHIRJSON'

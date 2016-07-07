@@ -260,7 +260,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertTrue(nil == d!.time!.second)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(NSTimeZone.localTimeZone(), d!.timeZone!, "Must default to the local timezone")
+		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Must default to the local timezone")
 		
 		d = DateTime(string: "2015-03-28T02:33:29")
 		XCTAssertFalse(nil == d)
@@ -272,7 +272,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(NSTimeZone.localTimeZone(), d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
+		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
 		
 		d = DateTime(string: "2015-03-28T02:33:29+01:00")
 		XCTAssertFalse(nil == d)
@@ -419,7 +419,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(NSTimeZone.localTimeZone(), d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
+		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
 	}
 	
 	func testComparisons() {

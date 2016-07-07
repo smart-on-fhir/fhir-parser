@@ -19,7 +19,7 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	
 	/// If this instance lives on a server, this property represents that server.
 	public var _server: FHIRServer? {
-		get { return __server ?? owningResource()?._server }
+		get { return __server ?? owningResource?._server }
 		set { __server = newValue }
 	}
 	var __server: FHIRServer?
@@ -33,7 +33,7 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+	public override func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		guard let json = json else {
 			return nil
 		}
@@ -42,7 +42,7 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 			if type != self.dynamicType.resourceName {
 				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(self.dynamicType.resourceName)” but is “\(type)”")]
 			}
-			return super.populateFromJSON(json, presentKeys: &presentKeys)
+			return super.populate(fromJSON: json, presentKeys: &presentKeys)
 		}
 		return [FHIRJSONError(key: "resourceType")]
 	}
