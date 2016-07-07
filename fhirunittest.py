@@ -52,6 +52,8 @@ class FHIRUnitTestController(object):
         """
         classname = resource.content.get('resourceType')
         assert classname
+        if classname in self.settings.classmap:
+            classname = self.settings.classmap[classname]
         klass = fhirclass.FHIRClass.with_name(classname)
         if klass is None:
             logger.error('There is no class for "{}"'.format(classname))
@@ -123,21 +125,20 @@ class FHIRUnitTest(object):
                         i = 0
                         for ival in val:
                             idxpath = self.controller.settings.unittest_format_path_index.format(path, i)
-                            item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass)
+                            item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass, True)
                             tests.extend(item.create_tests(self.controller))
                             i += 1
                             if i >= 10:     # let's assume we don't need 100s of unit tests
                                 break
                     else:
-                        keypath = self.controller.settings.unittest_format_path_prepare.format(path)
-                        item = FHIRUnitTestItem(self.filepath, keypath, val, propclass)
+                        item = FHIRUnitTestItem(self.filepath, path, val, propclass, False)
                         tests.extend(item.create_tests(self.controller))
         
         self.tests = sorted(tests, key=lambda t: t.path)
 
 
 class FHIRUnitTestItem(object):
-    def __init__(self, filepath, path, value, klass):
+    def __init__(self, filepath, path, value, klass, array_item):
         assert path
         assert value is not None
         assert klass
@@ -145,6 +146,7 @@ class FHIRUnitTestItem(object):
         self.path = path
         self.value = value
         self.klass = klass
+        self.array_item = array_item
     
     def create_tests(self, controller):
         """ Creates as many FHIRUnitTestCase instances as the item defines.
@@ -155,7 +157,11 @@ class FHIRUnitTestItem(object):
         
         # property is another element, recurse
         if dict == type(self.value):
-            test = FHIRUnitTest(controller, self.filepath, self.value, self.klass, self.path)
+            prefix = self.path
+            if not self.array_item:
+                prefix = controller.settings.unittest_format_path_prepare.format(prefix)
+            
+            test = FHIRUnitTest(controller, self.filepath, self.value, self.klass, prefix)
             tests.extend(test.tests)
         
         # regular test case; skip string tests that are longer than 200 chars
@@ -177,7 +183,7 @@ class FHIRUnitTestItem(object):
                     return tests
                 
                 value = self.value.replace("\n", "\\n")
-            tests.append(FHIRUnitTestCase(self.path, value, self.klass))
+            tests.append(FHIRUnitTestCase(self.path, value, self.klass, self.array_item))
         
         return tests
 
@@ -185,10 +191,11 @@ class FHIRUnitTestItem(object):
 class FHIRUnitTestCase(object):
     """ One unit test case.
     """
-    def __init__(self, path, value, klass):
+    def __init__(self, path, value, klass, array_item):
         self.path = path
         self.value = value
         self.klass = klass
+        self.array_item = array_item
     
     def __repr__(self):
         return 'Unit Test Case "{}": "{}"'.format(self.path, self.value)
