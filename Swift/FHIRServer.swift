@@ -53,7 +53,7 @@ public struct FHIRRequestHeaders {
 	public var headers: [FHIRRequestHeaderField: String]
 	
 	public init(_ headers: [FHIRRequestHeaderField: String]? = nil) {
-		var hdrs = [FHIRRequestHeaderField.AcceptCharset: "utf-8"]
+		var hdrs = [FHIRRequestHeaderField.acceptCharset: "utf-8"]
 		headers?.forEach() { hdrs[$0] = $1 }
 		self.headers = hdrs
 	}
@@ -81,15 +81,15 @@ Describe valid (and supported) FHIR request headers.
 The "Authorization" header is not used in the basic library, it is provided for convenience's sake.
 */
 public enum FHIRRequestHeaderField: String {
-	case Accept          = "Accept"
-	case AcceptCharset   = "Accept-Charset"
-	case Authorization   = "Authorization"
-	case ContentType     = "Content-Type"
-	case Prefer          = "Prefer"
-	case IfMatch         = "If-Match"
-	case IfNoneMatch     = "If-None-Match"
-	case IfModifiedSince = "If-Modified-Since"
-	case IfNoneExist     = "If-None-Exist"
+	case accept          = "Accept"
+	case acceptCharset   = "Accept-Charset"
+	case authorization   = "Authorization"
+	case contentType     = "Content-Type"
+	case prefer          = "Prefer"
+	case ifMatch         = "If-Match"
+	case ifNoneMatch     = "If-None-Match"
+	case ifModifiedSince = "If-Modified-Since"
+	case ifNoneExist     = "If-None-Exist"
 }
 
 
