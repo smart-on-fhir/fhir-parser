@@ -88,11 +88,11 @@ extension Base64Binary {
 	}
 }
 
-extension Date {
-	public static func instantiate(fromArray json: [String]) -> [Date] {
-		var arr: [Date] = []
+extension FHIRDate {
+	public static func instantiate(fromArray json: [String]) -> [FHIRDate] {
+		var arr: [FHIRDate] = []
 		for string in json {
-			if let obj = Date(string: string) {
+			if let obj = FHIRDate(string: string) {
 				arr.append(obj)
 			}
 		}
@@ -104,11 +104,11 @@ extension Date {
 	}
 }
 
-extension Time {
-	public static func instantiate(fromArray json: [String]) -> [Time] {
-		var arr: [Time] = []
+extension FHIRTime {
+	public static func instantiate(fromArray json: [String]) -> [FHIRTime] {
+		var arr: [FHIRTime] = []
 		for string in json {
-			if let obj = Time(string: string) {
+			if let obj = FHIRTime(string: string) {
 				arr.append(obj)
 			}
 		}

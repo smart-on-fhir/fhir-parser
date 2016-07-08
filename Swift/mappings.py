@@ -20,6 +20,8 @@ classmap = {
     'uuid': 'String',
     'xhtml': 'String',
     'base64Binary': 'Base64Binary',
+    'date': 'FHIRDate',
+    'time': 'FHIRTime',
 }
 
 # Classes of properties to be replaced with different ones at resource rendering time
@@ -59,7 +61,7 @@ starexpandtypes = {
 }
 
 # Which class names are native to the language (or can be treated this way)
-natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'URL']
+natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'URL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -69,8 +71,8 @@ jsonmap = {
     'Double': 'NSNumber',
     
     'String': 'String',
-    'Date': 'String',
-    'Time': 'String',
+    'FHIRDate': 'String',
+    'FHIRTime': 'String',
     'DateTime': 'String',
     'Instant': 'String',
     'NSDecimalNumber': 'NSNumber',

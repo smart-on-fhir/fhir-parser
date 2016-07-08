@@ -14,16 +14,16 @@ A protocol for all our date and time structs.
 */
 protocol DateAndTime: CustomStringConvertible, Comparable, Equatable {
 	
-	var nsDate: Foundation.Date { get }
+	var nsDate: Date { get }
 }
 
 
 /**
-A date for use in human communication.
+A date for use in human communication. Named `FHIRDate` to avoid the numerous collisions with `Foundation.Date`.
 
 Month and day are optional and there are no timezones.
 */
-public struct Date: DateAndTime {
+public struct FHIRDate: DateAndTime {
 	
 	/// The year.
 	public var year: Int
@@ -72,7 +72,7 @@ public struct Date: DateAndTime {
 	- parameter string: The string to parse the date from
 	*/
 	public init?(string: String) {
-		let parsed = DateAndTimeParser.sharedParser.parse(string)
+		let parsed = DateAndTimeParser.sharedParser.parse(string: string)
 		if nil == parsed.date {
 			return nil
 		}
@@ -84,16 +84,16 @@ public struct Date: DateAndTime {
 	/**
 	- returns: Today's date
 	*/
-	public static var today: Date {
-		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: Foundation.Date())
+	public static var today: FHIRDate {
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
 		return date
 	}
 	
 	
 	// MARK: Protocols
 	
-	public var nsDate: Foundation.Date {
-		return DateNSDateConverter.sharedConverter.create(self)
+	public var nsDate: Date {
+		return DateNSDateConverter.sharedConverter.create(fromDate: self)
 	}
 	
 	public var description: String {
@@ -107,8 +107,8 @@ public struct Date: DateAndTime {
 	}
 }
 
-extension Date: Comparable {  }
-public func <(lhs: Date, rhs: Date) -> Bool {
+extension FHIRDate: Comparable {  }
+public func <(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
 	if lhs.year == rhs.year {
 		if lhs.month == rhs.month {
 			return lhs.day < rhs.day
@@ -118,8 +118,8 @@ public func <(lhs: Date, rhs: Date) -> Bool {
 	return lhs.year < rhs.year
 }
 
-extension Date: Equatable {  }
-public func ==(lhs: Date, rhs: Date) -> Bool {
+extension FHIRDate: Equatable {  }
+public func ==(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
 	return lhs.year == rhs.year
 		&& lhs.month == rhs.month
 		&& lhs.day == rhs.day
@@ -128,12 +128,12 @@ public func ==(lhs: Date, rhs: Date) -> Bool {
 
 
 /**
-A time during the day, optionally with seconds, usually for human communication.
+A time during the day, optionally with seconds, usually for human communication. Named `FHIRTime` to match with `FHIRDate`.
 
 Minimum of 00:00 and maximum of < 24:00. There is no timezone. Since decimal precision has significance in FHIR, Time initialized from a
 string will remember the seconds string until it is manually set.
 */
-public struct Time: DateAndTime {
+public struct FHIRTime: DateAndTime {
 	
 	/// The hour of the day; cannot be higher than 23.
 	public var hour: UInt8 {
@@ -217,7 +217,7 @@ public struct Time: DateAndTime {
 	Will fail unless the string contains at least hour and minute.
 	*/
 	public init?(string: String) {
-		let parsed = DateAndTimeParser.sharedParser.parse(string, isTimeOnly: true)
+		let parsed = DateAndTimeParser.sharedParser.parse(string: string, isTimeOnly: true)
 		guard let time = parsed.time else {
 			return nil
 		}
@@ -228,18 +228,20 @@ public struct Time: DateAndTime {
 	}
 	
 	/**
+	The time right now.
+	
 	- returns: The clock time of right now.
 	*/
-	public static var now: Time {
-		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: Foundation.Date())
+	public static var now: FHIRTime {
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
 		return time
 	}
 	
 	
 	// MARK: Protocols
 	
-	public var nsDate: Foundation.Date {
-		return DateNSDateConverter.sharedConverter.create(self)
+	public var nsDate: Date {
+		return DateNSDateConverter.sharedConverter.create(fromTime: self)
 	}
 	
 	public var description: String {
@@ -253,8 +255,8 @@ public struct Time: DateAndTime {
 	}
 }
 
-extension Time: Comparable {  }
-public func <(lhs: Time, rhs: Time) -> Bool {
+extension FHIRTime: Comparable {  }
+public func <(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
 	if lhs.hour == rhs.hour {
 		if lhs.minute == rhs.minute {
 			return lhs.second < rhs.second
@@ -264,8 +266,8 @@ public func <(lhs: Time, rhs: Time) -> Bool {
 	return lhs.hour < rhs.hour
 }
 
-extension Time: Equatable {  }
-public func ==(lhs: Time, rhs: Time) -> Bool {
+extension FHIRTime: Equatable {  }
+public func ==(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
 	if nil != lhs.second && nil != rhs.second {
 		return lhs.description == rhs.description		// must respect decimal precision of seconds, which `description` takes care of
 	}
@@ -283,10 +285,10 @@ If a time is specified there must be a timezone; defaults to the system reported
 public struct DateTime: DateAndTime {
 	
 	/// The date.
-	public var date: Date
+	public var date: FHIRDate
 	
 	/// The time.
-	public var time: Time?
+	public var time: FHIRTime?
 	
 	/// The timezone
 	public var timeZone: TimeZone? {
@@ -304,7 +306,8 @@ public struct DateTime: DateAndTime {
 	- returns: A DateTime instance representing current date and time.
 	*/
 	public static var now: DateTime {
-		return DateTime(date: Date.today, time: Time.now, timeZone: TimeZone(abbreviation: "UTC")!)
+		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: Date())
+		return DateTime(date: date, time: time, timeZone: tz)
 	}
 	
 	/**
@@ -316,7 +319,7 @@ public struct DateTime: DateAndTime {
 	- parameter time:     The time of the date-time
 	- parameter timeZone: The timezone
 	*/
-	public init(date: Date, time: Time?, timeZone: TimeZone?) {
+	public init(date: FHIRDate, time: FHIRTime?, timeZone: TimeZone?) {
 		self.date = date
 		self.time = time
 		if nil != time && nil == timeZone {
@@ -335,7 +338,7 @@ public struct DateTime: DateAndTime {
 	- parameter string: The string the date-time is parsed from
 	*/
 	public init?(string: String) {
-		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
+		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string: string)
 		if nil == date {
 			return nil
 		}
@@ -350,11 +353,11 @@ public struct DateTime: DateAndTime {
 	
 	// MARK: Protocols
 	
-	public var nsDate: Foundation.Date {
+	public var nsDate: Date {
 		if let time = time, let tz = timeZone {
 			return DateNSDateConverter.sharedConverter.create(date: date, time: time, timeZone: tz)
 		}
-		return DateNSDateConverter.sharedConverter.create(date)
+		return DateNSDateConverter.sharedConverter.create(fromDate: date)
 	}
 	
 	public var description: String {
@@ -388,7 +391,7 @@ An instant in time, known at least to the second and with a timezone, for machin
 public struct Instant: DateAndTime {
 	
 	/// The date.
-	public var date: Date {
+	public var date: FHIRDate {
 		didSet {
 			if nil == date.month {
 				date.month = 1
@@ -400,7 +403,7 @@ public struct Instant: DateAndTime {
 	}
 	
 	/// The time, including seconds.
-	public var time: Time {
+	public var time: FHIRTime {
 		didSet {
 			if nil == time.second {
 				time.second = 0.0
@@ -424,17 +427,18 @@ public struct Instant: DateAndTime {
 	- returns: An Instant instance representing current date and time.
 	*/
 	public static var now: Instant {
-		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: Foundation.Date())
+		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: Date())
 		return Instant(date: date, time: time, timeZone: tz)
 	}
 	
-	/** Designated initializer.
+	/**
+	Designated initializer.
 	
-	- parameter date:     The date of the instant; ensures to have month and day (which are optional in the `Date` construct)
-	- parameter time:     The time of the instant; ensures to have seconds (which are optional in the `Time` construct)
+	- parameter date:     The date of the instant; ensures to have month and day (which are optional in the `FHIRDate` construct)
+	- parameter time:     The time of the instant; ensures to have seconds (which are optional in the `FHIRTime` construct)
 	- parameter timeZone: The timezone
 	*/
-	public init(date: Date, time: Time, timeZone: TimeZone) {
+	public init(date: FHIRDate, time: FHIRTime, timeZone: TimeZone) {
 		self.date = date
 		if nil == self.date.month {
 			self.date.month = 1
@@ -454,7 +458,7 @@ public struct Instant: DateAndTime {
 	- parameter string: The string to parse the instant from
 	*/
 	public init?(string: String) {
-		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string)
+		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string: string)
 		if nil == date || nil == date!.month || nil == date!.day || nil == time || nil == time!.second || nil == tz {
 			return nil
 		}
@@ -467,7 +471,7 @@ public struct Instant: DateAndTime {
 	
 	// MARK: Protocols
 	
-	public var nsDate: Foundation.Date {
+	public var nsDate: Date {
 		return DateNSDateConverter.sharedConverter.create(date: date, time: time, timeZone: timeZone)
 	}
 	
@@ -529,7 +533,7 @@ extension Instant {
 
 
 /**
-Converts between NSDate and our Date, Time, DateTime and Instance structs.
+Converts between NSDate and our FHIRDate, FHIRTime, DateTime and Instance structs.
 */
 class DateNSDateConverter {
 	
@@ -549,19 +553,19 @@ class DateNSDateConverter {
 	// MARK: Parsing
 	
 	/**
-	Execute parsing. Will use `calendar` to split the NSDate into components.
+	Execute parsing. Will use `calendar` to split the Date into components.
 	
-	- parameter date: The NSDate to parse into structs
-	- returns: A tuple with (Date, Time, TimeZone)
+	- parameter date: The Date to parse into structs
+	- returns: A tuple with (FHIRDate, FHIRTime, TimeZone)
 	*/
-	func parse(date inDate: Foundation.Date) -> (Date, Time, TimeZone) {
+	func parse(date inDate: Date) -> (FHIRDate, FHIRTime, TimeZone) {
 		let flags: Calendar.Unit = [.year, .month, .day, .hour, .minute, .second, .nanosecond, .timeZone]
 		let comp = calendar.components(flags, from: inDate)
 		
-		let date = Date(year: comp.year!, month: UInt8(comp.month!), day: UInt8(comp.day!))
+		let date = FHIRDate(year: comp.year!, month: UInt8(comp.month!), day: UInt8(comp.day!))
 		let zone = (comp as NSDateComponents).timeZone ?? utc
 		let secs = Double(comp.second!) + (Double(comp.nanosecond!) / 1000000000)
-		let time = Time(hour: UInt8(comp.hour!), minute: UInt8(comp.minute!), second: secs)
+		let time = FHIRTime(hour: UInt8(comp.hour!), minute: UInt8(comp.minute!), second: secs)
 		
 		return (date, time, zone)
 	}
@@ -569,19 +573,19 @@ class DateNSDateConverter {
 	
 	// MARK: Creation
 	
-	func create(_ date: Date) -> Foundation.Date {
+	func create(fromDate date: FHIRDate) -> Date {
 		return _create(date: date, time: nil, timeZone: nil)
 	}
 	
-	func create(_ time: Time) -> Foundation.Date {
+	func create(fromTime time: FHIRTime) -> Date {
 		return _create(date: nil, time: time, timeZone: nil)
 	}
 	
-	func create(date: Date, time: Time, timeZone: TimeZone) -> Foundation.Date {
+	func create(date: FHIRDate, time: FHIRTime, timeZone: TimeZone) -> Date {
 		return _create(date: date, time: time, timeZone: timeZone)
 	}
 	
-	func _create(date: Date?, time: Time?, timeZone: TimeZone?) -> Foundation.Date {
+	func _create(date: FHIRDate?, time: FHIRTime?, timeZone: TimeZone?) -> Date {
 		var comp = DateComponents()
 		comp.timeZone = timeZone ?? utc
 		
@@ -606,7 +610,7 @@ class DateNSDateConverter {
 			comp.nanosecond = Int(sec.truncatingRemainder(dividingBy: 1000000000))
 		}
 		
-		return calendar.date(from: comp) ?? Foundation.Date()
+		return calendar.date(from: comp) ?? Date()
 	}
 }
 
@@ -625,14 +629,14 @@ class DateAndTimeParser {
 	
 	Does not currently check if the day exists in the given month.
 	
-	- parameter string: The date string to parse
+	- parameter string:     The date string to parse
 	- parameter isTimeOnly: If true assumes that the string describes time only
-	- returns: A tuple with (Date?, Time?, TimeZone?, String? [for time zone])
+	- returns:              A tuple with (FHIRDate?, FHIRTime?, TimeZone?, String? [for time zone])
 	*/
-	func parse(_ string: String, isTimeOnly: Bool=false) -> (date: Date?, time: Time?, tz: TimeZone?, tzString: String?) {
+	func parse(string: String, isTimeOnly: Bool=false) -> (date: FHIRDate?, time: FHIRTime?, tz: TimeZone?, tzString: String?) {
 		let scanner = Scanner(string: string)
-		var date: Date?
-		var time: Time?
+		var date: FHIRDate?
+		var time: FHIRTime?
 		var tz: TimeZone?
 		var tzString: String?
 		
@@ -644,14 +648,14 @@ class DateAndTimeParser {
 				if scanner.scanString("-", into: nil) && scanner.scanInt(&month) && month <= 12 {
 					var day = 0
 					if scanner.scanString("-", into: nil) && scanner.scanInt(&day) && day <= 31 {
-						date = Date(year: year, month: UInt8(month), day: UInt8(day))
+						date = FHIRDate(year: year, month: UInt8(month), day: UInt8(day))
 					}
 					else {
-						date = Date(year: year, month: UInt8(month), day: nil)
+						date = FHIRDate(year: year, month: UInt8(month), day: nil)
 					}
 				}
 				else {
-					date = Date(year: year, month: nil, day: nil)
+					date = FHIRDate(year: year, month: nil, day: nil)
 				}
 			}
 		}
@@ -672,10 +676,10 @@ class DateAndTimeParser {
 				
 				var secStr: NSString?
 				if scanner.scanString(":", into: nil) && scanner.scanCharacters(from: decimalSet as CharacterSet, into: &secStr), let secStr = secStr as? String, let second = Double(secStr) where second < 60.0 {
-					time = Time(hour: UInt8(hour), minute: UInt8(minute), second: second, secondsFromString: secStr)
+					time = FHIRTime(hour: UInt8(hour), minute: UInt8(minute), second: second, secondsFromString: secStr)
 				}
 				else {
-					time = Time(hour: UInt8(hour), minute: UInt8(minute), second: nil)
+					time = FHIRTime(hour: UInt8(hour), minute: UInt8(minute), second: nil)
 				}
 				
 				// scan zone
@@ -720,18 +724,18 @@ class DateAndTimeParser {
 
 
 /**
-Extend NSDate to be able to return DateAndTime instances.
+Extend Date to be able to return DateAndTime instances.
 */
-public extension Foundation.Date {
+public extension Date {
 	
-	/** Create a `Date` instance from the receiver. */
-	func fhir_asDate() -> Date {
+	/** Create a `FHIRDate` instance from the receiver. */
+	func fhir_asDate() -> FHIRDate {
 		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return date
 	}
 	
 	/** Create a `Time` instance from the receiver. */
-	func fhir_asTime() -> Time {
+	func fhir_asTime() -> FHIRTime {
 		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: self)
 		return time
 	}
