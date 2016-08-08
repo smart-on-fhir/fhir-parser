@@ -18,7 +18,7 @@ public typealias FHIRJSON = [String: AnyObject]
 /**
 Data encoded as a base-64 string.
 */
-public struct Base64Binary: StringLiteralConvertible, CustomStringConvertible, Equatable, Comparable {
+public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible, Equatable, Comparable {
 	public typealias UnicodeScalarLiteralType = Character
 	public typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
 	

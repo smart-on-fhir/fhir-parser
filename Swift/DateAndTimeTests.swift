@@ -260,7 +260,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertTrue(nil == d!.time!.second)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Must default to the local timezone")
+		XCTAssertEqual(TimeZone.current, d!.timeZone!, "Must default to the local timezone")
 		
 		d = DateTime(string: "2015-03-28T02:33:29")
 		XCTAssertFalse(nil == d)
@@ -272,7 +272,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
+		XCTAssertEqual(TimeZone.current, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
 		
 		d = DateTime(string: "2015-03-28T02:33:29+01:00")
 		XCTAssertFalse(nil == d)
@@ -284,7 +284,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(3600 == d!.timeZone!.secondsFromGMT, "Should be 3600 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(3600 == d!.timeZone!.secondsFromGMT(), "Should be 3600 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29-05:00")
 		XCTAssertFalse(nil == d)
@@ -296,7 +296,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT(), "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-05:00")
 		XCTAssertFalse(nil == d)
@@ -308,7 +308,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT(), "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-05:30")
 		XCTAssertFalse(nil == d)
@@ -320,7 +320,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT(), "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.128500-05:30")
 		XCTAssertFalse(nil == d)
@@ -333,7 +333,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertEqual("2015-03-28T02:33:29.128500-05:30", d!.description)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT(), "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29-05")
 		XCTAssertFalse(nil == d)
@@ -345,7 +345,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT(), "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-0500")
 		XCTAssertFalse(nil == d)
@@ -357,7 +357,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT, "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-18000 == d!.timeZone!.secondsFromGMT(), "Should be 18000 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 		
 		d = DateTime(string: "2015-03-28T02:33:29.1285-0530")
 		XCTAssertFalse(nil == d)
@@ -369,7 +369,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29.1285, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT, "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT) seconds")
+		XCTAssertTrue(-19800 == d!.timeZone!.secondsFromGMT(), "Should be 19800 seconds ahead, but am \(d!.timeZone!.secondsFromGMT()) seconds")
 	}
 	
 	func testParseSomeFails() {
@@ -419,7 +419,7 @@ class DateTimeTests: XCTestCase {
 		XCTAssertEqual(UInt8(33), d!.time!.minute)
 		XCTAssertEqual(29, d!.time!.second!)
 		XCTAssertFalse(nil == d!.timeZone)
-		XCTAssertEqual(TimeZone.local, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
+		XCTAssertEqual(TimeZone.current, d!.timeZone!, "Should default to local time zone but have \(d!.timeZone)")
 	}
 	
 	func testComparisons() {
@@ -516,7 +516,7 @@ class InstantTests: XCTestCase {
 		XCTAssertEqual(UInt8(2), d!.time.hour)
 		XCTAssertEqual(UInt8(33), d!.time.minute)
 		XCTAssertEqual(29, d!.time.second!)
-		XCTAssertTrue(3600 == d!.timeZone.secondsFromGMT)
+		XCTAssertTrue(3600 == d!.timeZone.secondsFromGMT())
 		
 		d = Instant(string: "2015-03-28T02:33:29-05:00")
 		XCTAssertFalse(nil == d)
@@ -526,7 +526,7 @@ class InstantTests: XCTestCase {
 		XCTAssertEqual(UInt8(2), d!.time.hour)
 		XCTAssertEqual(UInt8(33), d!.time.minute)
 		XCTAssertEqual(29, d!.time.second!)
-		XCTAssertTrue(-18000 == d!.timeZone.secondsFromGMT)
+		XCTAssertTrue(-18000 == d!.timeZone.secondsFromGMT())
 		
 		d = Instant(string: "2015-03-28T02:33:29.1285-05:00")
 		XCTAssertFalse(nil == d)
@@ -536,7 +536,7 @@ class InstantTests: XCTestCase {
 		XCTAssertEqual(UInt8(2), d!.time.hour)
 		XCTAssertEqual(UInt8(33), d!.time.minute)
 		XCTAssertEqual(29.1285, d!.time.second!)
-		XCTAssertTrue(-18000 == d!.timeZone.secondsFromGMT)
+		XCTAssertTrue(-18000 == d!.timeZone.secondsFromGMT())
 	}
 	
 	func testComparisons() {

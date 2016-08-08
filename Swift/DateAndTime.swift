@@ -323,7 +323,7 @@ public struct DateTime: DateAndTime {
 		self.date = date
 		self.time = time
 		if nil != time && nil == timeZone {
-			self.timeZone = TimeZone.local
+			self.timeZone = TimeZone.current
 		}
 		else {
 			self.timeZone = timeZone
@@ -345,7 +345,7 @@ public struct DateTime: DateAndTime {
 		self.date = date!
 		if let time = time {
 			self.time = time
-			self.timeZone = nil == tz ? TimeZone.local : tz
+			self.timeZone = nil == tz ? TimeZone.current : tz
 			self.timeZoneString = tzString
 		}
 	}
@@ -511,7 +511,7 @@ extension Instant {
 	*/
 	public static func fromHttpDate(_ httpDate: String) -> Instant? {
 		let formatter = DateFormatter()
-		formatter.locale = Locale(localeIdentifier: "en_US_POSIX")
+		formatter.locale = Locale(identifier: "en_US_POSIX")
 		formatter.timeZone = TimeZone(abbreviation: "GMT")
 		formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
 		if let date = formatter.date(from: httpDate) {
@@ -544,9 +544,10 @@ class DateNSDateConverter {
 	let utc: TimeZone
 	
 	init() {
-		calendar = Calendar(calendarIdentifier: Calendar.Identifier.gregorian)!
 		utc = TimeZone(abbreviation: "UTC")!
-		calendar.timeZone = utc
+		var cal = Calendar(identifier: Calendar.Identifier.gregorian)
+		cal.timeZone = utc
+		calendar = cal
 	}
 	
 	
@@ -559,8 +560,8 @@ class DateNSDateConverter {
 	- returns: A tuple with (FHIRDate, FHIRTime, TimeZone)
 	*/
 	func parse(date inDate: Date) -> (FHIRDate, FHIRTime, TimeZone) {
-		let flags: Calendar.Unit = [.year, .month, .day, .hour, .minute, .second, .nanosecond, .timeZone]
-		let comp = calendar.components(flags, from: inDate)
+		let flags: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second, .nanosecond, .timeZone]
+		let comp = calendar.dateComponents(flags, from: inDate)
 		
 		let date = FHIRDate(year: comp.year!, month: UInt8(comp.month!), day: UInt8(comp.day!))
 		let zone = (comp as NSDateComponents).timeZone ?? utc
@@ -675,7 +676,7 @@ class DateAndTimeParser {
 				decimalSet.insert(".")
 				
 				var secStr: NSString?
-				if scanner.scanString(":", into: nil) && scanner.scanCharacters(from: decimalSet as CharacterSet, into: &secStr), let secStr = secStr as? String, let second = Double(secStr) where second < 60.0 {
+				if scanner.scanString(":", into: nil) && scanner.scanCharacters(from: decimalSet as CharacterSet, into: &secStr), let secStr = secStr as? String, let second = Double(secStr), second < 60.0 {
 					time = FHIRTime(hour: UInt8(hour), minute: UInt8(minute), second: second, secondsFromString: secStr)
 				}
 				else {
@@ -711,7 +712,7 @@ class DateAndTimeParser {
 							}
 							
 							let offset = tzhour * 3600 + tzmin * 60
-							tz = TimeZone(forSecondsFromGMT: nil == negStr ? offset : -1 * offset)
+							tz = TimeZone(secondsFromGMT: nil == negStr ? offset : -1 * offset)
 						}
 					}
 				}
@@ -760,17 +761,20 @@ Extend TimeZone to report the offset in "+00:00" or "Z" (for UTC/GMT) format.
 extension TimeZone {
 	
 	/**
+	Return the offset as a string string.
+	
 	- returns: The offset as a string; uses "Z" if the timezone is UTC or GMT
 	*/
 	func offset() -> String {
-		if "UTC" == abbreviation || "GMT" == abbreviation {
+		if "UTC" == identifier || "GMT" == identifier {
 			return "Z"
 		}
 		
-		let hr = abs((secondsFromGMT / 3600) - (secondsFromGMT % 3600))
-		let min = abs((secondsFromGMT % 3600) / 60)
+		let secsFromGMT = secondsFromGMT()
+		let hr = abs((secsFromGMT / 3600) - (secsFromGMT % 3600))
+		let min = abs((secsFromGMT % 3600) / 60)
 		
-		return String(format: "%@%02d:%02d", secondsFromGMT >= 0 ? "+" : "-", hr, min)
+		return String(format: "%@%02d:%02d", secsFromGMT >= 0 ? "+" : "-", hr, min)
 	}
 }
 

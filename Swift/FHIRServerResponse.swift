@@ -36,7 +36,7 @@ public protocol FHIRServerResponse {
 	*/
 	init(response: URLResponse, data: Data?, urlError: NSError?)
 	
-	init(error: ErrorProtocol)
+	init(error: Error)
 	
 	
 	// MARK: - Responses

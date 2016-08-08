@@ -55,9 +55,9 @@ public class FHIRAbstractBase: CustomStringConvertible {
 		
 		// superfluous JSON entries? Ignore "fhir_comments" and "_xy".
 		let superfluous = json?.keys.filter() { !present.contains($0) }
-		if let supflu = superfluous where !supflu.isEmpty {
+		if let supflu = superfluous, !supflu.isEmpty {
 			for sup in supflu {
-				if let first = sup.characters.first where "_" != first {
+				if let first = sup.characters.first, "_" != first {
 					errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
 				}
 			}

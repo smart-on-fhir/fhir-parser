@@ -12,7 +12,7 @@ import Foundation
 /**
 FHIR errors.
 */
-public enum FHIRError: ErrorProtocol, CustomStringConvertible {
+public enum FHIRError: Error, CustomStringConvertible {
 	case error(String)
 	
 	case resourceLocationUnknown
@@ -97,7 +97,7 @@ public enum FHIRError: ErrorProtocol, CustomStringConvertible {
 /**
 Errors thrown during JSON parsing.
 */
-public struct FHIRJSONError: ErrorProtocol, CustomStringConvertible {
+public struct FHIRJSONError: Error, CustomStringConvertible {
 	
 	/// The error type.
 	public var code: FHIRJSONErrorType
