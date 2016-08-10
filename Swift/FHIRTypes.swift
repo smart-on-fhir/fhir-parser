@@ -29,7 +29,7 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 	}
 	
 	
-	// MARK: - String Literal Convertible
+	// MARK: - ExpressibleByStringLiteral
 	
 	public init(stringLiteral value: StringLiteralType) {
 		self.value = value
@@ -43,28 +43,20 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 		self.value = value
 	}
 	
-	public static func convertFromExtendedGraphemeClusterLiteral(value: String) -> Base64Binary {
-		return self.init(stringLiteral: value)
-	}
 	
-	public static func convertFromStringLiteral(value: String) -> Base64Binary {
-		return self.init(stringLiteral: value)
-	}
-	
-	
-	// MARK: - Printable
+	// MARK: - Printable, Equatable and Comparable
 	
 	public var description: String {
 		return "<Base64Binary; \(nil != value ? value!.characters.count : 0) chars>"
 	}
-}
-
-public func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
-	return lhs.value < rhs.value
-}
-
-public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
-	return lhs.value == rhs.value
+	
+	public static func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
+		return lhs.value < rhs.value
+	}
+	
+	public static func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
+		return lhs.value == rhs.value
+	}
 }
 
 

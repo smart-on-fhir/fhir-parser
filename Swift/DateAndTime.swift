@@ -105,24 +105,22 @@ public struct FHIRDate: DateAndTime {
 		}
 		return String(format: "%04d", year)
 	}
-}
-
-extension FHIRDate: Comparable {  }
-public func <(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
-	if lhs.year == rhs.year {
-		if lhs.month == rhs.month {
-			return lhs.day < rhs.day
+	
+	public static func <(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
+		if lhs.year == rhs.year {
+			if lhs.month == rhs.month {
+				return lhs.day < rhs.day
+			}
+			return lhs.month < rhs.month
 		}
-		return lhs.month < rhs.month
+		return lhs.year < rhs.year
 	}
-	return lhs.year < rhs.year
-}
-
-extension FHIRDate: Equatable {  }
-public func ==(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
-	return lhs.year == rhs.year
-		&& lhs.month == rhs.month
-		&& lhs.day == rhs.day
+	
+	public static func ==(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
+		return lhs.year == rhs.year
+			&& lhs.month == rhs.month
+			&& lhs.day == rhs.day
+	}
 }
 
 
@@ -253,27 +251,25 @@ public struct FHIRTime: DateAndTime {
 		}
 		return String(format: "%02d:%02d", hour, minute)
 	}
-}
-
-extension FHIRTime: Comparable {  }
-public func <(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
-	if lhs.hour == rhs.hour {
-		if lhs.minute == rhs.minute {
-			return lhs.second < rhs.second
+	
+	public static func <(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
+		if lhs.hour == rhs.hour {
+			if lhs.minute == rhs.minute {
+				return lhs.second < rhs.second
+			}
+			return lhs.minute < rhs.minute
 		}
-		return lhs.minute < rhs.minute
+		return lhs.hour < rhs.hour
 	}
-	return lhs.hour < rhs.hour
-}
-
-extension FHIRTime: Equatable {  }
-public func ==(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
-	if nil != lhs.second && nil != rhs.second {
-		return lhs.description == rhs.description		// must respect decimal precision of seconds, which `description` takes care of
+	
+	public static func ==(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
+		if nil != lhs.second && nil != rhs.second {
+			return lhs.description == rhs.description		// must respect decimal precision of seconds, which `description` takes care of
+		}
+		return lhs.hour == rhs.hour
+			&& lhs.minute == rhs.minute
+			&& lhs.second == rhs.second
 	}
-	return lhs.hour == rhs.hour
-		&& lhs.minute == rhs.minute
-		&& lhs.second == rhs.second
 }
 
 
@@ -368,20 +364,18 @@ public struct DateTime: DateAndTime {
 		}
 		return date.description
 	}
-}
-
-extension DateTime: Comparable {  }
-public func <(lhs: DateTime, rhs: DateTime) -> Bool {
-	let lhd = lhs.nsDate
-	let rhd = rhs.nsDate
-	return (lhd.compare(rhd) == .orderedAscending)
-}
-
-extension DateTime: Equatable {  }
-public func ==(lhs: DateTime, rhs: DateTime) -> Bool {
-	let lhd = lhs.nsDate
-	let rhd = rhs.nsDate
-	return (lhd.compare(rhd) == .orderedSame)
+	
+	public static func <(lhs: DateTime, rhs: DateTime) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedAscending)
+	}
+	
+	public static func ==(lhs: DateTime, rhs: DateTime) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedSame)
+	}
 }
 
 
@@ -479,21 +473,20 @@ public struct Instant: DateAndTime {
 		let tz = timeZoneString ?? timeZone.offset()
 		return String(format: "%@T%@%@", date.description, time.description, tz)
 	}
+	
+	public static func <(lhs: Instant, rhs: Instant) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedAscending)
+	}
+	
+	public static func ==(lhs: Instant, rhs: Instant) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedSame)
+	}
 }
 
-extension Instant: Comparable {  }
-public func <(lhs: Instant, rhs: Instant) -> Bool {
-	let lhd = lhs.nsDate
-	let rhd = rhs.nsDate
-	return (lhd.compare(rhd) == .orderedAscending)
-}
-
-extension Instant: Equatable {  }
-public func ==(lhs: Instant, rhs: Instant) -> Bool {
-	let lhd = lhs.nsDate
-	let rhd = rhs.nsDate
-	return (lhd.compare(rhd) == .orderedSame)
-}
 
 extension Instant {
 	
@@ -668,9 +661,6 @@ class DateAndTimeParser {
 			if scanner.scanInt(&hour) && hour >= 0 && hour < 24 && scanner.scanString(":", into: nil)
 				&& scanner.scanInt(&minute) && minute >= 0 && minute < 60 {
 				
-				/* this crashes in Xcode 8b2, see https://bugs.swift.org/browse/SR-1782
-				var decimalSet = CharacterSet.decimalDigits
-				*/
 				let digitSet = CharacterSet.decimalDigits
 				var decimalSet = NSMutableCharacterSet.decimalDigits
 				decimalSet.insert(".")
