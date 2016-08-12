@@ -409,7 +409,7 @@ class FHIRStructureDefinitionStructure(object):
         if not name:
             raise Exception("Must find 'name' in profile dictionary but found nothing")
         self.name = self.profile.spec.class_name_for_profile(name) 
-        self.base = json_dict.get('baseType')
+        self.base = json_dict.get('baseDefinition')
         self.kind = json_dict.get('kind')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
@@ -684,12 +684,10 @@ class FHIRElementType(object):
         if self.code is not None and not _is_string(self.code):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
-        self.profiles = type_dict.get('profile')
-        if self.profiles is not None and \
-            (not isinstance(self.profiles, list) or 1 != len(self.profiles)):
-            raise Exception("Expecting a list of 1 for 'profile' definition of an element type, got {} in {}"
-                .format(self.profiles, type_dict))
-        self.profile = self.profiles[0] if self.profiles is not None else None
+        self.profile = type_dict.get('profile')
+        if self.profile is not None and not _is_string(self.profile):
+            raise Exception("Expecting a string for 'profile' definition of an element type, got {} as {}"
+                .format(self.profile, type(self.profile)))
 
 
 class FHIRElementConstraint(object):
