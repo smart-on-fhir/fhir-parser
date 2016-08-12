@@ -30,6 +30,8 @@ default_base = {
     'resource': 'FHIRAbstractResource',                 # for "Resource"
 }
 resource_modules_lowercase = True                       # whether all resource paths (i.e. modules) should be lowercase
+camelcase_classes = True                                # whether class name generation should use CamelCase
+backbone_class_adds_parent = True                       # if True, backbone class names prepend their parent's class name
 tpl_resource_source = 'Python/template-resource.py'     # the template to use as source when writing resource implementations for profiles
 manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Python/fhirabstractbase.py', 'fhirabstractbase', [
