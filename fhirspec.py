@@ -126,19 +126,26 @@ class FHIRSpec(object):
     def as_module_name(self, name):
         return name.lower() if name and self.settings.resource_modules_lowercase else name
     
-    def as_class_name(self, classname):
+    def as_class_name(self, classname, parent_name=None):
         if not classname or 0 == len(classname):
             return None
+        
+        # if we have a parent, do we have a mapped class?
+        pathname = '{}.{}'.format(parent_name, classname) if parent_name is not None else None
+        if pathname is not None and pathname in self.settings.classmap:
+            return self.settings.classmap[pathname]
+        
+        # is our plain class mapped?
         if classname in self.settings.classmap:
             return self.settings.classmap[classname]
-        return classname[:1].upper() + classname[1:]
+        
+        # CamelCase or just plain
+        if self.settings.camelcase_classes:
+            return classname[:1].upper() + classname[1:]
+        return classname
     
-    def mapped_name_for_type(self, type_name):
-        return type_name
-    
-    def class_name_for_type(self, type_name):
-        mappedname = self.mapped_name_for_type(type_name)
-        return self.as_class_name(mappedname)
+    def class_name_for_type(self, type_name, parent_name=None):
+        return self.as_class_name(type_name, parent_name)
     
     def class_name_for_type_if_property(self, type_name):
         classname = self.class_name_for_type(type_name)
@@ -146,15 +153,11 @@ class FHIRSpec(object):
             return None
         return self.settings.replacemap.get(classname, classname)
     
-    def mapped_name_for_profile(self, profile_name):
+    def class_name_for_profile(self, profile_name):
         if not profile_name:
             return None
         type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
-        return self.mapped_name_for_type(type_name)
-    
-    def class_name_for_profile(self, profile_name):
-        mappedname = self.mapped_name_for_profile(profile_name)
-        return self.as_class_name(mappedname)
+        return self.as_class_name(type_name)
     
     def class_name_is_native(self, class_name):
         return class_name in self.settings.natives
@@ -563,7 +566,7 @@ class FHIRStructureDefinitionElement(object):
         assert self._did_resolve_dependencies
         if not self.is_main_profile_element:
             return self.name_if_class()
-        return self.profile.spec.mapped_name_for_type(self.definition.name or self.path)
+        return self.definition.name or self.path
     
     def name_if_class(self):
         return self.definition.name_if_class()
@@ -658,9 +661,10 @@ class FHIRStructureDefinitionElementDefinition(object):
             return self._content_referenced.name_if_class()
         
         with_name = self.name or self.prop_name
-        classname = self.element.profile.spec.class_name_for_type(with_name)
-        if self.element.parent is not None:
-            classname = self.element.parent.name_if_class() + classname
+        parent_name = self.element.parent.name_if_class() if self.element.parent is not None else None
+        classname = self.element.profile.spec.class_name_for_type(with_name, parent_name)
+        if parent_name is not None and self.element.profile.spec.settings.backbone_class_adds_parent:
+            classname = parent_name + classname
         return classname
 
 
