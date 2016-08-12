@@ -46,11 +46,11 @@ class {{ class.name }}Tests: XCTestCase {
 		{%- else %}{% if "UInt" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, UInt({{ onetest.value }}))
 		{%- else %}{% if "Bool" == onetest.klass.name %}
-		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst.{{ onetest.path }})
+		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst.{{ onetest.path }} ?? {% if onetest.value %}false{% else %}true{% endif %})
 		{%- else %}{% if "Date" == onetest.klass.name or "Time" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
-		XCTAssertEqual(inst.{{ onetest.path }}.description, "{{ onetest.value }}")
+		XCTAssertEqual(inst.{{ onetest.path }}?.description, "{{ onetest.value }}")
 		{%- else %}{% if "NSURL" == onetest.klass.name %}
-		XCTAssertEqual(inst.{{ onetest.path }}.absoluteString, "{{ onetest.value }}")
+		XCTAssertEqual(inst.{{ onetest.path }}{% if not onetest.array_item %}?{% endif %}.absoluteString, "{{ onetest.value }}")
 		{%- else %}{% if "Base64Binary" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
 		{%- else %}
