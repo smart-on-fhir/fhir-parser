@@ -1,6 +1,6 @@
 # These are settings for the FHIR class generator
 
-from Swift.mappings import *
+from Swift3.mappings import *
 
 # Base URL for where to load specification data from
 #specification_url = 'http://hl7.org/fhir/2016May/'
