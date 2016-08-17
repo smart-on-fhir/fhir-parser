@@ -8,12 +8,12 @@
 
 
 /**
- *  Abstract superclass for all FHIR data elements.
- */
-public class FHIRAbstractBase: CustomStringConvertible {
+Abstract superclass for all FHIR data elements.
+*/
+open class FHIRAbstractBase: CustomStringConvertible {
 	
-	/// The name of the resource or element.
-	public class var resourceName: String {
+	/// The type of the resource or element.
+	public class var resourceType: String {
 		get { return "FHIRAbstractBase" }
 	}
 	
@@ -58,7 +58,7 @@ public class FHIRAbstractBase: CustomStringConvertible {
 		if let supflu = superfluous, !supflu.isEmpty {
 			for sup in supflu {
 				if let first = sup.characters.first, "_" != first {
-					errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
+					errors.append(FHIRJSONError(key: sup, has: type(of: json![sup]!)))
 				}
 			}
 		}
@@ -72,7 +72,7 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	- parameter presentKeys: An in-out parameter being filled with key names used.
 	- returns:               An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
 	*/
-	public func populate(fromJSON: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	open func populate(fromJSON: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		return nil
 	}
 	
@@ -81,18 +81,8 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	
 	- returns: The FHIRJSON reperesentation of the receiver
 	*/
-	public func asJSON() -> FHIRJSON {
+	open func asJSON() -> FHIRJSON {
 		return FHIRJSON()
-	}
-	
-	/**
-	Calls `asJSON()` on all elements in the array and returns the resulting array full of FHIRJSON dictionaries.
-	
-	- parameter array: The array of elements to map to FHIRJSON
-	- returns:         An array of FHIRJSON elements representing the given resources
-	*/
-	public class func asJSONArray(_ array: [FHIRAbstractBase]) -> [FHIRJSON] {
-		return array.map() { $0.asJSON() }
 	}
 	
 	
@@ -188,10 +178,10 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	}
 	
 	
-	// MARK: - Printable
+	// MARK: - CustomStringConvertible
 	
-	public var description: String {
-		return "<\(self.dynamicType.resourceName)>"
+	open var description: String {
+		return "<\(type(of: self).resourceType)>"
 	}
 }
 

@@ -8,8 +8,8 @@
 
 
 /**
- *  Extension to FHIRAbstractBase to be able to instantiate by class name.
- */
+Extension to FHIRAbstractBase to be able to instantiate by class name.
+*/
 extension FHIRAbstractBase {
 	
 	public class func factory(_ className: String, json: FHIRJSON, owner: FHIRAbstractBase?) -> FHIRAbstractBase {

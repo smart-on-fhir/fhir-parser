@@ -22,7 +22,7 @@ extension XCTestCase {
 	}
 	
 	func readJSONFile(_ filename: String) throws -> FHIRJSON {
-		let dir = self.dynamicType.testsDirectory
+		let dir = type(of: self).testsDirectory
 		XCTAssertTrue(FileManager.default.fileExists(atPath: dir), "You must either first download the FHIR spec or manually adjust `XCTestCase.testsDirectory` to point to your FHIR download directory")
 		
 		let path = (dir as NSString).appendingPathComponent(filename)

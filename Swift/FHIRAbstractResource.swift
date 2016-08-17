@@ -10,9 +10,9 @@ import Foundation
 
 
 /**
- *  Abstract superclass for all FHIR resource models.
- */
-public class FHIRAbstractResource: FHIRAbstractBase {
+Abstract superclass for all FHIR resource models.
+*/
+open class FHIRAbstractResource: FHIRAbstractBase {
 	
 	/// A specific version id, if the instance was created using `vread`.
 	public var _versionId: String?
@@ -33,14 +33,14 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	public override func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	override open func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		guard let json = json else {
 			return nil
 		}
 		if let type = json["resourceType"] as? String {
 			presentKeys.insert("resourceType")
-			if type != self.dynamicType.resourceName {
-				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(self.dynamicType.resourceName)” but is “\(type)”")]
+			if type != type(of: self).resourceType {
+				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(type(of: self).resourceType)” but is “\(type)”")]
 			}
 			return super.populate(fromJSON: json, presentKeys: &presentKeys)
 		}
@@ -48,18 +48,18 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	}
 	
 	/** Serialize the receiver to JSON. */
-	public override func asJSON() -> FHIRJSON {
+	override open func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
-		json["resourceType"] = self.dynamicType.resourceName
+		json["resourceType"] = type(of: self).resourceType as AnyObject
 		
 		return json
 	}
 	
 	
-	// MARK: - Printable
+	// MARK: - CustomStringConvertible
 	
-	override public var description: String {
-		return "<\(self.dynamicType.resourceName)> \(__server?.baseURL.absoluteString ?? "nil")"
+	override open var description: String {
+		return "<\(type(of: self).resourceType)> \(__server?.baseURL.absoluteString ?? "nil")"
 	}
 }
 

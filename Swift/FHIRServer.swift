@@ -118,6 +118,6 @@ public protocol FHIRServer {
 	- parameter additonalHeaders:  The headers to set on the request
 	- parameter callback:          A callback, likely called asynchronously, returning a response instance
 	*/
-	func performRequest(ofType: FHIRRequestType, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: ((response: FHIRServerResponse) -> Void))
+	func performRequest(ofType: FHIRRequestType, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: ((FHIRServerResponse) -> Void))
 }
 

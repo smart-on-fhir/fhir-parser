@@ -31,7 +31,7 @@ public struct FHIRDate: DateAndTime {
 	/// The month of the year, maximum of 12.
 	public var month: UInt8? {
 		didSet {
-			if month > 12 {
+			if let mth = month, mth > 12 {
 				month = nil
 			}
 		}
@@ -40,7 +40,7 @@ public struct FHIRDate: DateAndTime {
 	/// The day of the month; must be valid for the month (not enforced in code!).
 	public var day: UInt8? {
 		didSet {
-			if day > 31 {
+			if let d = day, d > 31 {
 				day = nil
 			}
 		}
@@ -58,9 +58,11 @@ public struct FHIRDate: DateAndTime {
 	*/
 	public init(year: Int, month: UInt8?, day: UInt8?) {
 		self.year = year
-		if month <= 12 {
-			self.month = month
-			self.day = day > 31 ? nil : day
+		if let mth = month, mth <= 12 {
+			self.month = mth
+			if let d = day, d <= 31 {
+				self.day = d
+			}
 		}
 	}
 	
@@ -108,10 +110,22 @@ public struct FHIRDate: DateAndTime {
 	
 	public static func <(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
 		if lhs.year == rhs.year {
-			if lhs.month == rhs.month {
-				return lhs.day < rhs.day
+			guard let lhm = lhs.month else {
+				return true
 			}
-			return lhs.month < rhs.month
+			guard let rhm = rhs.month else {
+				return false
+			}
+			if lhm == rhm {
+				guard let lhd = lhs.day else {
+					return true
+				}
+				guard let rhd = rhs.day else {
+					return false
+				}
+				return lhd < rhd
+			}
+			return lhm < rhm
 		}
 		return lhs.year < rhs.year
 	}
@@ -154,7 +168,7 @@ public struct FHIRTime: DateAndTime {
 	/// The second of the minute; must be smaller than 60
 	public var second: Double? {
 		didSet {
-			if second >= 60 {
+			if let sec = second, sec >= 60.0 {
 				second = 59.999999999
 			}
 			tookSecondsFromString = nil
@@ -179,13 +193,15 @@ public struct FHIRTime: DateAndTime {
 		var overflowMinute: UInt = 0
 		var overflowHour: UInt = 0
 		
-		if second >= 60.0 {
-			self.second = second!.truncatingRemainder(dividingBy: 60)
-			overflowMinute = UInt((second! - self.second!) / 60)
-		}
-		else {
-			self.second = (second < 0.0) ? nil : second
-			self.tookSecondsFromString = (second < 0.0) ? nil : secondsFromString
+		if let sec = second, sec >= 0.0 {
+			if sec >= 60.0 {
+				self.second = sec.truncatingRemainder(dividingBy: 60)
+				overflowMinute = UInt((sec - self.second!) / 60)
+			}
+			else {
+				self.second = sec
+				self.tookSecondsFromString = secondsFromString
+			}
 		}
 		
 		let mins = UInt(minute) + overflowMinute
@@ -255,7 +271,13 @@ public struct FHIRTime: DateAndTime {
 	public static func <(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
 		if lhs.hour == rhs.hour {
 			if lhs.minute == rhs.minute {
-				return lhs.second < rhs.second
+				guard let lhsec = lhs.second else {
+					return true
+				}
+				guard let rhsec = rhs.second else {
+					return false
+				}
+				return lhsec < rhsec
 			}
 			return lhs.minute < rhs.minute
 		}

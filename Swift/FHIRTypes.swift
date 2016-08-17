@@ -12,7 +12,7 @@ import Foundation
 /**
 A JSON dictionary, with `String` keys and `AnyObject` values.
 */
-public typealias FHIRJSON = [String: AnyObject]
+public typealias FHIRJSON = [String: Any]
 
 
 /**
@@ -50,8 +50,14 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 		return "<Base64Binary; \(nil != value ? value!.characters.count : 0) chars>"
 	}
 	
-	public static func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
-		return lhs.value < rhs.value
+	public static func <(lh: Base64Binary, rh: Base64Binary) -> Bool {
+		guard let lhs = lh.value else {
+			return true
+		}
+		guard let rhs = rh.value else {
+			return false
+		}
+		return lhs < rhs
 	}
 	
 	public static func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
