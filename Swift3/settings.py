@@ -1,6 +1,6 @@
 # These are settings for the FHIR class generator
 
-from Swift.mappings import *
+from Swift3.mappings import *
 
 # Base URL for where to load specification data from
 specification_url = 'http://hl7.org/fhir/2016Sep/'
@@ -66,6 +66,6 @@ unittest_copyfiles = [
     'Swift/XCTestCase+FHIR.swift',
     'Swift/DateAndTimeTests.swift'
 ]
-unittest_format_path_prepare = '{}!'            # used to format `path` before appending another path element - one placeholder for `path`
+unittest_format_path_prepare = '{}?'            # used to format `path` before appending another path element - one placeholder for `path`
 unittest_format_path_key = '{}.{}'              # used to create property paths by appending `key` to the existing `path` - two placeholders
-unittest_format_path_index = '{}![{}]'          # used for array properties - two placeholders, `path` and the array index
+unittest_format_path_index = '{}?[{}]'          # used for array properties - two placeholders, `path` and the array index
