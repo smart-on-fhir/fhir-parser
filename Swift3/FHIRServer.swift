@@ -104,7 +104,7 @@ public protocol FHIRServer {
 	/**
 	Designated initializer. Should make sure that the base URL ends with a "/"!
 	*/
-	init(baseURL base: URL, auth: [String: AnyObject]?)
+	init(baseURL base: URL, auth: [String: Any]?)
 	
 	
 	// MARK: - HTTP Request
