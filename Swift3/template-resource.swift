@@ -16,9 +16,9 @@ import Foundation
  *  {{ klass.formal|wordwrap(width=116, wrapstring="\n *  ") }}
 {%- endif %}
  */
-public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
+open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
 {%- if klass.resource_name %}
-	override public class var resourceType: String {
+	override open class var resourceType: String {
 		get { return "{{ klass.resource_name }}" }
 	}
 {% endif -%}
@@ -48,7 +48,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public override func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	override open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		var errors = super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
 		{%- for prop in klass.properties %}
@@ -96,7 +96,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 		return errors.isEmpty ? nil : errors
 	}
 	
-	override public func asJSON() -> FHIRJSON {
+	override open func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
 		{% for prop in klass.properties %}
 		if let {{ prop.name }} = self.{{ prop.name }} {
@@ -109,7 +109,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 			json["{{ prop.orig_name }}"] = arr
 		
 		{%- else %}
-			json["{{ prop.orig_name }}"] = {{ prop.class_name }}.asJSONArray({{ prop.name }})
+			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON() }
 		{%- endif %}
 		
 		{%- else %}

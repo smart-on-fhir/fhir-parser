@@ -33,7 +33,7 @@ open class FHIRAbstractResource: FHIRAbstractBase {
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	open override func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	override open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		guard let json = json else {
 			return nil
 		}
