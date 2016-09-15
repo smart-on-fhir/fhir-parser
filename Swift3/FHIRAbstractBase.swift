@@ -27,11 +27,11 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	/**
 	The default initializer.
 		
-	Forwards to `populate(fromJSON:)` and logs all JSON errors to console, if "DEBUG" is defined and true.
+	Forwards to `populate(from:)` and logs all JSON errors to console, if "DEBUG" is defined and true.
 	*/
 	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
 		_owner = owner
-		if let errors = populate(fromJSON: json) {
+		if let errors = populate(from: json) {
 			for error in errors {
 				fhir_warn(error.description)
 			}
@@ -48,10 +48,10 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- returns:            An optional array of errors reporting missing (when nonoptional) and superfluous properties and properties of the
 	                      wrong type
 	*/
-	public final func populate(fromJSON json: FHIRJSON?) -> [FHIRJSONError]? {
+	public final func populate(from json: FHIRJSON?) -> [FHIRJSONError]? {
 		var present = Set<String>()
 		present.insert("fhir_comments")
-		var errors = populate(fromJSON: json, presentKeys: &present) ?? [FHIRJSONError]()
+		var errors = populate(from: json, presentKeys: &present) ?? [FHIRJSONError]()
 		
 		// superfluous JSON entries? Ignore "fhir_comments" and "_xy".
 		let superfluous = json?.keys.filter() { !present.contains($0) }
@@ -68,11 +68,11 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	/**
 	The main function to perform the actual JSON parsing, to be overridden by subclasses.
 	 
-	- parameter fromJSON:    The JSON element to use to populate the receiver
+	- parameter json:        The JSON element to use to populate the receiver
 	- parameter presentKeys: An in-out parameter being filled with key names used.
 	- returns:               An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
 	*/
-	open func populate(fromJSON: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		return nil
 	}
 	
@@ -92,11 +92,11 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
 	specified resource type, or instantiates the receiver's class otherwise.
 	
-	- parameter fromJSON: A FHIRJSON decoded from a JSON response
-	- parameter owner:    The FHIRAbstractBase owning the new instance, if appropriate
-	- returns:            If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
+	- parameter json:  A FHIRJSON decoded from a JSON response
+	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
+	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
 	*/
-	public final class func instantiate(fromJSON json: FHIRJSON?, owner: FHIRAbstractBase?) -> FHIRAbstractBase {
+	public final class func instantiate(from json: FHIRJSON?, owner: FHIRAbstractBase?) -> FHIRAbstractBase {
 		if let type = json?["resourceType"] as? String {
 			return factory(type, json: json!, owner: owner)
 		}
@@ -113,7 +113,7 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- returns:             An array of the appropriate FHIRAbstractBase subclass, if possible, Self otherwise
 	*/
 	public final class func instantiate(fromArray: [FHIRJSON], owner: FHIRAbstractBase? = nil) -> [FHIRAbstractBase] {
-		return fromArray.map() { instantiate(fromJSON: $0, owner: owner) }
+		return fromArray.map() { instantiate(from: $0, owner: owner) }
 	}
 	
 	

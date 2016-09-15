@@ -33,7 +33,7 @@ open class FHIRAbstractResource: FHIRAbstractBase {
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	override open func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	override open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		guard let json = json else {
 			return nil
 		}
@@ -42,7 +42,7 @@ open class FHIRAbstractResource: FHIRAbstractBase {
 			if type != type(of: self).resourceType {
 				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(type(of: self).resourceType)” but is “\(type)”")]
 			}
-			return super.populate(fromJSON: json, presentKeys: &presentKeys)
+			return super.populate(from: json, presentKeys: &presentKeys)
 		}
 		return [FHIRJSONError(key: "resourceType")]
 	}

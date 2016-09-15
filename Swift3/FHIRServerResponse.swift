@@ -32,10 +32,13 @@ public protocol FHIRServerResponse {
 	
 	
 	/**
-	Instantiate a FHIRServerResponse from an NS(HTTP)URLResponse, NSData and an NSError.
+	Instantiate a FHIRServerResponse from an URLResponse, Data and an Error.
 	*/
-	init(response: URLResponse, data: Data?, urlError: NSError?)
+	init(response: URLResponse, data: Data?, error: Error?)
 	
+	/**
+	Instantiate a response that only represents an error, possibly because it wasn't even sent.
+	*/
 	init(error: Error)
 	
 	
