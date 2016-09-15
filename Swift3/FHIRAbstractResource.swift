@@ -12,13 +12,13 @@ import Foundation
 /**
  *  Abstract superclass for all FHIR resource models.
  */
-public class FHIRAbstractResource: FHIRAbstractBase {
+open class FHIRAbstractResource: FHIRAbstractBase {
 	
 	/// A specific version id, if the instance was created using `vread`.
-	public var _versionId: String?
+	open var _versionId: String?
 	
 	/// If this instance lives on a server, this property represents that server.
-	public var _server: FHIRServer? {
+	open var _server: FHIRServer? {
 		get { return __server ?? owningResource?._server }
 		set { __server = newValue }
 	}
@@ -33,24 +33,24 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	public override func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	open override func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
 		guard let json = json else {
 			return nil
 		}
 		if let type = json["resourceType"] as? String {
 			presentKeys.insert("resourceType")
-			if type != self.dynamicType.resourceName {
-				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(self.dynamicType.resourceName)” but is “\(type)”")]
+			if type != type(of: self).resourceType {
+				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(type(of: self).resourceType)” but is “\(type)”")]
 			}
-			return super.populate(fromJSON: json, presentKeys: &presentKeys)
+			return super.populate(from: json, presentKeys: &presentKeys)
 		}
 		return [FHIRJSONError(key: "resourceType")]
 	}
 	
 	/** Serialize the receiver to JSON. */
-	public override func asJSON() -> FHIRJSON {
+	open override func asJSON() -> FHIRJSON {
 		var json = super.asJSON()
-		json["resourceType"] = self.dynamicType.resourceName
+		json["resourceType"] = type(of: self).resourceType
 		
 		return json
 	}
@@ -58,8 +58,8 @@ public class FHIRAbstractResource: FHIRAbstractBase {
 	
 	// MARK: - Printable
 	
-	override public var description: String {
-		return "<\(self.dynamicType.resourceName)> \(__server?.baseURL.absoluteString ?? "nil")"
+	override open var description: String {
+		return "<\(type(of: self).resourceType)> \(__server?.baseURL.absoluteString ?? "nil")"
 	}
 }
 

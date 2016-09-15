@@ -18,7 +18,7 @@ import Foundation
  */
 public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
 {%- if klass.resource_name %}
-	override public class var resourceName: String {
+	override public class var resourceType: String {
 		get { return "{{ klass.resource_name }}" }
 	}
 {% endif -%}
@@ -48,11 +48,11 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public override func populate(fromJSON json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
-		var errors = super.populate(fromJSON: json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
+	public override func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+		var errors = super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
 		if let js = json {
 		{%- for prop in klass.properties %}
-			if let exist: AnyObject = js["{{ prop.orig_name }}"] {
+			if let exist = js["{{ prop.orig_name }}"] {
 				presentKeys.insert("{{ prop.orig_name }}")
 				if let val = exist as? {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %} {
 					{%- if prop.class_name == prop.json_class %}
@@ -68,13 +68,13 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 					{%- else %}{% if prop.is_native %}
 					self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
 					{%- else %}{% if "Resource" == prop.class_name %}
-					self.{{ prop.name }} = Resource.instantiate(fromJSON: val, owner: self) as? Resource
+					self.{{ prop.name }} = Resource.instantiate(from: val, owner: self) as? Resource
 					{%- else %}
 					self.{{ prop.name }} = {{ prop.class_name }}(json: val, owner: self)
 					{%- endif %}{% endif %}{% endif %}{% endif %}
 				}
 				else {
-					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: exist.dynamicType))
+					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: type(of: exist)))
 				}
 			}
 			{%- if prop.nonoptional and not prop.one_of_many %}
@@ -102,7 +102,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 		if let {{ prop.name }} = self.{{ prop.name }} {
 		
 		{%- if prop.is_array %}{% if prop.is_native %}
-			var arr = [AnyObject]()
+			var arr = [Any]()
 			for val in {{ prop.name }} {
 				arr.append(val.asJSON())
 			}

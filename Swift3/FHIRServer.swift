@@ -104,7 +104,7 @@ public protocol FHIRServer {
 	/**
 	Designated initializer. Should make sure that the base URL ends with a "/"!
 	*/
-	init(baseURL base: URL, auth: [String: AnyObject]?)
+	init(baseURL base: URL, auth: [String: Any]?)
 	
 	
 	// MARK: - HTTP Request
@@ -118,6 +118,6 @@ public protocol FHIRServer {
 	- parameter additonalHeaders:  The headers to set on the request
 	- parameter callback:          A callback, likely called asynchronously, returning a response instance
 	*/
-	func performRequest(ofType: FHIRRequestType, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: ((response: FHIRServerResponse) -> Void))
+	func performRequest(ofType: FHIRRequestType, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: @escaping ((_ response: FHIRServerResponse) -> Void))
 }
 

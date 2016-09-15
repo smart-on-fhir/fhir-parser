@@ -32,9 +32,9 @@ public protocol FHIRServerResponse {
 	
 	
 	/**
-	Instantiate a FHIRServerResponse from an NS(HTTP)URLResponse, NSData and an NSError.
+	Instantiate a FHIRServerResponse from an (HTTP)URLResponse, Data and an Error.
 	*/
-	init(response: URLResponse, data: Data?, urlError: NSError?)
+	init(response: URLResponse, data: Data?, error: Error?)
 	
 	init(error: Error)
 	
@@ -51,7 +51,7 @@ public protocol FHIRServerResponse {
 	- throws:   The method should only throw on severe cases, like if Location headers were returned that don't match the resource type
 	- parameter resource: The resource to apply response data to
 	*/
-	func applyHeadersTo(resource: Resource) throws
+	func applyHeaders(to resource: Resource) throws
 	
 	/**
 	The response should apply response body data to the given resource. It should throw `FHIRError.ResponseNoResourceReceived` if there was
@@ -63,7 +63,7 @@ public protocol FHIRServerResponse {
 	            response data at all (`FHIRError.ResponseNoResourceReceived` in that case)
 	- parameter resource: The resource to apply response data to
 	*/
-	func applyBodyTo(resource: Resource) throws
+	func applyBody(to resource: Resource) throws
 	
 	static func noneReceived() -> Self
 }

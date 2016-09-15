@@ -10,9 +10,9 @@ import Foundation
 
 
 /**
-A JSON dictionary, with `String` keys and `AnyObject` values.
+A JSON dictionary, with `String` keys and `Any` values.
 */
-public typealias FHIRJSON = [String: AnyObject]
+public typealias FHIRJSON = [String: Any]
 
 
 /**
@@ -29,7 +29,7 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 	}
 	
 	
-	// MARK: - String Literal Convertible
+	// MARK: - ExpressibleByStringLiteral
 	
 	public init(stringLiteral value: StringLiteralType) {
 		self.value = value
@@ -43,28 +43,26 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 		self.value = value
 	}
 	
-	public static func convertFromExtendedGraphemeClusterLiteral(value: String) -> Base64Binary {
-		return self.init(stringLiteral: value)
-	}
 	
-	public static func convertFromStringLiteral(value: String) -> Base64Binary {
-		return self.init(stringLiteral: value)
-	}
-	
-	
-	// MARK: - Printable
+	// MARK: - Printable, Equatable and Comparable
 	
 	public var description: String {
 		return "<Base64Binary; \(nil != value ? value!.characters.count : 0) chars>"
 	}
-}
-
-public func <(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
-	return lhs.value < rhs.value
-}
-
-public func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
-	return lhs.value == rhs.value
+	
+	public static func <(lh: Base64Binary, rh: Base64Binary) -> Bool {
+		guard let lhs = lh.value else {
+			return true
+		}
+		guard let rhs = rh.value else {
+			return false
+		}
+		return lhs < rhs
+	}
+	
+	public static func ==(lhs: Base64Binary, rhs: Base64Binary) -> Bool {
+		return lhs.value == rhs.value
+	}
 }
 
 
@@ -82,7 +80,7 @@ extension String {
 /**
 Execute a `print()`, prepending filename, line and function/method name, if `DEBUG` is defined.
 */
-public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: String = #function, file: NSString = #file, line: Int = #line) {
+public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: String = #function, file: String = #file, line: Int = #line) {
 #if DEBUG
 	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  \(message())")
 #endif
@@ -91,7 +89,7 @@ public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: Stri
 /**
 Execute a `print()`, prepending filename, line and function/method name and "WARNING" prepended.
 */
-public func fhir_warn(_ message: @autoclosure () -> String, function: String = #function, file: NSString = #file, line: Int = #line) {
-	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  WARNING: \(message())")
+public func fhir_warn(_ message: @autoclosure () -> String, function: String = #function, file: String = #file, line: Int = #line) {
+	print("SwiftFHIR [\((file as NSString).lastPathComponent):\(line)] \(function)  WARNING: \(message())")
 }
 
