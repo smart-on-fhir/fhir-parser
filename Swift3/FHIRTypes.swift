@@ -10,7 +10,7 @@ import Foundation
 
 
 /**
-A JSON dictionary, with `String` keys and `Any` values.
+A JSON dictionary, with `String` keys and `AnyObject` values.
 */
 public typealias FHIRJSON = [String: Any]
 
@@ -82,7 +82,7 @@ Execute a `print()`, prepending filename, line and function/method name, if `DEB
 */
 public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: String = #function, file: String = #file, line: Int = #line) {
 #if DEBUG
-	print("SwiftFHIR [\(file.lastPathComponent):\(line)] \(function)  \(message())")
+	print("SwiftFHIR [\((file as NSString).lastPathComponent):\(line)] \(function)  \(message())")
 #endif
 }
 
