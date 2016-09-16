@@ -112,12 +112,12 @@ public protocol FHIRServer {
 	/*
 	Execute a request of given type against the given path, which is relative to the receiver's `baseURL`, with the given resource (if any).
 	
-	- parameter ofType:            The HTTP method type of the request
+	- parameter method:            The HTTP method type of the request
 	- parameter path:              The relative path on the server to be interacting against
 	- parameter resource:          The resource to be involved in the request, if any
 	- parameter additonalHeaders:  The headers to set on the request
 	- parameter callback:          A callback, likely called asynchronously, returning a response instance
 	*/
-	func performRequest(ofType: FHIRRequestMethod, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: @escaping ((FHIRServerResponse) -> Void))
+	func performRequest(_ method: FHIRRequestMethod, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: @escaping ((FHIRServerResponse) -> Void))
 }
 
