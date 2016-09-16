@@ -13,7 +13,7 @@ Abstract superclass for all FHIR data elements.
 open class FHIRAbstractBase: CustomStringConvertible {
 	
 	/// The type of the resource or element.
-	public class var resourceType: String {
+	open class var resourceType: String {
 		get { return "FHIRAbstractBase" }
 	}
 	
@@ -44,9 +44,9 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	/**
 	Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
 	
-	- parameter fromJSON: The JSON dictionary to pull data from
-	- returns:            An optional array of errors reporting missing (when nonoptional) and superfluous properties and properties of the
-	                      wrong type
+	- parameter json: The JSON dictionary to pull data from
+	- returns:        An optional array of errors reporting missing (when nonoptional) and superfluous properties and properties of the
+	                  wrong type
 	*/
 	public final func populate(from json: FHIRJSON?) -> [FHIRJSONError]? {
 		var present = Set<String>()
@@ -150,7 +150,7 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	
 	- returns: The owning `DomainResource` instance or nil
 	*/
-	public var owningResource: DomainResource? {
+	open var owningResource: DomainResource? {
 		var owner = _owner
 		while nil != owner {
 			if let owner = owner as? DomainResource {
@@ -166,7 +166,7 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	
 	- returns: The owning `Bundle` instance or nil
 	*/
-	public var owningBundle: Bundle? {
+	open var owningBundle: Bundle? {
 		var owner = _owner
 		while nil != owner {
 			if let owner = owner as? Bundle {

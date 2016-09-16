@@ -44,6 +44,12 @@ public protocol FHIRServerResponse {
 	
 	// MARK: - Responses
 	
+	/**
+	Extract the resource of the given type from the response, if possible.
+	
+	- parameter ofType: The type of resource to extract
+	- returns:          The resource that was found in the response if it is of the desired type, nil otherwise
+	*/
 	func responseResource<T: Resource>(ofType: T.Type) -> T?
 	
 	/**
@@ -68,6 +74,9 @@ public protocol FHIRServerResponse {
 	*/
 	func applyBody(to: Resource) throws
 	
+	/**
+	Represent a response that was not received.
+	*/
 	static func noneReceived() -> Self
 }
 

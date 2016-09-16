@@ -12,7 +12,7 @@ import Foundation
 /**
 Struct to describe REST request types, with a convenience method to make a request FHIR compliant.
 */
-public enum FHIRRequestType: String {
+public enum FHIRRequestMethod: String {
 	case GET = "GET"
 	case PUT = "PUT"
 	case POST = "POST"
@@ -118,6 +118,6 @@ public protocol FHIRServer {
 	- parameter additonalHeaders:  The headers to set on the request
 	- parameter callback:          A callback, likely called asynchronously, returning a response instance
 	*/
-	func performRequest(ofType: FHIRRequestType, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: @escaping ((FHIRServerResponse) -> Void))
+	func performRequest(ofType: FHIRRequestMethod, path: String, resource: Resource?, additionalHeaders: FHIRRequestHeaders?, callback: @escaping ((FHIRServerResponse) -> Void))
 }
 
