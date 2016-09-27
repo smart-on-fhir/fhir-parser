@@ -4,10 +4,11 @@ Python FHIR Parser
 A Python FHIR specification parser for model class generation.
 If you've come here because you want _Swift_ or _Python_ classes for FHIR data models, look at our client libraries instead:
 
-- [Swift-FHIR](https://github.com/smart-on-fhir/Swift-FHIR) and [Swift-SMART](https://github.com/smart-on-fhir/Swift-SMART)
-- Python [client-py](https://github.com/smart-on-fhir/client-py)
+- [Swift-FHIR][] and [Swift-SMART][]
+- Python [client-py][]
 
 This work is licensed under the [APACHE license][license].
+FHIR® is the registered trademark of [HL7][] and is used with the permission of HL7.
 
 ### Tech ###
 
@@ -51,7 +52,7 @@ This repo currently supports class generation in the following languages:
 Swift
 -----
 
-[Swift][], Apple's new programming language for OS X and iOS.
+[Swift][], Apple's new programming language for OS X and iOS, in version 2 and 3.
 See the [Swift-FHIR][] repo for details.
 
 Python
@@ -105,8 +106,10 @@ The class of this property is derived from `element.type`, which is expected to 
 
 
 [license]: ./LICENSE.txt
+[hl7]: http://hl7.org/
 [fhir]: http://www.hl7.org/implement/standards/fhir/
-[jinja]: http://jinja.pocoo.org
+[jinja]: http://jinja.pocoo.org/
 [swift]: https://developer.apple.com/swift/
 [swift-fhir]: https://github.com/smart-on-fhir/Swift-FHIR
+[swift-smart]: https://github.com/smart-on-fhir/Swift-SMART
 [client-py]: https://github.com/smart-on-fhir/client-py
