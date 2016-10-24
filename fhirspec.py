@@ -684,9 +684,9 @@ class FHIRElementType(object):
         if self.code is not None and not _is_string(self.code):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
-        self.profile = type_dict.get('profile')
+        self.profile = type_dict.get('targetProfile')
         if self.profile is not None and not _is_string(self.profile):
-            raise Exception("Expecting a string for 'profile' definition of an element type, got {} as {}"
+            raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
                 .format(self.profile, type(self.profile)))
 
 
