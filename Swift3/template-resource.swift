@@ -17,22 +17,19 @@ import Foundation
 {%- endif %}
  */
 open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
-{%- if klass.resource_name %}
+	{%- if klass.resource_name %}
 	override open class var resourceType: String {
 		get { return "{{ klass.resource_name }}" }
 	}
-{% endif -%}
+	{% endif %}
 	
-{%- for prop in klass.properties %}	
+	{%- for prop in klass.properties %}	
 	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}.
 	public var {{ prop.name }}: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.is_array %}]{% endif %}?
-{% endfor %}	
+	{% endfor -%}
 	
-	/** Initialize with a JSON object. */
-	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
-		super.init(json: json, owner: owner)
-	}
-{% if klass.has_nonoptional %}	
+	{% if klass.has_nonoptional %}
+	
 	/** Convenience initializer, taking all required properties as arguments. */
 	public convenience init(
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
@@ -41,63 +38,66 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 		{%- set past_first_item = True %}
 	{%- endif %}{% endfor -%}
 	) {
-		self.init(json: nil)
+		self.init()
 	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
 		self.{{ nonop.name }} = {{ nonop.name }}
 	{%- endif %}{% endfor %}
 	}
-{% endif -%}
-{% if klass.properties %}	
-	override open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
-		var errors = super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
-		if let js = json {
+	{% endif -%}
+	
+	{% if klass.properties %}
+	
+	override open func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]? {
+		var errors = try super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRValidationError]()
 		{%- for prop in klass.properties %}
-			if let exist = js["{{ prop.orig_name }}"] {
-				presentKeys.insert("{{ prop.orig_name }}")
-				if let val = exist as? {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %} {
-					{%- if prop.class_name == prop.json_class %}
-					self.{{ prop.name }} = val
+		if let exist = json["{{ prop.orig_name }}"] {
+			presentKeys.insert("{{ prop.orig_name }}")
+			if let val = exist as? {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %} {
+				{%- if prop.class_name == prop.json_class %}
+				self.{{ prop.name }} = val
+				{%- else %}{% if prop.is_native %}{% if prop.is_array %}
+				self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val)
+				{%- else %}
+				self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
+				{%- endif %}{% else %}
+				do {
+					{%- if prop.is_array %}
+					self.{{ prop.name }} = try {{ prop.class_name }}.instantiate(fromArray: val, owner: self) as? [{{ prop.class_name }}]
+					{%- else %}{% if "Resource" == prop.class_name %}     {# The `Bundle` has generic resources #}
+					self.{{ prop.name }} = try Resource.instantiate(from: val, owner: self) as? Resource
 					{%- else %}
-					
-					{%- if prop.is_array %}{% if prop.is_native or 'FHIRElement' == prop.class_name %}
-					self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val)
-					{%- else %}
-					self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val, owner: self) as? [{{ prop.class_name }}]
-					{%- endif %}
-					
-					{%- else %}{% if prop.is_native %}
-					self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
-					{%- else %}{% if "Resource" == prop.class_name %}
-					self.{{ prop.name }} = Resource.instantiate(from: val, owner: self) as? Resource
-					{%- else %}
-					self.{{ prop.name }} = {{ prop.class_name }}(json: val, owner: self)
-					{%- endif %}{% endif %}{% endif %}{% endif %}
+					self.{{ prop.name }} = try {{ prop.class_name }}(json: val, owner: self)
+					{%- endif %}{% endif %}
 				}
-				else {
-					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: type(of: exist)))
+				catch let error as FHIRValidationError {
+					errors.append(error.prefixed(with: "{{ prop.orig_name }}"))
 				}
+				{%- endif %}{% endif %}
 			}
-			{%- if prop.nonoptional and not prop.one_of_many %}
 			else {
-				errors.append(FHIRJSONError(key: "{{ prop.orig_name }}"))
+				errors.append(FHIRValidationError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: type(of: exist)))
 			}
-			{%- endif %}
+		}
+		{%- if prop.nonoptional and not prop.one_of_many %}
+		else {
+			errors.append(FHIRValidationError(missing: "{{ prop.orig_name }}"))
+		}
+		{%- endif %}
 		{%- endfor %}
 		{%- if klass.expanded_nonoptionals %}
-			
-			// check if nonoptional expanded properties are present
-			{%- for exp, props in klass.sorted_nonoptionals %}
-			if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
-				errors.append(FHIRJSONError(key: "{{ exp }}*"))
-			}
-			{%- endfor %}
-		{%- endif %}
+		
+		// check if nonoptional expanded properties (i.e. at least one "answer" for "answer[x]") are present
+		{%- for exp, props in klass.sorted_nonoptionals %}
+		if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
+			errors.append(FHIRValidationError(missing: "{{ exp }}[x]"))
 		}
+		{%- endfor %}
+		{%- endif %}
 		return errors.isEmpty ? nil : errors
 	}
 	
-	override open func asJSON() -> FHIRJSON {
-		var json = super.asJSON()
+	override open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
+		var json = super.asJSON(errors: &errors)
 		{% for prop in klass.properties %}
 		if let {{ prop.name }} = self.{{ prop.name }} {
 		
@@ -109,13 +109,20 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 			json["{{ prop.orig_name }}"] = arr
 		
 		{%- else %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON() }
+			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON(errors: &errors) }
 		{%- endif %}
 		
-		{%- else %}
+		{%- else %}{% if prop.is_native %}
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON()
-		{%- endif %}
+		{%- else %}
+			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON(errors: &errors)
+		{%- endif %}{% endif %}
 		}
+		{%- else %}{% if prop.nonoptional %}
+		else {
+			// APPEND TO errors
+		}
+		{%- endif %}
 		{%- endfor %}
 		
 		return json

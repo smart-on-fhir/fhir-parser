@@ -50,7 +50,7 @@ extension URL {
 	}
 	
 	public func asJSON() -> String {
-		return self.description
+		return self.absoluteString
 	}
 }
 

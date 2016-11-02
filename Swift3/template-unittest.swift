@@ -13,13 +13,11 @@ import SwiftFHIR
 class {{ class.name }}Tests: XCTestCase {
 	
 	func instantiateFrom(filename: String) throws -> SwiftFHIR.{{ class.name }} {
-		return instantiateFrom(json: try readJSONFile(filename))
+		return try instantiateFrom(json: try readJSONFile(filename))
 	}
 	
-	func instantiateFrom(json: FHIRJSON) -> SwiftFHIR.{{ class.name }} {
-		let instance = SwiftFHIR.{{ class.name }}(json: json)
-		XCTAssertNotNil(instance, "Must have instantiated a test instance")
-		return instance
+	func instantiateFrom(json: FHIRJSON) throws -> SwiftFHIR.{{ class.name }} {
+		return try SwiftFHIR.{{ class.name }}(json: json)
 	}
 	
 {%- for tcase in tests %}
@@ -36,7 +34,7 @@ class {{ class.name }}Tests: XCTestCase {
 	
 	@discardableResult
 	func run{{ class.name }}{{ loop.index }}(_ json: FHIRJSON? = nil) throws -> SwiftFHIR.{{ class.name }} {
-		let inst = (nil != json) ? instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
+		let inst = (nil != json) ? try instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
 		{%- if "String" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")

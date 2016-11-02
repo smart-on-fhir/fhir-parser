@@ -48,17 +48,17 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	- returns: An optional array of errors reporting missing (when nonoptional) and superfluous properties and
 	    properties of the wrong type
 	*/
-	public final func populateFromJSON(json: FHIRJSON?) -> [FHIRJSONError]? {
+	public final func populateFromJSON(json: FHIRJSON?) -> [FHIRValidationError]? {
 		var present = Set<String>()
 		present.insert("fhir_comments")
-		var errors = populateFromJSON(json, presentKeys: &present) ?? [FHIRJSONError]()
+		var errors = populateFromJSON(json, presentKeys: &present) ?? [FHIRValidationError]()
 		
 		// superfluous JSON entries? Ignore "fhir_comments" and "_xy".
 		let superfluous = json?.keys.filter() { !present.contains($0) }
 		if let supflu = superfluous where !supflu.isEmpty {
 			for sup in supflu {
 				if let first = sup.characters.first where "_" != first {
-					errors.append(FHIRJSONError(key: sup, has: json![sup]!.dynamicType))
+					errors.append(FHIRValidationError(key: sup, has: json![sup]!.dynamicType))
 				}
 			}
 		}
@@ -72,7 +72,7 @@ public class FHIRAbstractBase: CustomStringConvertible {
 	- parameter presentKeys: An in-out parameter being filled with key names used.
 	- returns: An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
 	*/
-	public func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
+	public func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRValidationError]? {
 		return nil
 	}
 	

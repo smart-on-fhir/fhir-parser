@@ -95,10 +95,10 @@ public enum FHIRError: ErrorType, CustomStringConvertible {
 /**
 Errors thrown during JSON parsing.
 */
-public struct FHIRJSONError: ErrorType, CustomStringConvertible {
+public struct FHIRValidationError: ErrorType, CustomStringConvertible {
 	
 	/// The error type.
-	public var code: FHIRJSONErrorType
+	public var code: FHIRValidationErrorType
 	
 	/// The JSON property key generating the error.
 	public var key: String
@@ -114,7 +114,7 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 	
 	
 	/** Designated initializer. */
-	init(code: FHIRJSONErrorType, key: String) {
+	init(code: FHIRValidationErrorType, key: String) {
 		self.code = code
 		self.key = key
 	}
@@ -159,7 +159,7 @@ public struct FHIRJSONError: ErrorType, CustomStringConvertible {
 }
 
 
-public enum FHIRJSONErrorType: Int {
+public enum FHIRValidationErrorType: Int {
 	case MissingKey
 	case UnknownKey
 	case WrongValueTypeForKey

@@ -48,8 +48,8 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 	}
 {% endif -%}
 {% if klass.properties %}	
-	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRJSONError]? {
-		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRJSONError]()
+	public override func populateFromJSON(json: FHIRJSON?, inout presentKeys: Set<String>) -> [FHIRValidationError]? {
+		var errors = super.populateFromJSON(json, presentKeys: &presentKeys) ?? [FHIRValidationError]()
 		if let js = json {
 		{%- for prop in klass.properties %}
 			if let exist: AnyObject = js["{{ prop.orig_name }}"] {
@@ -74,12 +74,12 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 					{%- endif %}{% endif %}{% endif %}{% endif %}
 				}
 				else {
-					errors.append(FHIRJSONError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: exist.dynamicType))
+					errors.append(FHIRValidationError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: exist.dynamicType))
 				}
 			}
 			{%- if prop.nonoptional and not prop.one_of_many %}
 			else {
-				errors.append(FHIRJSONError(key: "{{ prop.orig_name }}"))
+				errors.append(FHIRValidationError(key: "{{ prop.orig_name }}"))
 			}
 			{%- endif %}
 		{%- endfor %}
@@ -88,7 +88,7 @@ public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBas
 			// check if nonoptional expanded properties are present
 			{%- for exp, props in klass.sorted_nonoptionals %}
 			if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
-				errors.append(FHIRJSONError(key: "{{ exp }}*"))
+				errors.append(FHIRValidationError(key: "{{ exp }}*"))
 			}
 			{%- endfor %}
 		{%- endif %}

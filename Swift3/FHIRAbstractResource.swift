@@ -24,32 +24,27 @@ open class FHIRAbstractResource: FHIRAbstractBase {
 	}
 	var __server: FHIRServer?
 	
-	/** Initialize with a JSON object. */
-	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
-		super.init(json: json, owner: owner)
-	}
-	
 	/**
 	The Resource, in contrast to the base element, definitely wants "resourceType" to be present. Will return an error complaining about it
 	missing if it's not present.
 	*/
-	override open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
-		guard let json = json else {
-			return nil
-		}
+	override open func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]? {
+		var errors = try super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRValidationError]()
 		if let type = json["resourceType"] as? String {
 			presentKeys.insert("resourceType")
 			if type != type(of: self).resourceType {
-				return [FHIRJSONError.init(key: "resourceType", problem: "should be “\(type(of: self).resourceType)” but is “\(type)”")]
+				errors.append(FHIRValidationError(key: "resourceType", problem: "should be “\(type(of: self).resourceType)” but is “\(type)”"))
 			}
-			return super.populate(from: json, presentKeys: &presentKeys)
 		}
-		return [FHIRJSONError(key: "resourceType")]
+		else {
+			errors.append(FHIRValidationError(missing: "resourceType"))
+		}
+		return errors.isEmpty ? nil : errors
 	}
 	
 	/** Serialize the receiver to JSON. */
-	open override func asJSON() -> FHIRJSON {
-		var json = super.asJSON()
+	override open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
+		var json = super.asJSON(errors: &errors)
 		json["resourceType"] = type(of: self).resourceType
 		
 		return json

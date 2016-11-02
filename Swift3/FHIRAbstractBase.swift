@@ -25,17 +25,25 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	
 	
 	/**
-	The default initializer.
-		
-	Forwards to `populate(from:)` and logs all JSON errors to console, if "DEBUG" is defined and true.
+	The default initializer, made “required” so instantiation with a metatype is possible.
+	
+	Forwards to `populate(from:)`.
+	
+	- parameter json:  The JSON element to use to populate the receiver
+	- parameter owner: If the receiver is an element or a resource in another resource, this references that "owner"
 	*/
-	public required init(json: FHIRJSON?, owner: FHIRAbstractBase? = nil) {
+	public required init(json: FHIRJSON, owner: FHIRAbstractBase? = nil) throws {
 		_owner = owner
-		if let errors = populate(from: json) {
-			for error in errors {
-				fhir_warn(error.description)
-			}
-		}
+		try populate(from: json)
+	}
+	
+	/**
+	Basic initializer for easy construction of new instances in code.
+	
+	- parameter owner: An optional owner of the element or resource
+	*/
+	public init(owner: FHIRAbstractBase? = nil) {
+		_owner = owner
 	}
 	
 	
@@ -44,25 +52,29 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	/**
 	Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
 	
-	- parameter json: The JSON dictionary to pull data from
+	- parameter json: The JSON element to use to populate the receiver
 	- returns:        An optional array of errors reporting missing (when nonoptional) and superfluous properties and properties of the
 	                  wrong type
+	- throws:         FHIRValidationError (it's theoretically possible that it throws something else)
 	*/
-	public final func populate(from json: FHIRJSON?) -> [FHIRJSONError]? {
+	public final func populate(from json: FHIRJSON) throws {
 		var present = Set<String>()
 		present.insert("fhir_comments")
-		var errors = populate(from: json, presentKeys: &present) ?? [FHIRJSONError]()
+		var errors = try populate(from: json, presentKeys: &present) ?? [FHIRValidationError]()
 		
 		// superfluous JSON entries? Ignore "fhir_comments" and "_xy".
-		let superfluous = json?.keys.filter() { !present.contains($0) }
-		if let supflu = superfluous, !supflu.isEmpty {
-			for sup in supflu {
+		let superfluous = json.keys.filter() { !present.contains($0) }
+		if !superfluous.isEmpty {
+			for sup in superfluous {
 				if let first = sup.characters.first, "_" != first {
-					errors.append(FHIRJSONError(key: sup, has: type(of: json![sup]!)))
+					errors.append(FHIRValidationError(unknown: sup, ofType: type(of: json[sup]!)))
 				}
 			}
 		}
-		return errors.isEmpty ? nil : errors
+		
+		if !errors.isEmpty {
+			throw FHIRValidationError(errors: errors)
+		}
 	}
 	
 	/**
@@ -71,8 +83,9 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- parameter json:        The JSON element to use to populate the receiver
 	- parameter presentKeys: An in-out parameter being filled with key names used.
 	- returns:               An optional array of errors reporting missing mandatory keys or keys containing values of the wrong type
+	- throws:                If anything besides a `FHIRValidationError` happens
 	*/
-	open func populate(from json: FHIRJSON?, presentKeys: inout Set<String>) -> [FHIRJSONError]? {
+	open func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]? {
 		return nil
 	}
 	
@@ -81,7 +94,24 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	
 	- returns: The FHIRJSON reperesentation of the receiver
 	*/
-	open func asJSON() -> FHIRJSON {
+	public final func asJSON() throws -> FHIRJSON {
+		var errors = [FHIRValidationError]()
+		let json = asJSON(errors: &errors)
+		if !errors.isEmpty {
+			// TODO: concat errors
+			throw errors[0]
+		}
+		return json
+	}
+	
+	/**
+	Represent the receiver in FHIRJSON, ready to be used for JSON serialization. Non-throwing version that you can use if
+	you want to handle errors yourself or ignore them altogether. Otherwise, just use `asJSON() throws`.
+	
+	- parameter errors: The array that will be filled with FHIRValidationError instances, if there are any
+	- returns: The FHIRJSON reperesentation of the receiver
+	*/
+	open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
 		return FHIRJSON()
 	}
 	
@@ -95,14 +125,13 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- parameter json:  A FHIRJSON decoded from a JSON response
 	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
 	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
+	- throws:          FHIRValidationError
 	*/
-	public final class func instantiate(from json: FHIRJSON?, owner: FHIRAbstractBase?) -> FHIRAbstractBase {
-		if let type = json?["resourceType"] as? String {
-			return factory(type, json: json!, owner: owner)
+	public final class func instantiate(from json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
+		if let type = json["resourceType"] as? String {
+			return try factory(type, json: json, owner: owner)
 		}
-		let instance = self.init(json: json)		// must use 'required' init with dynamic type
-		instance._owner = owner
-		return instance
+		return try self.init(json: json, owner: owner)		// must use 'required' init with dynamic type
 	}
 	
 	/**
@@ -112,8 +141,24 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- parameter owner:     The FHIRAbstractBase owning the new instance, if appropriate
 	- returns:             An array of the appropriate FHIRAbstractBase subclass, if possible, Self otherwise
 	*/
-	public final class func instantiate(fromArray: [FHIRJSON], owner: FHIRAbstractBase? = nil) -> [FHIRAbstractBase] {
-		return fromArray.map() { instantiate(from: $0, owner: owner) }
+	public final class func instantiate(fromArray: [FHIRJSON], owner: FHIRAbstractBase? = nil) throws -> [FHIRAbstractBase] {
+		var instances = [FHIRAbstractBase]()
+		var errors = [FHIRValidationError]()
+		var i = 0
+		for json in fromArray {
+			do {
+				let instance = try instantiate(from: json, owner: owner)
+				instances.append(instance)
+			}
+			catch let error as FHIRValidationError {
+				errors.append(error.prefixed(with: "\(i)"))
+			}
+			i += 1
+		}
+		if !errors.isEmpty {
+			throw FHIRValidationError(errors: errors)
+		}
+		return instances
 	}
 	
 	
