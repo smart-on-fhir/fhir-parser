@@ -23,7 +23,7 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 	}
 	{% endif %}
 	
-	{%- for prop in klass.properties %}	
+	{%- for prop in klass.properties %}
 	/// {{ prop.short|replace("\r\n", " ")|replace("\n", " ") }}.
 	public var {{ prop.name }}: {% if prop.is_array %}[{% endif %}{{ prop.class_name }}{% if prop.is_array %}]{% endif %}?
 	{% endfor -%}
@@ -32,15 +32,29 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 	
 	/** Convenience initializer, taking all required properties as arguments. */
 	public convenience init(
-	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
-		{%- if past_first_item %}, {% endif -%}
+	{%- for nonop in klass.nonexpanded_properties %}{% if nonop.nonoptional %}
+		{%- if past_first_item %}, {% endif -%}{% set past_first_item = True -%}
+		{%- if nonop.one_of_many -%}
+		{{ nonop.one_of_many }}: Any
+		{%- else -%}
 		{{ nonop.name }}: {% if nonop.is_array %}[{% endif %}{{ nonop.class_name }}{% if nonop.is_array %}]{% endif %}
-		{%- set past_first_item = True %}
+		{%- endif -%}
 	{%- endif %}{% endfor -%}
 	) {
 		self.init()
-	{%- for nonop in klass.properties %}{% if nonop.nonoptional %}
+	{%- for nonop in klass.nonexpanded_properties %}{% if nonop.nonoptional %}
+		{%- if nonop.one_of_many %}{% for expanded in klass.expanded_nonoptionals[nonop.one_of_many] %}
+		{% if past_first_item %}else {% endif -%}{% set past_first_item = True -%}
+		if let value = {{ nonop.one_of_many }} as? {{ expanded.class_name }} {
+			self.{{ expanded.name }} = value
+		}
+		{%- endfor %}
+		else {
+			fhir_warn("Type “\(type(of: {{ nonop.one_of_many }}))” for property “\({{ nonop.one_of_many }})” is invalid, ignoring")
+		}
+		{%- else %}
 		self.{{ nonop.name }} = {{ nonop.name }}
+		{%- endif %}
 	{%- endif %}{% endfor %}
 	}
 	{% endif -%}
