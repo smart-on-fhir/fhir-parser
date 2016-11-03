@@ -73,6 +73,12 @@ open class FHIRAbstractBase: CustomStringConvertible {
 		}
 		
 		if !errors.isEmpty {
+			if nil == _owner {
+				errors = errors.map() { $0.prefixed(with: type(of: self).resourceType) }
+			}
+			if 1 == errors.count {
+				throw errors[0]
+			}
 			throw FHIRValidationError(errors: errors)
 		}
 	}

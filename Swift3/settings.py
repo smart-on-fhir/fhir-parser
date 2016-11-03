@@ -48,7 +48,8 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/JSON-extensions.swift', None, []),
     ('Swift3/FHIRServer.swift', None, []),
     ('Swift3/FHIRServerResponse.swift', None, []),
-    ('Swift3/FHIRError.swift', None, []),
+    ('Swift3/FHIRError.swift', None, ['FHIRError']),
+    ('Swift3/FHIRValidationError.swift', None, ['FHIRValidationError']),
 ]
 
 # factory methods
