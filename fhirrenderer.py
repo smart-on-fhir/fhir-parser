@@ -98,6 +98,19 @@ class FHIRFactoryRenderer(FHIRRenderer):
         self.do_render(data, self.settings.tpl_factory_source, self.settings.tpl_factory_target)
 
 
+class FHIRValueSetRenderer(FHIRRenderer):
+    """ Write ValueSet and CodeSystem contained in the FHIR spec.
+    """
+    def render(self):
+        systems = [v for k,v in self.spec.codesystems.items()]
+        data = {
+            'info': self.spec.info,
+            'systems': sorted(systems, key=lambda x: x.name),
+        }
+        target_path = self.settings.tpl_resource_target_ptrn.format('CodeSystems')
+        self.do_render(data, self.settings.tpl_resource_codesystems, target_path)
+
+
 class FHIRUnitTestRenderer(FHIRRenderer):
     """ Write unit tests.
     """
@@ -148,8 +161,8 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
         wrapstring = environment.newline_sequence
     
     accumulator = []
-    # Workaround: pre-split the string
-    for component in re.split(r"\r?\n", s):
+    # Workaround: pre-split the string on \r, \r\n and \n
+    for component in re.split(r"\r?\n?", s):
         # textwrap will eat empty strings for breakfirst. Therefore we route them around it.
         if len(component) is 0:
             accumulator.append(component)

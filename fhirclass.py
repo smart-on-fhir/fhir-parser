@@ -114,9 +114,10 @@ class FHIRClassProperty(object):
         spec = element.profile.spec
         
         self.path = element.path
-        self.one_of_many = None        # assign if this property has been expanded from "property[x]"
+        self.one_of_many = None         # assign if this property has been expanded from "property[x]"
         if not type_name:
             type_name = type_obj.code
+        
         name = element.definition.prop_name
         if '[x]' in name:
             self.one_of_many = name.replace('[x]', '')

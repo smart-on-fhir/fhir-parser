@@ -10,12 +10,12 @@ import Foundation
 {% for klass in classes %}
 
 /**
- *  {{ klass.short|wordwrap(width=116, wrapstring="\n *  ") }}.
+{{ klass.short|wordwrap(width=120, wrapstring="\n") }}.
 {%- if klass.formal %}
- *
- *  {{ klass.formal|wordwrap(width=116, wrapstring="\n *  ") }}
+
+{{ klass.formal|wordwrap(width=120, wrapstring="\n") }}
 {%- endif %}
- */
+*/
 open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
 	{%- if klass.resource_name %}
 	override open class var resourceType: String {

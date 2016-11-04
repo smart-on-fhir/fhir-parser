@@ -31,9 +31,9 @@ replacemap = {
     'Reference': 'FHIRReference',     # `FHIRReference` adds dereferencing capabilities
 }
 
-# Some properties (in Conformance, Profile and Questionnaire currently) can be
-# any (value) type and have the `value[x]` form - how to substitute is defined
-# here
+# Some properties can be any (value) type and have the `value[x]` form - how to
+# substitute is defined here
+# see http://hl7.org/fhir/2015May/datatypes.html#1.18.0.17
 starexpandtypes = {
     'integer',
     'decimal',
@@ -85,5 +85,15 @@ reservedmap = {
     'global': 'global_fhir',
     'assert': 'assert_fhir',
     'except': 'except_fhir',
+}
+
+# For enum codes where a computer just cannot generate reasonable names
+enum_map = {
+    '=': 'eq',
+    '<': 'lt',
+    '<=': 'lte',
+    '>': 'gt',
+    '>=': 'gte',
+    '*': 'max',
 }
 

@@ -31,8 +31,10 @@ default_base = {
 }
 resource_modules_lowercase = False                      # whether all resource paths (i.e. modules) should be lowercase
 camelcase_classes = True                                # whether class name generation should use CamelCase
+camelcase_enums = True                                  # whether names for enums should be camelCased
 backbone_class_adds_parent = True                       # if True, backbone class names prepend their parent's class name
 tpl_resource_source = 'Swift2/template-resource.swift'  # the template to use as source when writing resource implementations for profiles
+tpl_resource_codesystems = 'Swift2/template-codesystems.swift'  # the template to use as source when writing enums for CodeSystems
 manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Swift2/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
     ('Swift2/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),

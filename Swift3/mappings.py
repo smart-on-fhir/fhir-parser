@@ -28,9 +28,8 @@ classmap = {
 # Classes of properties to be replaced with different ones at resource rendering time
 replacemap = {}
 
-# Some properties (in Conformance, Profile and Questionnaire currently) can be
-# any (value) type and have the `value[x]` form - how to substitute is defined
-# here
+# Some properties can be any (value) type and have the `value[x]` form - how to
+# substitute is defined here
 # see http://hl7.org/fhir/2015May/datatypes.html#1.18.0.17
 starexpandtypes = {
     'integer',
@@ -84,12 +83,36 @@ jsonmap_default = 'FHIRJSON'
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
-    'for': 'for_fhir',
-    'class': 'class_fhir',
-    'import': 'import_fhir',
-    'protocol': 'protocol_fhir',
+    'as': '`as`',
+    'class': '`class`',
+    'default': '`default`',
     'extension': 'extension_fhir',
+    'false': '`false`',
+    'for': 'for_fhir',
+    'import': 'import_fhir',
+    'in': '`in`',
+    'protocol': 'protocol_fhir',
     'operator': 'operator_fhir',
     'repeat': 'repeat_fhir',
+    'return': '`return`',
+    'self': '`self`',
+    'true': '`true`',
     'description': 'description_fhir',    # Reserved for `Printable` classes
 }
+
+# For enum codes where a computer just cannot generate reasonable names
+enum_map = {
+    '=': 'eq',
+    '<': 'lt',
+    '<=': 'lte',
+    '>': 'gt',
+    '>=': 'gte',
+    '*': 'max',
+}
+
+enum_namemap = {
+    'http://hl7.org/fhir/contracttermsubtypecodes': 'ContractTermSubtypeCodes',
+    'http://hl7.org/fhir/coverage-exception': 'CoverageExceptionCodes',
+    'http://hl7.org/fhir/resource-type-link': 'ResourceTypeLink',
+}
+

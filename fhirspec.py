@@ -30,6 +30,7 @@ class FHIRSpec(object):
         self.directory = directory
         self.settings = settings
         self.info = FHIRVersionInfo(self, directory)
+        self.codesystems = {}           # system-url: FHIRCodeSystem()
         self.profiles = {}              # profile-name: FHIRStructureDefinition()
         self.unit_tests = None          # FHIRUnitTestCollection()
         
@@ -40,9 +41,40 @@ class FHIRSpec(object):
     def prepare(self):
         """ Run actions before starting to parse profiles.
         """
+        self.read_valuesets()
         self.handle_manual_profiles()
     
+    def read_bundle_resources(self, filename):
+        """ Return an array of the Bundle's entry's "resource" elements.
+        """
+        logger.info("Reading {}".format(filename))
+        filepath = os.path.join(self.directory, filename)
+        with io.open(filepath, encoding='utf-8') as handle:
+            parsed = json.load(handle)
+            if 'resourceType' not in parsed:
+                raise Exception("Expecting \"resourceType\" to be present, but is not in {}"
+                    .format(filepath))
+            if 'Bundle' != parsed['resourceType']:
+                raise Exception("Can only process \"Bundle\" resources")
+            if 'entry' not in parsed:
+                raise Exception("There are no entries in the Bundle at {}"
+                    .format(filepath))
+            
+            return [e['resource'] for e in parsed['entry']]
     
+    
+    # MARK: Managing ValueSets and CodeSystems
+    
+    def read_valuesets(self):
+        resources = self.read_bundle_resources('valuesets.json')
+        for resource in resources:
+            if 'ValueSet' == resource['resourceType']:
+                assert 'url' in resource
+                self.valuesets[resource['url']] = FHIRValueSet(self, resource)
+            elif 'CodeSystem' == resource['resourceType']:
+                assert 'url' in resource
+                self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+        logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
     # MARK: Handling Profiles
     
     def read_profiles(self):
@@ -50,24 +82,13 @@ class FHIRSpec(object):
         """
         resources = []
         for filename in ['profiles-types.json', 'profiles-resources.json']: #, 'profiles-others.json']:
-            filepath = os.path.join(self.directory, filename)
-            with io.open(filepath, encoding='utf-8') as handle:
-                parsed = json.load(handle)
-                assert parsed is not None
-                assert 'resourceType' in parsed
-                assert 'Bundle' == parsed['resourceType']
-                assert 'entry' in parsed
-                
-                # find resources in entries
-                for entry in parsed['entry']:
-                    resource = entry.get('resource')
-                    if resource is not None:
-                        assert 'resourceType' in resource
-                        if 'StructureDefinition' == resource['resourceType']:
-                            resources.append(resource)
-                    else:
-                        logging.warning('There is no resource in this entry: {}'
-                            .format(entry))
+            bundle_res = self.read_bundle_resources(filename)
+            for resource in bundle_res:
+                if 'StructureDefinition' == resource['resourceType']:
+                    resources.append(resource)
+                else:
+                    logger.debug('Not handling resource of type {}'
+                        .format(resource['resourceType']))
         
         # create profile instances
         for resource in resources:
@@ -80,7 +101,6 @@ class FHIRSpec(object):
             
             if profile is not None and self.found_profile(profile):
                 profile.process_profile()
-                    
     
     def found_profile(self, profile):
         if not profile or not profile.name:
@@ -165,6 +185,18 @@ class FHIRSpec(object):
     def safe_property_name(self, prop_name):
         return self.settings.reservedmap.get(prop_name, prop_name)
     
+    def safe_enum_name(self, enum_name, ucfirst=False):
+        assert enum_name, "Must have a name"
+        name = self.settings.enum_map.get(enum_name, enum_name)
+        parts = re.split('\W+', name)
+        if self.settings.camelcase_enums:
+            name = ''.join([n[:1].upper() + n[1:] for n in parts])
+            if not ucfirst and name.upper() != name:
+                name = name[:1].lower() + name[1:]
+        else:
+            name = '_'.join(parts)
+        return self.settings.reservedmap.get(name, name)
+    
     def json_class_for_class_name(self, class_name):
         return self.settings.jsonmap.get(class_name, self.settings.jsonmap_default)
     
@@ -195,6 +227,9 @@ class FHIRSpec(object):
             renderer = fhirrenderer.FHIRStructureDefinitionRenderer(self, self.settings)
             renderer.copy_files()
             renderer.render()
+            
+            vsrenderer = fhirrenderer.FHIRValueSetRenderer(self, self.settings)
+            vsrenderer.render()
         
         if self.settings.write_factory:
             renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
@@ -232,6 +267,54 @@ class FHIRVersionInfo(object):
                         self.version = v
 
 
+
+
+class FHIRCodeSystem(object):
+    """ Holds on to CodeSystems bundled with the spec.
+    """
+    
+    def __init__(self, spec, resource):
+        assert 'content' in resource
+        self.spec = spec
+        self.definition = resource
+        self.url = resource.get('url')
+        if self.url in self.spec.settings.enum_namemap:
+            self.name = self.spec.settings.enum_namemap[self.url]
+        else:
+            self.name = self.spec.safe_enum_name(resource.get('name'), ucfirst=True)
+        self.codes = resource.get('concept')
+        
+        self.generate_enum = 'complete' == resource['content']
+        if not self.generate_enum:
+            logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
+                .format(self.url, resource['content']))
+            return
+        
+        assert self.codes, "Expecting at least one code for \"complete\" CodeSystem"
+        if len(self.codes) > 100:
+            self.generate_enum = False
+            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 100 ({}) codes"
+                .format(self.url, len(self.codes)))
+            return
+        
+        if 'exemplar' in self.definition.get('description', '') or \
+            'xample value' in self.definition.get('description', ''):
+            self.generate_enum = False
+            logger.error("The code system \"{}\" is defined \"complete\" but the description indicates that it is of exemplary nature"
+                .format(self.url))
+            return
+        
+        for c in self.codes:
+            if re.match(r'\d', c['code'][:1]):
+                self.generate_enum = False
+                break
+        if not self.generate_enum:
+            logger.info("Will not generate enum for CodeSystem \"{}\" because at least one code starts with a number"
+                .format(self.url))
+        
+        for c in self.codes:
+            c['name'] = self.spec.safe_enum_name(c['code'])
+            c['definition'] = c.get('definition') or c['name']
 class FHIRStructureDefinition(object):
     """ One FHIR profile.
     """
@@ -608,6 +691,7 @@ class FHIRStructureDefinitionElementDefinition(object):
         self.short = None
         self.formal = None
         self.comment = None
+        self.binding = None
         self.constraint = None
         self.mapping = None
         self.slicing = None
@@ -633,6 +717,8 @@ class FHIRStructureDefinitionElementDefinition(object):
             self.formal = None
         self.comment = definition_dict.get('comments')
         
+        if 'binding' in definition_dict:
+            self.binding = FHIRElementBinding(definition_dict['binding'])
         if 'constraint' in definition_dict:
             self.constraint = FHIRElementConstraint(definition_dict['constraint'])
         if 'mapping' in definition_dict:
@@ -688,6 +774,17 @@ class FHIRElementType(object):
         if self.profile is not None and not _is_string(self.profile):
             raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
                 .format(self.profile, type(self.profile)))
+
+
+class FHIRElementBinding(object):
+    """ The "binding" element in an element definition
+    """
+    def __init__(self, binding_obj):
+        self.strength = binding_obj.get('strength')
+        self.description = binding_obj.get('description')
+        self.uri = binding_obj.get('valueSetUri')
+        self.reference = binding_obj.get('valueSetReference', {}).get('reference')
+        self.is_required = 'required' == self.strength
 
 
 class FHIRElementConstraint(object):
