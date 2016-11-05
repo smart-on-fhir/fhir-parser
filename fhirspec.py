@@ -30,6 +30,7 @@ class FHIRSpec(object):
         self.directory = directory
         self.settings = settings
         self.info = FHIRVersionInfo(self, directory)
+        self.valuesets = {}             # system-url: FHIRValueSet()
         self.codesystems = {}           # system-url: FHIRCodeSystem()
         self.profiles = {}              # profile-name: FHIRStructureDefinition()
         self.unit_tests = None          # FHIRUnitTestCollection()
@@ -75,6 +76,16 @@ class FHIRSpec(object):
                 assert 'url' in resource
                 self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
         logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
+    
+    def valueset_with_uri(self, uri):
+        assert uri
+        return self.valuesets.get(uri)
+    
+    def codesystem_with_uri(self, uri):
+        assert uri
+        return self.codesystems.get(uri)
+    
+    
     # MARK: Handling Profiles
     
     def read_profiles(self):
@@ -267,6 +278,54 @@ class FHIRVersionInfo(object):
                         self.version = v
 
 
+class FHIRValueSet(object):
+    """ Holds on to ValueSets bundled with the spec.
+    """
+    
+    def __init__(self, spec, set_dict):
+        self.spec = spec
+        self.definition = set_dict
+        self._enum = None
+    
+    @property
+    def enum(self):
+        """ Returns FHIRCodeSystem if this valueset can be represented by one.
+        """
+        if self._enum is not None:
+            return self._enum
+        
+        compose = self.definition.get('compose')
+        if compose is None:
+            raise Exception("Currently only composed ValueSets are supported")
+        if 'exclude' in compose:
+            raise Exception("Not currently supporting 'exclude' on ValueSet")
+        include = compose.get('include')
+        if 1 != len(include):
+            logger.warn("Ignoring ValueSet with more than 1 includes ({}: {})".format(len(include), include))
+            return None
+        
+        system = include[0].get('system')
+        if system is None:
+            return None
+        
+        # alright, this is a ValueSet with 1 include and a system, is there a CodeSystem?
+        cs = self.spec.codesystem_with_uri(system)
+        if cs is None or not cs.generate_enum:
+            return None
+        
+        # do we only allow specific concepts?
+        restricted_to = []
+        concepts = include[0].get('concept')
+        if concepts is not None:
+            for concept in concepts:
+                assert 'code' in concept
+                restricted_to.append(concept['code'])
+        
+        self._enum = {
+            'name': cs.name,
+            'restricted_to': restricted_to if len(restricted_to) > 0 else None,
+        }
+        return self._enum
 
 
 class FHIRCodeSystem(object):
@@ -282,41 +341,53 @@ class FHIRCodeSystem(object):
             self.name = self.spec.settings.enum_namemap[self.url]
         else:
             self.name = self.spec.safe_enum_name(resource.get('name'), ucfirst=True)
-        self.codes = resource.get('concept')
+        self.codes = None
+        self.generate_enum = False
+        concepts = self.definition.get('concept', [])
         
+        if resource.get('experimental'):
+            return
         self.generate_enum = 'complete' == resource['content']
         if not self.generate_enum:
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
         
-        assert self.codes, "Expecting at least one code for \"complete\" CodeSystem"
-        if len(self.codes) > 100:
+        assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
+        if len(concepts) > 100:
             self.generate_enum = False
-            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 100 ({}) codes"
-                .format(self.url, len(self.codes)))
+            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 100 ({}) concepts"
+                .format(self.url, len(concepts)))
             return
         
-        if 'exemplar' in self.definition.get('description', '') or \
-            'xample value' in self.definition.get('description', ''):
-            self.generate_enum = False
-            logger.error("The code system \"{}\" is defined \"complete\" but the description indicates that it is of exemplary nature"
-                .format(self.url))
-            return
-        
-        for c in self.codes:
+        self.codes = self.parsed_codes(concepts)
+    
+    def parsed_codes(self, codes, prefix=None):
+        found = []
+        for c in codes:
             if re.match(r'\d', c['code'][:1]):
                 self.generate_enum = False
-                break
-        if not self.generate_enum:
-            logger.info("Will not generate enum for CodeSystem \"{}\" because at least one code starts with a number"
-                .format(self.url))
-        
-        for c in self.codes:
-            c['name'] = self.spec.safe_enum_name(c['code'])
+                logger.info("Will not generate enum for CodeSystem \"{}\" because at least one concept code starts with a number"
+                    .format(self.url))
+                return None
+            
+            cd = c['code']
+            name = '{}-{}'.format(prefix, cd) if prefix and not cd.startswith(prefix) else cd
+            c['name'] = self.spec.safe_enum_name(cd)
             c['definition'] = c.get('definition') or c['name']
+            found.append(c)
+            
+            # nested concepts?
+            if 'concept' in c:
+                fnd = self.parsed_codes(c['concept'])
+                if fnd is None:
+                    return None
+                found.extend(fnd)
+        return found
+
+
 class FHIRStructureDefinition(object):
-    """ One FHIR profile.
+    """ One FHIR structure definition.
     """
     
     def __init__(self, spec, profile):
@@ -518,6 +589,8 @@ class FHIRStructureDefinitionElement(object):
         self.definition = None
         self.n_min = None
         self.n_max = None
+        self.valueset = None
+        self.enum = None      # assigned if the element has a binding to a ValueSet that is a CodeSystem generating an enum
         
         self.is_main_profile_element = is_main_profile_element
         self.represents_class = False
@@ -737,6 +810,21 @@ class FHIRStructureDefinitionElementDefinition(object):
                 raise Exception("There is no element definiton with id \"{}\", as referenced by {} in {}"
                     .format(self.content_reference, self.path, self.profile.url))
             self._content_referenced = elem.definition
+        
+        # resolve bindings
+        if self.binding is not None and self.binding.is_required:
+            uri = self.binding.reference or self.binding.uri
+            if 'http://hl7.org/fhir' != uri[:19]:
+                logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
+                return
+            
+            valueset = self.element.profile.spec.valueset_with_uri(uri)
+            if valueset is None:
+                logger.error("There is no ValueSet for required binding \"{}\" on {} in {}"
+                    .format(uri, self.name or self.prop_name, self.element.profile.name))
+            else:
+                self.element.valueset = valueset
+                self.element.enum = valueset.enum
     
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was

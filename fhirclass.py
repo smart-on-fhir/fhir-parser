@@ -127,12 +127,14 @@ class FHIRClassProperty(object):
         self.name = spec.safe_property_name(name)
         self.parent_name = element.parent_name
         self.class_name = spec.class_name_for_type_if_property(type_name)
+        self.enum = element.enum if 'code' == type_name else None
         self.module_name = None             # should only be set if it's an external module (think Python)
         self.json_class = spec.json_class_for_class_name(self.class_name)
-        self.is_native = spec.class_name_is_native(self.class_name)
+        self.is_native = False if self.enum else spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == element.n_max else False
         self.nonoptional = True if element.n_min is not None and 0 != int(element.n_min) else False
         self.reference_to_names = [spec.class_name_for_profile(type_obj.profile)] if type_obj.profile is not None else []
         self.short = element.definition.short
+        self.formal = element.definition.formal
         self.representation = element.definition.representation
 

@@ -36,7 +36,9 @@ class {{ class.name }}Tests: XCTestCase {
 	func run{{ class.name }}{{ loop.index }}(_ json: FHIRJSON? = nil) throws -> SwiftFHIR.{{ class.name }} {
 		let inst = (nil != json) ? try instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
-		{%- if "String" == onetest.klass.name %}
+		{%- if onetest.enum %}
+		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.enum }}(rawValue: "{{ onetest.value|replace('"', '\\"') }}")!)
+		{%- else %}{% if "String" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
 		{%- else %}{% if "NSDecimalNumber" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
@@ -54,7 +56,7 @@ class {{ class.name }}Tests: XCTestCase {
 		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
 		{%- else %}
 		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
-		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
+		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
 		{%- endfor %}
 		
 		return inst

@@ -56,7 +56,8 @@ class FHIRUnitTestController(object):
             classname = self.settings.classmap[classname]
         klass = fhirclass.FHIRClass.with_name(classname)
         if klass is None:
-            logger.error('There is no class for "{}"'.format(classname))
+            logger.error('There is no class for "{}", cannot create unit tests'
+                .format(classname))
             return None
         
         return FHIRUnitTest(self, resource.filepath, resource.content, klass)
@@ -71,8 +72,8 @@ class FHIRUnitTestController(object):
 
 
 class FHIRUnitTestCollection(object):
-    """ Represents a FHIR unit test collection, meaning unit tests pertaining to
-    a certain data model to be run against local sample files.
+    """ Represents a FHIR unit test collection, meaning unit tests pertaining
+    to one data model class, to be run against local sample files.
     """
     def __init__(self, klass):
         self.klass = klass
@@ -85,7 +86,8 @@ class FHIRUnitTestCollection(object):
 
 
 class FHIRUnitTest(object):
-    """ Unit tests to be run against one data model class.
+    """ Holds on to unit tests (FHIRUnitTestItem in `tests`) that are to be run
+    against one data model class (`klass`).
     """
     def __init__(self, controller, filepath, content, klass, prefix=None):
         assert content and klass
@@ -100,7 +102,7 @@ class FHIRUnitTest(object):
         self.expand()
     
     def expand(self):
-        """ Expand into a list of FHIRUnitTestCase instances.
+        """ Expand into a list of FHIRUnitTestItem_name instances.
         """
         tests = []
         for key, val in self.content.items():
@@ -125,20 +127,25 @@ class FHIRUnitTest(object):
                         i = 0
                         for ival in val:
                             idxpath = self.controller.settings.unittest_format_path_index.format(path, i)
-                            item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass, True)
+                            item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass, True, prop.enum)
                             tests.extend(item.create_tests(self.controller))
                             i += 1
                             if i >= 10:     # let's assume we don't need 100s of unit tests
                                 break
                     else:
-                        item = FHIRUnitTestItem(self.filepath, path, val, propclass, False)
+                        item = FHIRUnitTestItem(self.filepath, path, val, propclass, False, prop.enum)
                         tests.extend(item.create_tests(self.controller))
         
         self.tests = sorted(tests, key=lambda t: t.path)
 
 
 class FHIRUnitTestItem(object):
-    def __init__(self, filepath, path, value, klass, array_item):
+    """ Represents unit tests to be performed against a single data model
+    property. If the property itself is an element, will be expanded into
+    more FHIRUnitTestItem that cover its own properties.
+    """
+    
+    def __init__(self, filepath, path, value, klass, array_item, enum_item):
         assert path
         assert value is not None
         assert klass
@@ -147,11 +154,14 @@ class FHIRUnitTestItem(object):
         self.value = value
         self.klass = klass
         self.array_item = array_item
+        self.enum = enum_item['name'] if enum_item is not None else None
     
     def create_tests(self, controller):
-        """ Creates as many FHIRUnitTestCase instances as the item defines.
+        """ Creates as many FHIRUnitTestItem instances as the item defines, or
+        just returns a list containing itself if this property is not an
+        element.
         
-        :returns: A list of FHIRUnitTestCase items, never None
+        :returns: A list of FHIRUnitTestItem items, never None
         """
         tests = []
         
@@ -183,19 +193,9 @@ class FHIRUnitTestItem(object):
                     return tests
                 
                 value = self.value.replace("\n", "\\n")
-            tests.append(FHIRUnitTestCase(self.path, value, self.klass, self.array_item))
+            tests.append(self)
         
         return tests
-
-
-class FHIRUnitTestCase(object):
-    """ One unit test case.
-    """
-    def __init__(self, path, value, klass, array_item):
-        self.path = path
-        self.value = value
-        self.klass = klass
-        self.array_item = array_item
     
     def __repr__(self):
         return 'Unit Test Case "{}": "{}"'.format(self.path, self.value)
