@@ -14,7 +14,8 @@ _cache = 'downloads'
 
 
 if '__main__' == __name__:
-    force = len(sys.argv) > 1 and '-f' == sys.argv[1]
+    force = len(sys.argv) > 1 and '-f' in sys.argv
+    dry = len(sys.argv) > 1 and ('-d' in sys.argv or '--dry-run' in sys.argv)
     
     # assure we have all files
     loader = fhirloader.FHIRLoader(settings, _cache)
@@ -22,4 +23,5 @@ if '__main__' == __name__:
     
     # parse
     spec = fhirspec.FHIRSpec(spec_source, settings)
-    spec.write()
+    if not dry:
+	    spec.write()
