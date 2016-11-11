@@ -258,12 +258,22 @@ public struct FHIRTime: DateAndTime {
 		return DateNSDateConverter.sharedConverter.create(fromTime: self)
 	}
 	
+	// TODO: this implementation uses a workaround using string coercion instead of format: "%02d:%02d:%@" because %@ with String is not
+	// supported on Linux (SR-957)
 	public var description: String {
 		if let secStr = tookSecondsFromString {
+			#if os(Linux)
+			return String(format: "%02d:%02d:", hour, minute) + secStr
+			#else
 			return String(format: "%02d:%02d:%@", hour, minute, secStr)
+			#endif
 		}
 		if let s = second {
+			#if os(Linux)
+			return String(format: "%02d:%02d:", hour, minute) + ((s < 10) ? "0" : "") + String(format: "%g", s)
+			#else
 			return String(format: "%02d:%02d:%@%g", hour, minute, (s < 10) ? "0" : "", s)
+			#endif
 		}
 		return String(format: "%02d:%02d", hour, minute)
 	}
@@ -381,7 +391,7 @@ public struct DateTime: DateAndTime {
 	public var description: String {
 		if let tm = time {
 			if let tz = timeZoneString ?? timeZone?.offset() {
-				return String(format: "%@T%@%@", date.description, tm.description, tz)
+				return "\(date.description)T\(tm.description)\(tz)"
 			}
 		}
 		return date.description
@@ -493,7 +503,7 @@ public struct Instant: DateAndTime {
 	
 	public var description: String {
 		let tz = timeZoneString ?? timeZone.offset()
-		return String(format: "%@T%@%@", date.description, time.description, tz)
+		return "\(date.description)T\(time.description)\(tz)"
 	}
 	
 	public static func <(lhs: Instant, rhs: Instant) -> Bool {
@@ -579,7 +589,7 @@ class DateNSDateConverter {
 		let comp = calendar.dateComponents(flags, from: inDate)
 		
 		let date = FHIRDate(year: comp.year!, month: UInt8(comp.month!), day: UInt8(comp.day!))
-		let zone = (comp as NSDateComponents).timeZone ?? utc
+		let zone = comp.timeZone ?? utc
 		let secs = Double(comp.second!) + (Double(comp.nanosecond!) / 1000000000)
 		let time = FHIRTime(hour: UInt8(comp.hour!), minute: UInt8(comp.minute!), second: secs)
 		
@@ -658,37 +668,31 @@ class DateAndTimeParser {
 		
 		// scan date (must have at least the year)
 		if !isTimeOnly {
-			var year = 0
-			if scanner.scanInt(&year) && year < 10000 {			// dates above 9999 are considered special cases
-				var month = 0
-				if scanner.scanString("-", into: nil) && scanner.scanInt(&month) && month <= 12 {
-					var day = 0
-					if scanner.scanString("-", into: nil) && scanner.scanInt(&day) && day <= 31 {
-						date = FHIRDate(year: year, month: UInt8(month), day: UInt8(day))
+			if let year = scanner.fhir_scanInt(), year < 10000 {			// dates above 9999 are considered special cases
+				if nil != scanner.fhir_scanString("-"), let month = scanner.fhir_scanInt(), month <= 12 {
+					if nil != scanner.fhir_scanString("-"), let day = scanner.fhir_scanInt(), day <= 31 {
+						date = FHIRDate(year: Int(year), month: UInt8(month), day: UInt8(day))
 					}
 					else {
-						date = FHIRDate(year: year, month: UInt8(month), day: nil)
+						date = FHIRDate(year: Int(year), month: UInt8(month), day: nil)
 					}
 				}
 				else {
-					date = FHIRDate(year: year, month: nil, day: nil)
+					date = FHIRDate(year: Int(year), month: nil, day: nil)
 				}
 			}
 		}
 		
 		// scan time
-		if isTimeOnly || scanner.scanString("T", into: nil) {
-			var hour = 0
-			var minute = 0
-			if scanner.scanInt(&hour) && hour >= 0 && hour < 24 && scanner.scanString(":", into: nil)
-				&& scanner.scanInt(&minute) && minute >= 0 && minute < 60 {
+		if isTimeOnly || nil != scanner.fhir_scanString("T") {
+			if let hour = scanner.fhir_scanInt(), hour >= 0 && hour < 24 && nil != scanner.fhir_scanString(":"),
+				let minute = scanner.fhir_scanInt(), minute >= 0 && minute < 60 {
 				
 				let digitSet = CharacterSet.decimalDigits
 				var decimalSet = NSMutableCharacterSet.decimalDigits
 				decimalSet.insert(".")
 				
-				var secStr: NSString?
-				if scanner.scanString(":", into: nil) && scanner.scanCharacters(from: decimalSet as CharacterSet, into: &secStr), let secStr = secStr as? String, let second = Double(secStr), second < 60.0 {
+				if nil != scanner.fhir_scanString(":"), let secStr = scanner.fhir_scanCharacters(from: decimalSet as CharacterSet), let second = Double(secStr), second < 60.0 {
 					time = FHIRTime(hour: UInt8(hour), minute: UInt8(minute), second: second, secondsFromString: secStr)
 				}
 				else {
@@ -696,35 +700,33 @@ class DateAndTimeParser {
 				}
 				
 				// scan zone
-				if !scanner.isAtEnd {
-					var negStr: NSString?
-					if scanner.scanString("Z", into: nil) {
+				if !scanner.fhir_isAtEnd {
+					if nil != scanner.fhir_scanString("Z") {
 						tz = TimeZone(abbreviation: "UTC")
 						tzString = "Z"
 					}
-					else if scanner.scanString("-", into: &negStr) || scanner.scanString("+", into: nil) {
-						tzString = (nil == negStr) ? "+" : "-"
-						var hourStr: NSString?
-						if scanner.scanCharacters(from: digitSet, into: &hourStr) {
-							tzString! += hourStr! as String
+					else if var tzStr = (scanner.fhir_scanString("-") ?? scanner.fhir_scanString("+")) {
+						if let hourStr = scanner.fhir_scanCharacters(from: digitSet) {
+							tzStr += hourStr
 							var tzhour = 0
 							var tzmin = 0
-							if 2 == hourStr?.length {
-								tzhour = hourStr!.integerValue
-								if scanner.scanString(":", into: nil) && scanner.scanInt(&tzmin) {
-									tzString! += (tzmin < 10) ? ":0\(tzmin)" : ":\(tzmin)"
-									if tzmin >= 60 {
-										tzmin = 0
+							if 2 == hourStr.characters.count {
+								tzhour = Int(hourStr) ?? 0
+								if nil != scanner.fhir_scanString(":"), let tzm = scanner.fhir_scanInt() {
+									tzStr += (tzm < 10) ? ":0\(tzm)" : ":\(tzm)"
+									if tzm < 60 {
+										tzmin = tzm
 									}
 								}
 							}
-							else if 4 == hourStr?.length {
-								tzhour = Int(hourStr!.substring(to: 2))!
-								tzmin = Int(hourStr!.substring(from: 2))!
+							else if 4 == hourStr.characters.count {
+								tzhour = Int(hourStr.substring(to: hourStr.index(hourStr.startIndex, offsetBy: 2)))!
+								tzmin = Int(hourStr.substring(from: hourStr.index(hourStr.startIndex, offsetBy: 2)))!
 							}
 							
 							let offset = tzhour * 3600 + tzmin * 60
-							tz = TimeZone(secondsFromGMT: nil == negStr ? offset : -1 * offset)
+							tz = TimeZone(secondsFromGMT: "+" == tzStr ? offset : -1 * offset)
+							tzString = tzStr
 						}
 					}
 				}
@@ -786,7 +788,56 @@ extension TimeZone {
 		let hr = abs((secsFromGMT / 3600) - (secsFromGMT % 3600))
 		let min = abs((secsFromGMT % 3600) / 60)
 		
-		return String(format: "%@%02d:%02d", secsFromGMT >= 0 ? "+" : "-", hr, min)
+		return (secsFromGMT >= 0 ? "+" : "-") + String(format: "%02d:%02d", hr, min)
+	}
+}
+
+
+/**
+Extend Scanner to account for interface differences between macOS and Linux (as of November 2016)
+*/
+extension Scanner {
+	
+	public var fhir_isAtEnd: Bool {
+		#if os(Linux)
+		return atEnd
+		#else
+		return isAtEnd
+		#endif
+	}
+	
+	public func fhir_scanString(_ searchString: String) -> String? {
+		#if os(Linux)
+		return scanString(string: searchString)
+		#else
+		var str: NSString?
+		if scanString(searchString, into: &str) {
+			return str as? String
+		}
+		return nil
+		#endif
+	}
+	
+	public func fhir_scanCharacters(from set: CharacterSet) -> String? {
+		#if os(Linux)
+		return scanCharactersFromSet(set)
+		#else
+		var str: NSString?
+		if scanCharacters(from: set, into: &str) {
+			return str as? String
+		}
+		return nil
+		#endif
+	}
+	
+	public func fhir_scanInt() -> Int? {
+		var int = 0
+		#if os(Linux)
+		let flag = scanInteger(&int)
+		#else
+		let flag = scanInt(&int)
+		#endif
+		return flag ? int : nil
 	}
 }
 
