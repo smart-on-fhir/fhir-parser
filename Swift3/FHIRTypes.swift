@@ -71,9 +71,15 @@ public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible,
 extension String {
 	/**
 	Convenience getter using `NSLocalizedString()` with no comment.
+	
+	TODO: On Linux this currently simply returns self
 	*/
 	public var fhir_localized: String {
+		#if os(Linux)
+		return self
+		#else
 		return NSLocalizedString(self, comment: "")
+		#endif
 	}
 }
 
@@ -82,7 +88,7 @@ Execute a `print()`, prepending filename, line and function/method name, if `DEB
 */
 public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: String = #function, file: String = #file, line: Int = #line) {
 #if DEBUG
-	print("SwiftFHIR [\((file as NSString).lastPathComponent):\(line)] \(function)  \(message())")
+	print("SwiftFHIR [\(URL(fileURLWithPath: file).lastPathComponent):\(line)] \(function)  \(message())")
 #endif
 }
 
@@ -90,6 +96,6 @@ public func fhir_logIfDebug(_ message: @autoclosure () -> String, function: Stri
 Execute a `print()`, prepending filename, line and function/method name and "WARNING" prepended.
 */
 public func fhir_warn(_ message: @autoclosure () -> String, function: String = #function, file: String = #file, line: Int = #line) {
-	print("SwiftFHIR [\((file as NSString).lastPathComponent):\(line)] \(function)  WARNING: \(message())")
+	print("SwiftFHIR [\(URL(fileURLWithPath: file).lastPathComponent):\(line)] \(function)  WARNING: \(message())")
 }
 

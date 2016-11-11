@@ -66,7 +66,7 @@ extension NSDecimalNumber {
 	 */
 	public convenience init(json: NSNumber) {
 		if let _ = json.stringValue.characters.index(of: ".") {
-			self.init(string: NSString(format: "%.15g", json.doubleValue) as String)
+			self.init(string: String(format: "%.15g", json.doubleValue))
 		}
 		else {
 			self.init(string: "\(json)")
