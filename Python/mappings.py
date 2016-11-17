@@ -97,3 +97,6 @@ enum_map = {
     '*': 'max',
 }
 
+enum_namemap = {
+}
+

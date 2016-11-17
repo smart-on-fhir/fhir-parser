@@ -100,3 +100,9 @@ enum_map = {
     '*': 'max',
 }
 
+enum_namemap = {
+    'http://hl7.org/fhir/contracttermsubtypecodes': 'ContractTermSubtypeCodes',
+    'http://hl7.org/fhir/coverage-exception': 'CoverageExceptionCodes',
+    'http://hl7.org/fhir/resource-type-link': 'ResourceTypeLink',
+}
+
