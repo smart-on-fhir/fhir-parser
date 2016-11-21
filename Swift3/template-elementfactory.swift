@@ -14,8 +14,8 @@ extension FHIRAbstractBase {
 	
 	public class func factory(_ className: String, json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
 		switch className {
-		{%- for klass in classes %}{% if klass.resource_name %}
-			case "{{ klass.resource_name }}":
+		{%- for klass in classes %}{% if klass.resource_type %}
+			case "{{ klass.resource_type }}":
 				return try {{ klass.name }}(json: json, owner: owner)
 		{%- endif %}{% endfor %}
 			default:

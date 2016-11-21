@@ -21,9 +21,9 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     {{ klass.formal|wordwrap(width=75, wrapstring="\n    ") }}
 {%- endif %}
     """
-{%- if klass.resource_name %}
+{%- if klass.resource_type %}
     
-    resource_name = "{{ klass.resource_name }}"
+    resource_type = "{{ klass.resource_type }}"
 {%- endif %}
     
     def __init__(self, jsondict=None, strict=True):

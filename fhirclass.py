@@ -33,7 +33,7 @@ class FHIRClass(object):
         self.path = element.path
         self.name = element.name_if_class()
         self.module = None
-        self.resource_name = element.name_of_resource()
+        self.resource_type = element.name_of_resource()
         self.superclass = None
         self.superclass_name = element.superclass_name
         self.short = element.definition.short

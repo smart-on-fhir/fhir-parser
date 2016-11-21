@@ -17,9 +17,9 @@ import Foundation
 {%- endif %}
  */
 public class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase') }} {
-{%- if klass.resource_name %}
+{%- if klass.resource_type %}
 	override public class var resourceName: String {
-		get { return "{{ klass.resource_name }}" }
+		get { return "{{ klass.resource_type }}" }
 	}
 {% endif -%}
 	
