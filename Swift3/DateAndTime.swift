@@ -12,7 +12,7 @@ import Foundation
 /**
 A protocol for all our date and time structs.
 */
-protocol DateAndTime: CustomStringConvertible, Comparable, Equatable {
+protocol DateAndTime: FHIRPrimitive, CustomStringConvertible, Comparable, Equatable {
 	
 	var nsDate: Date { get }
 }
@@ -44,6 +44,21 @@ public struct FHIRDate: DateAndTime {
 				day = nil
 			}
 		}
+	}
+	
+	/// An optional id of the element.
+	public var id: String?
+	
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
+	
+	/// Today's date.
+	public static var today: FHIRDate {
+		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
+		return date
 	}
 	
 	
@@ -81,14 +96,6 @@ public struct FHIRDate: DateAndTime {
 		year = parsed.date!.year
 		month = parsed.date!.month
 		day = parsed.date!.day
-	}
-	
-	/**
-	- returns: Today's date
-	*/
-	public static var today: FHIRDate {
-		let (date, _, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
-		return date
 	}
 	
 	
@@ -178,6 +185,22 @@ public struct FHIRTime: DateAndTime {
 	/// If initialized from string, this was the string for the seconds; we use this to remember precision.
 	public internal(set) var tookSecondsFromString: String?
 	
+	/// An optional id of the element.
+	public var id: String?
+	
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
+	
+	/// The clock time of right now.
+	public static var now: FHIRTime {
+		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
+		return time
+	}
+	
+	
 	/**
 	Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than 24:00:00 or it will be capped.
 	
@@ -239,16 +262,6 @@ public struct FHIRTime: DateAndTime {
 		minute = time.minute
 		second = time.second
 		tookSecondsFromString = time.tookSecondsFromString
-	}
-	
-	/**
-	The time right now.
-	
-	- returns: The clock time of right now.
-	*/
-	public static var now: FHIRTime {
-		let (_, time, _) = DateNSDateConverter.sharedConverter.parse(date: Date())
-		return time
 	}
 	
 	
@@ -328,15 +341,21 @@ public struct DateTime: DateAndTime {
 	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
 	var timeZoneString: String?
 	
-	/**
-	This very date and time.
+	/// An optional id of the element.
+	public var id: String?
 	
-	- returns: A DateTime instance representing current date and time.
-	*/
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
+	
+	/// This very date and time: a DateTime instance representing current date and time.
 	public static var now: DateTime {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: Date())
 		return DateTime(date: date, time: time, timeZone: tz)
 	}
+	
 	
 	/**
 	Designated initializer, takes a date and optionally a time and a timezone.
@@ -447,15 +466,21 @@ public struct Instant: DateAndTime {
 	/// The timezone string seen during deserialization; to be used on serialization unless the timezone changed.
 	var timeZoneString: String?
 	
-	/**
-	This very instant.
+	/// An optional id of the element.
+	public var id: String?
 	
-	- returns: An Instant instance representing current date and time.
-	*/
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
+	
+	/// This very instant: an Instant instance representing current date and time.
 	public static var now: Instant {
 		let (date, time, tz) = DateNSDateConverter.sharedConverter.parse(date: Date())
 		return Instant(date: date, time: time, timeZone: tz)
 	}
+	
 	
 	/**
 	Designated initializer.

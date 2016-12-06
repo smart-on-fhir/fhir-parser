@@ -12,20 +12,32 @@ import Foundation
 /**
 Struct to hold on to strings.
 */
-public struct FHIRString: CustomStringConvertible, ExpressibleByStringLiteral {
+public struct FHIRString: FHIRPrimitive, CustomStringConvertible, ExpressibleByStringLiteral {
 	
 	/// The actual string value.
 	public var string: String
 	
-	/**
-	Designated initializer.
-	*/
-	public init(_ string: String) {
-		self.string = string
-	}
+	/// An optional id of the element.
+	public var id: String?
+	
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
 	
 	public var isEmpty: Bool {
 		return string.isEmpty
+	}
+	
+	
+	/**
+	Designated initializer.
+	
+	- parameter string: The string represented by the receiver
+	*/
+	public init(_ string: String) {
+		self.string = string
 	}
 	
 	

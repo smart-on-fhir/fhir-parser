@@ -18,11 +18,21 @@ public typealias FHIRJSON = [String: Any]
 /**
 Data encoded as a base-64 string.
 */
-public struct Base64Binary: ExpressibleByStringLiteral, CustomStringConvertible, Equatable, Comparable {
+public struct Base64Binary: FHIRPrimitive, ExpressibleByStringLiteral, CustomStringConvertible, Equatable, Comparable {
 	public typealias UnicodeScalarLiteralType = Character
 	public typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
 	
 	var value: String?
+	
+	/// An optional id of the element.
+	public var id: String?
+	
+	/// The parent/owner of the receiver, if any. Used to dereference resources.
+	public weak var _owner: FHIRAbstractBase?
+	
+	/// Optional extensions of the element.
+	public var extension_fhir: [Extension]?
+	
 	
 	public init(value: String) {
 		self.value = value

@@ -38,13 +38,16 @@ tpl_resource_codesystems = 'Swift3/template-codesystems.swift'  # the template t
 manual_profiles = [                                     # all these profiles should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path, module, profile-name-list)
     ('Swift3/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
     ('Swift3/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
+    ('Swift3/FHIRPrimitive.swift', None, []),
     ('Swift3/FHIRTypes.swift', None, [
     	'boolean',
-    	'string', 'base64Binary', 'code', 'id',
+    	'base64Binary',
     	'decimal', 'integer', 'positiveInt', 'unsignedInt',
-    	'uri', 'oid', 'uuid',
+    	'uri',
     ]),
-    ('Swift3/FHIRString.swift', None, ['String']),
+    ('Swift3/FHIRString.swift', None, [
+        'string', 'code', 'id', 'oid', 'uuid', 'markdown', 'xhtml',
+    ]),
     ('Swift3/DateAndTime.swift', None, [
         'date', 'dateTime', 'time', 'instant',
     ]),

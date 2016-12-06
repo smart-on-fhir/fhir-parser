@@ -60,12 +60,10 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names are native to the language (or can be treated this way:
-# must support `ClassName(json:)` and `ClassName.instantiate(fromArray:)`
-# initialization)
+# Which class names represent primitives in FHIR
 natives = ['Bool', 'Int', 'UInt', 'FHIRString', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'URL']
 
-# Which classes are to be expected from JSON decoding
+# Mapping the JSON type (value) expected for every class (key)
 jsonmap = {
     'Int': 'Int',
     'UInt': 'UInt',

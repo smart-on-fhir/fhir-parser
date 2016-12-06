@@ -93,7 +93,7 @@ extension FHIRString {
 		return string
 	}
 	
-	static func instantiate(fromArray: [String]) -> [FHIRString] {
+	public static func instantiate(fromArray: [String]) -> [FHIRString] {
 		return fromArray.map() { self.init($0) }
 	}
 }
