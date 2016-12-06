@@ -27,8 +27,8 @@ class {{ class.name }}Tests: XCTestCase {
 			let instance = try run{{ class.name }}{{ loop.index }}()
 			try run{{ class.name }}{{ loop.index }}(instance.asJSON())
 		}
-		catch {
-			XCTAssertTrue(false, "Must instantiate and test {{ class.name }} successfully, but threw")
+		catch let error {
+			XCTAssertTrue(false, "Must instantiate and test {{ class.name }} successfully, but threw:\n---\n\(error)\n---")
 		}
 	}
 	

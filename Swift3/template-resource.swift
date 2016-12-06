@@ -152,12 +152,20 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON(errors: &errors)
 		{%- endif %}{% endif %}{% endif %}
 		}
-		{%- else %}{% if prop.nonoptional %}
+		{%- if prop.nonoptional and not prop.one_of_many %}
 		else {
-			// APPEND TO errors
+			errors.append(FHIRValidationError(missing: "{{ prop.name }}"))
 		}
 		{%- endif %}
 		{%- endfor %}
+		{%- if klass.expanded_nonoptionals %}
+		
+		// check if nonoptional expanded properties (i.e. at least one "value" for "value[x]") are present
+		{%- for exp, props in klass.sorted_nonoptionals %}
+		if {% for prop in props %}nil == self.{{ prop.name }}{% if not loop.last %} && {% endif %}{% endfor %} {
+			errors.append(FHIRValidationError(missing: "{{ exp }}[x]"))
+		}
+		{%- endfor %}{% endif %}
 		
 		return json
 	}
