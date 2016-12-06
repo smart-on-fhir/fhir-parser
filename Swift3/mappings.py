@@ -12,14 +12,14 @@ classmap = {
     'unsignedInt': 'UInt',
     'decimal': 'NSDecimalNumber',
     
-    'string': 'String',
-    'markdown': 'String',
-    'id': 'String',
-    'code': 'String',       # for now we're not generating enums for these
+    'string': 'FHIRString',
+    'markdown': 'FHIRString',
+    'id': 'FHIRString',
+    'code': 'FHIRString',       # we're not generating enums for all of these
     'uri': 'URL',
-    'oid': 'String',
-    'uuid': 'String',
-    'xhtml': 'String',
+    'oid': 'FHIRString',
+    'uuid': 'FHIRString',
+    'xhtml': 'FHIRString',
     'base64Binary': 'Base64Binary',
     'date': 'FHIRDate',
     'time': 'FHIRTime',
@@ -60,8 +60,10 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names are native to the language (or can be treated this way)
-natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'URL']
+# Which class names are native to the language (or can be treated this way:
+# must support `ClassName(json:)` and `ClassName.instantiate(fromArray:)`
+# initialization)
+natives = ['Bool', 'Int', 'UInt', 'FHIRString', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'URL']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -70,7 +72,7 @@ jsonmap = {
     'Bool': 'Bool',
     'Double': 'NSNumber',
     
-    'String': 'String',
+    'FHIRString': 'String',
     'FHIRDate': 'String',
     'FHIRTime': 'String',
     'DateTime': 'String',

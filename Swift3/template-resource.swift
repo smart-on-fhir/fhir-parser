@@ -93,7 +93,7 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 				{%- else %}{% if prop.is_native %}{% if prop.is_array %}
 				self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val)
 				{%- else %}
-				self.{{ prop.name }} = {{ prop.class_name }}({% if "String" == prop.json_class %}string{% else %}json{% endif %}: val)
+				self.{{ prop.name }} = {{ prop.class_name }}(json: val)
 				{%- endif %}{% else %}
 				do {
 					{%- if prop.is_array %}

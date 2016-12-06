@@ -9,12 +9,6 @@
 import Foundation
 
 
-extension String {
-	public func asJSON() -> String {
-		return self
-	}
-}
-
 extension Bool {
 	public func asJSON() -> Bool {
 		return self
@@ -64,7 +58,7 @@ extension NSDecimalNumber {
 	
 		TODO: improve to avoid double precision issues
 	 */
-	public convenience init(json: NSNumber) {
+	public convenience init?(json: NSNumber) {
 		if let _ = json.stringValue.characters.index(of: ".") {
 			self.init(string: String(format: "%.15g", json.doubleValue))
 		}
@@ -79,8 +73,9 @@ extension NSDecimalNumber {
 }
 
 extension Base64Binary {
-	public init(string: String) {
-		self.init(value: string)
+	
+	public init?(json: String) {
+		self.init(value: json)
 	}
 	
 	public func asJSON() -> String {
@@ -88,7 +83,27 @@ extension Base64Binary {
 	}
 }
 
+extension FHIRString {
+	
+	public init?(json: String) {
+		self.init(json)
+	}
+	
+	public func asJSON() -> String {
+		return string
+	}
+	
+	static func instantiate(fromArray: [String]) -> [FHIRString] {
+		return fromArray.map() { self.init($0) }
+	}
+}
+
 extension FHIRDate {
+	
+	public init?(json: String) {
+		self.init(string: json)
+	}
+	
 	public static func instantiate(fromArray json: [String]) -> [FHIRDate] {
 		var arr: [FHIRDate] = []
 		for string in json {
@@ -105,6 +120,11 @@ extension FHIRDate {
 }
 
 extension FHIRTime {
+	
+	public init?(json: String) {
+		self.init(string: json)
+	}
+	
 	public static func instantiate(fromArray json: [String]) -> [FHIRTime] {
 		var arr: [FHIRTime] = []
 		for string in json {
@@ -121,6 +141,11 @@ extension FHIRTime {
 }
 
 extension DateTime {
+	
+	public init?(json: String) {
+		self.init(string: json)
+	}
+	
 	public static func instantiate(fromArray json: [String]) -> [DateTime] {
 		var arr: [DateTime] = []
 		for string in json {
@@ -137,6 +162,11 @@ extension DateTime {
 }
 
 extension Instant {
+	
+	public init?(json: String) {
+		self.init(string: json)
+	}
+	
 	public static func instantiate(fromArray json: [String]) -> [Instant] {
 		var arr: [Instant] = []
 		for string in json {

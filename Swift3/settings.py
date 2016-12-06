@@ -44,6 +44,7 @@ manual_profiles = [                                     # all these profiles sho
     	'decimal', 'integer', 'positiveInt', 'unsignedInt',
     	'uri', 'oid', 'uuid',
     ]),
+    ('Swift3/FHIRString.swift', None, ['String']),
     ('Swift3/DateAndTime.swift', None, [
         'date', 'dateTime', 'time', 'instant',
     ]),

@@ -38,7 +38,7 @@ class {{ class.name }}Tests: XCTestCase {
 		{% for onetest in tcase.tests %}
 		{%- if onetest.enum %}
 		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.enum }}(rawValue: "{{ onetest.value|replace('"', '\\"') }}")!)
-		{%- else %}{% if "String" == onetest.klass.name %}
+		{%- else %}{% if "FHIRString" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
 		{%- else %}{% if "NSDecimalNumber" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
