@@ -39,7 +39,7 @@ public struct FHIRValidationError: Error, CustomStringConvertible {
 	/// The error type.
 	public var code: FHIRValidationErrorType
 	
-	/// The property key to which the error applies.
+	/// The property key to which the error applies; may be empty for errors raised by primitives.
 	public var key: String
 	
 	/// The path to the key, excluding the key itself.
@@ -47,7 +47,7 @@ public struct FHIRValidationError: Error, CustomStringConvertible {
 	
 	/// The full path to the property.
 	public var fullPath: String {
-		return (nil == path || path!.isEmpty) ? key : "\(path!).\(key)"
+		return (nil == path || path!.isEmpty) ? key : (key.isEmpty ? path! : "\(path!).\(key)")
 	}
 	
 	/// The type expected for values of this key.
@@ -145,15 +145,16 @@ public struct FHIRValidationError: Error, CustomStringConvertible {
 	
 	public var description: String {
 		let nul = Any.self
+		let prop = key.isEmpty ? "" : " “\(key)”"
 		switch code {
 		case .missingKey:
-			return "\(fullPath): mandatory property “\(key)” is missing"
+			return "\(fullPath): mandatory property\(prop) is missing"
 		case .unknownKey:
-			return "\(fullPath): superfluous property “\(key)” of type `\(has ?? nul)`"
+			return "\(fullPath): superfluous property\(prop) of type `\(has ?? nul)`"
 		case .wrongValueTypeForKey:
-			return "\(fullPath): expecting property “\(key)” to be `\(wants ?? nul)`, but is `\(has ?? nul)`"
+			return "\(fullPath): expecting property\(prop) to be `\(wants ?? nul)`, but is `\(has ?? nul)`"
 		case .problemWithValueForKey:
-			return "\(fullPath): problem with property “\(key)”: \(problem ?? "[problem not described]")"
+			return "\(fullPath): problem with property\(prop): \(problem ?? "[problem not described]")"
 		case .problemsWithKey:
 			guard let subErrors = subErrors else {
 				return "\(fullPath): [no errors]"

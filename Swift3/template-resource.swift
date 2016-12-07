@@ -70,67 +70,37 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 	
 	override open func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]? {
 		var errors = try super.populate(from: json, presentKeys: &presentKeys) ?? [FHIRValidationError]()
-		{%- for prop in klass.properties %}
-		if let exist = json["{{ prop.orig_name }}"] {
-			presentKeys.insert("{{ prop.orig_name }}")
-			do {
-				guard let val = exist as? {% if prop.is_array %}[{% endif %}{{ prop.json_class }}{% if prop.is_array %}]{% endif %} else {
-					throw FHIRValidationError(key: "{{ prop.orig_name }}", wants: {% if prop.is_array %}Array<{% endif %}{{ prop.json_class }}{% if prop.is_array %}>{% endif %}.self, has: type(of: exist))
-				}
-				
-				{#- enums #}
-				{%- if prop.enum %}{% if prop.is_array %}
-				var i = -1
-				self.{{ prop.name }} = val.map() { i += 1
-					if let enumval = {{ prop.enum.name }}(rawValue: $0) { return enumval }
-					errors.append(FHIRValidationError(key: "{{ prop.name }}.\(i)", problem: "the value “\(val)” is not valid"))
-					return nil
-				}.filter() { nil != $0 }.map() { $0! }
-				{%- else %}
-				guard let enumval = {{ prop.enum.name }}(rawValue: val) else {
-					throw FHIRValidationError(key: "{{ prop.orig_name }}", problem: "the value “\(val)” is not valid")
-				}
-				self.{{ prop.name }} = enumval
-				{%- endif %}
-				
-				{#- primitives #}
-				{%- else %}{% if prop.class_name == prop.json_class %}
-				self.{{ prop.name }} = val
-				{%- else %}{% if prop.is_native %}{% if prop.is_array %}
-				self.{{ prop.name }} = {{ prop.class_name }}.instantiate(fromArray: val)
-				if let primitives = json["_{{ prop.orig_name }}"] as? [FHIRJSON?] {
-					for (i, primitive) in primitives.enumerated() {
-						if let primitive = primitive, self.{{ prop.name }}?.count ?? 0 > i, let prop = self.{{ prop.name }}?[i] {
-							self.{{ prop.name }}![i] = try prop.updatedWith(json: primitive)
-						}
-					}
-				}
-				{%- else %}
-				self.{{ prop.name }} = {{ prop.class_name }}(json: val)
-				if let primitive = json["_{{ prop.orig_name }}"] as? FHIRJSON {
-					self.{{ prop.name }} = try self.{{ prop.name }}?.updatedWith(json: primitive)
-				}
-				{%- endif %}
-				
-				{#- elements #}
-				{%- else %}{% if prop.is_array %}
-				self.{{ prop.name }} = try {{ prop.class_name }}.instantiate(fromArray: val, owner: self) as? [{{ prop.class_name }}]
-				{%- else %}{% if "Resource" == prop.class_name %}     {# The `Bundle` has generic resources #}
-				self.{{ prop.name }} = try Resource.instantiate(from: val, owner: self) as? Resource
-				{%- else %}
-				self.{{ prop.name }} = try {{ prop.class_name }}(json: val, owner: self)
-				{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}
-			}
-			catch let error as FHIRValidationError {
-				errors.append(error.prefixed(with: "{{ prop.orig_name }}"))
-			}
+		{% for prop in klass.properties %}
+		
+		{%- if prop.enum %}{% if prop.is_array %}
+		{{ prop.name }} = createEnums(of: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors)
+		{%- else %}
+		{{ prop.name }} = createEnum(type: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors)
+		{%- endif %}{% else %}
+		
+		{%- if prop.is_array %}{% if prop.is_native %}
+		// TODO: NATIVE ARRAY of {{ prop.class_name }}: {{ prop.orig_name }}
+		presentKeys.insert("{{ prop.orig_name }}")
+		{%- else %}
+		{{ prop.name }} = try createInstances(of: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self)
+		{%- endif %}{% else %}{% if prop.is_native %}
+		// TODO: NATIVE {{ prop.class_name }}: {{ prop.orig_name }}
+		presentKeys.insert("{{ prop.orig_name }}")
+		{%- else %}{% if "Resource" == prop.class_name %}     {#- The `Bundle` and a few others have generic resources #}
+		if let js = json["{{ prop.orig_name }}"] as? FHIRJSON {
+			self.{{ prop.name }} = try Resource.instantiate(from: js, owner: self) as? Resource
 		}
+		{%- else %}
+		{{ prop.name }} = try createInstance(type: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self)
+		{%- endif %}{% endif %}{% endif %}{% endif %}
+		
 		{%- if prop.nonoptional and not prop.one_of_many %}
-		else {
+		if nil == {{ prop.name }}{% if prop.is_array %} || {{ prop.name }}!.isEmpty{% endif %} {
 			errors.append(FHIRValidationError(missing: "{{ prop.orig_name }}"))
 		}
 		{%- endif %}
 		{%- endfor %}
+		
 		{%- if klass.expanded_nonoptionals %}
 		
 		// check if nonoptional expanded properties (i.e. at least one "answer" for "answer[x]") are present
@@ -139,7 +109,7 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 			errors.append(FHIRValidationError(missing: "{{ exp }}[x]"))
 		}
 		{%- endfor %}
-		{%- endif %}
+		{% endif %}
 		return errors.isEmpty ? nil : errors
 	}
 	
@@ -150,19 +120,15 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 		
 		{%- if prop.is_array %}{% if prop.enum %}
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.rawValue }
-		{%- else %}{% if prop.is_native %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON() }
 		{%- else %}
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON(errors: &errors) }
-		{%- endif %}{% endif %}
+		{%- endif %}
 		
 		{%- else %}{% if prop.enum %}
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.rawValue
-		{%- else %}{% if prop.is_native %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON()
 		{%- else %}
 			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON(errors: &errors)
-		{%- endif %}{% endif %}{% endif %}
+		{%- endif %}{% endif %}
 		}
 		{%- if prop.nonoptional and not prop.one_of_many %}
 		else {

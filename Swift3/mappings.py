@@ -16,10 +16,10 @@ classmap = {
     'markdown': 'FHIRString',
     'id': 'FHIRString',
     'code': 'FHIRString',       # we're not generating enums for all of these
-    'uri': 'URL',
     'oid': 'FHIRString',
     'uuid': 'FHIRString',
     'xhtml': 'FHIRString',
+    'uri': 'FHIRURL',
     'base64Binary': 'Base64Binary',
     'date': 'FHIRDate',
     'time': 'FHIRTime',
@@ -60,8 +60,8 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names represent primitives in FHIR
-natives = ['Bool', 'Int', 'UInt', 'FHIRString', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'URL']
+# Which class names are native to the language (or can be treated this way)
+natives = ['Bool', 'Int', 'UInt', 'Double', 'NSDecimalNumber']
 
 # Mapping the JSON type (value) expected for every class (key)
 jsonmap = {
@@ -76,7 +76,7 @@ jsonmap = {
     'DateTime': 'String',
     'Instant': 'String',
     'NSDecimalNumber': 'NSNumber',
-    'URL': 'String',
+    'FHIRURL': 'String',
     'Base64Binary': 'String',
 }
 jsonmap_default = 'FHIRJSON'

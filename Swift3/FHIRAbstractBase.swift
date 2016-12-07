@@ -10,7 +10,9 @@
 /**
 Abstract superclass for all FHIR data elements.
 */
-open class FHIRAbstractBase: CustomStringConvertible {
+open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
+	
+	public typealias JSONType = FHIRJSON
 	
 	/// The type of the resource or element.
 	open class var resourceType: String {
@@ -18,7 +20,7 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	}
 	
 	/// The parent/owner of the receiver, if any. Used to dereference resources.
-	weak var _owner: FHIRAbstractBase?
+	public weak var _owner: FHIRAbstractBase?
 	
 	/// Resolved references.
 	var _resolved: [String: Resource]?
@@ -50,6 +52,22 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	// MARK: - JSON Capabilities
 	
 	/**
+	Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the specified resource type;
+	instantiates the receiver's class otherwise.
+	
+	- parameter json:  A FHIRJSON decoded from a JSON response
+	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
+	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
+	- throws:          FHIRValidationError
+	*/
+	public final class func instantiate(from json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
+		if let type = json["resourceType"] as? String {
+			return try factory(type, json: json, owner: owner)
+		}
+		return try self.init(json: json, owner: owner)		// must use 'required' init with dynamic type
+	}
+	
+	/**
 	Will populate instance variables - overriding existing ones - with values found in the supplied JSON.
 	
 	- parameter json: The JSON element to use to populate the receiver
@@ -76,9 +94,6 @@ open class FHIRAbstractBase: CustomStringConvertible {
 			if nil == _owner {
 				errors = errors.map() { $0.prefixed(with: type(of: self).resourceType) }
 			}
-			if 1 == errors.count {
-				throw errors[0]
-			}
 			throw FHIRValidationError(errors: errors)
 		}
 	}
@@ -100,12 +115,11 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	
 	- returns: The FHIRJSON reperesentation of the receiver
 	*/
-	public final func asJSON() throws -> FHIRJSON {
+	public final func asJSON() throws -> JSONType {
 		var errors = [FHIRValidationError]()
 		let json = asJSON(errors: &errors)
 		if !errors.isEmpty {
-			// TODO: concat errors
-			throw errors[0]
+			throw FHIRValidationError(errors: errors)
 		}
 		return json
 	}
@@ -117,54 +131,8 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	- parameter errors: The array that will be filled with FHIRValidationError instances, if there are any
 	- returns: The FHIRJSON reperesentation of the receiver
 	*/
-	open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
+	open func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
 		return FHIRJSON()
-	}
-	
-	
-	// MARK: - Factories
-	
-	/**
-	Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the
-	specified resource type, or instantiates the receiver's class otherwise.
-	
-	- parameter json:  A FHIRJSON decoded from a JSON response
-	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
-	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
-	- throws:          FHIRValidationError
-	*/
-	public final class func instantiate(from json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
-		if let type = json["resourceType"] as? String {
-			return try factory(type, json: json, owner: owner)
-		}
-		return try self.init(json: json, owner: owner)		// must use 'required' init with dynamic type
-	}
-	
-	/**
-	Instantiates an array of the receiver's type and returns it.
-	
-	- parameter fromArray: The FHIRJSON array to instantiate from
-	- parameter owner:     The FHIRAbstractBase owning the new instance, if appropriate
-	- returns:             An array of the appropriate FHIRAbstractBase subclass, if possible, Self otherwise
-	*/
-	public final class func instantiate(fromArray: [FHIRJSON], owner: FHIRAbstractBase? = nil) throws -> [FHIRAbstractBase] {
-		var instances = [FHIRAbstractBase]()
-		var errors = [FHIRValidationError]()
-		var i = 0
-		for json in fromArray {
-			do {
-				let instance = try instantiate(from: json, owner: owner)
-				instances.append(instance)
-			}
-			catch let error as FHIRValidationError {
-				errors.append(error.prefixed(with: "\(i)"))
-			}
-			i += 1
-		}
-		if !errors.isEmpty {
-			throw FHIRValidationError(errors: errors)
-		}
-		return instances
 	}
 	
 	
@@ -234,5 +202,45 @@ open class FHIRAbstractBase: CustomStringConvertible {
 	open var description: String {
 		return "<\(type(of: self).resourceType)>"
 	}
+}
+
+
+/**
+Inspects the given dictionary for an array with the given key, and if successful instantiates an array of the desired FHIR objects.
+
+Unable to make this a class method on FHIRAbstractBase as it would need to be implemented on every subclass in order to not return
+`FHIRAbstractBase` all the time.
+
+- parameter type:   The FHIR object that is expected
+- parameter key:    The key for which to look in `json`
+- parameter json:   The JSON dictionary to search through
+- parameter presentKeys: An inout set of keys found in the JSON
+- parameter errors: An inout array of validation errors found
+- parameter owner:  The FHIRAbstractBase owning the new instance, if appropriate
+- returns:          An array of the desired FHIRAbstractBase subclasses (or nil)
+*/
+public func instantiate<T: FHIRAbstractBase>(type: T.Type, for key: String, in json: FHIRJSON, presentKeys: inout Set<String>, errors: inout [FHIRValidationError], owner: FHIRAbstractBase? = nil) throws -> [T]? {
+	guard let exist = json[key] else {
+		return nil
+	}
+	presentKeys.insert(key)
+	
+	// correct type?
+	guard let arr = exist as? [T.JSONType] else {
+		errors.append(FHIRValidationError(key: key, wants: Array<T.JSONType>.self, has: type(of: exist)))
+		return nil
+	}
+	
+	// loop over dicts and create instances
+	var instances = [T]()
+	for (i, value) in arr.enumerated() {
+		do {
+			instances.append(try T(json: value, owner: owner))
+		}
+		catch let error as FHIRValidationError {
+			errors.append(error.prefixed(with: "\(key).\(i)"))
+		}
+	}
+	return instances.isEmpty ? nil : instances
 }
 

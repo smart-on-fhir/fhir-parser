@@ -15,7 +15,11 @@ A protocol for all our date and time structs.
 protocol DateAndTime: FHIRPrimitive, CustomStringConvertible, Comparable, Equatable {
 	
 	var nsDate: Date { get }
+	
+	init?(string: String)
 }
+
+// MARK: -
 
 
 /**
@@ -63,7 +67,7 @@ public struct FHIRDate: DateAndTime {
 	
 	
 	/**
-	Dedicated initializer. Everything but the year is optional, invalid months or days will be ignored (however it is NOT checked whether
+	Designated initializer. Everything but the year is optional, invalid months or days will be ignored (however it is NOT checked whether
 	the given month indeed contains the given day).
 	
 	- parameter year:  The year of the date
@@ -89,13 +93,30 @@ public struct FHIRDate: DateAndTime {
 	- parameter string: The string to parse the date from
 	*/
 	public init?(string: String) {
-		let parsed = DateAndTimeParser.sharedParser.parse(string: string)
-		if nil == parsed.date {
+		do { try self.init(json: string) }
+		catch let error {
+			fhir_logIfDebug("\(error)")
 			return nil
 		}
-		year = parsed.date!.year
-		month = parsed.date!.month
-		day = parsed.date!.day
+	}
+	
+	
+	// MARK: FHIRJSONType
+	
+	public typealias JSONType = String
+	
+	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
+		guard let date = DateAndTimeParser.sharedParser.parse(string: json).date else {
+			throw FHIRValidationError(key: "", problem: "the string “\(json)” could not be parsed into a \(type(of: self))")
+		}
+		year = date.year
+		month = date.month
+		day = date.day
+		_owner = owner
+	}
+	
+	public func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
+		return description
 	}
 	
 	
@@ -115,6 +136,15 @@ public struct FHIRDate: DateAndTime {
 		return String(format: "%04d", year)
 	}
 	
+	
+	// MARK: Equatable, Comparable
+	
+	public static func ==(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
+		return lhs.year == rhs.year
+			&& lhs.month == rhs.month
+			&& lhs.day == rhs.day
+	}
+
 	public static func <(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
 		if lhs.year == rhs.year {
 			guard let lhm = lhs.month else {
@@ -136,14 +166,9 @@ public struct FHIRDate: DateAndTime {
 		}
 		return lhs.year < rhs.year
 	}
-	
-	public static func ==(lhs: FHIRDate, rhs: FHIRDate) -> Bool {
-		return lhs.year == rhs.year
-			&& lhs.month == rhs.month
-			&& lhs.day == rhs.day
-	}
 }
 
+// MARK: -
 
 
 /**
@@ -202,7 +227,7 @@ public struct FHIRTime: DateAndTime {
 	
 	
 	/**
-	Dedicated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than 24:00:00 or it will be capped.
+	Designated initializer. Overflows seconds and minutes to arrive at the final time, which must be less than 24:00:00 or it will be capped.
 	
 	The `secondsFromString` parameter will be discarded if it is negative or higher than 60.
 	
@@ -254,14 +279,31 @@ public struct FHIRTime: DateAndTime {
 	Will fail unless the string contains at least hour and minute.
 	*/
 	public init?(string: String) {
-		let parsed = DateAndTimeParser.sharedParser.parse(string: string, isTimeOnly: true)
-		guard let time = parsed.time else {
+		do { try self.init(json: string) }
+		catch let error {
+			fhir_logIfDebug("\(error)")
 			return nil
+		}
+	}
+	
+	
+	// MARK: FHIRJSONType
+	
+	public typealias JSONType = String
+	
+	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
+		guard let time = DateAndTimeParser.sharedParser.parse(string: json, isTimeOnly: true).time else {
+			throw FHIRValidationError(key: "", problem: "the string “\(json)” could not be parsed into a \(type(of: self))")
 		}
 		hour = time.hour
 		minute = time.minute
 		second = time.second
 		tookSecondsFromString = time.tookSecondsFromString
+		_owner = owner
+	}
+	
+	public func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
+		return description
 	}
 	
 	
@@ -291,6 +333,18 @@ public struct FHIRTime: DateAndTime {
 		return String(format: "%02d:%02d", hour, minute)
 	}
 	
+	
+	// MARK: Equatable, Comparable
+	
+	public static func ==(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
+		if nil != lhs.second && nil != rhs.second {
+			return lhs.description == rhs.description		// must respect decimal precision of seconds, which `description` takes care of
+		}
+		return lhs.hour == rhs.hour
+			&& lhs.minute == rhs.minute
+			&& lhs.second == rhs.second
+	}
+	
 	public static func <(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
 		if lhs.hour == rhs.hour {
 			if lhs.minute == rhs.minute {
@@ -306,16 +360,9 @@ public struct FHIRTime: DateAndTime {
 		}
 		return lhs.hour < rhs.hour
 	}
-	
-	public static func ==(lhs: FHIRTime, rhs: FHIRTime) -> Bool {
-		if nil != lhs.second && nil != rhs.second {
-			return lhs.description == rhs.description		// must respect decimal precision of seconds, which `description` takes care of
-		}
-		return lhs.hour == rhs.hour
-			&& lhs.minute == rhs.minute
-			&& lhs.second == rhs.second
-	}
 }
+
+// MARK: -
 
 
 /**
@@ -385,16 +432,34 @@ public struct DateTime: DateAndTime {
 	- parameter string: The string the date-time is parsed from
 	*/
 	public init?(string: String) {
-		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string: string)
-		if nil == date {
+		do { try self.init(json: string) }
+		catch let error {
+			fhir_logIfDebug("\(error)")
 			return nil
 		}
-		self.date = date!
+	}
+	
+	
+	// MARK: FHIRJSONType
+	
+	public typealias JSONType = String
+	
+	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
+		let (datep, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string: json)
+		guard let date = datep else {
+			throw FHIRValidationError(key: "", problem: "the string “\(json)” could not be parsed into a \(type(of: self))")
+		}
+		self.date = date
 		if let time = time {
 			self.time = time
-			self.timeZone = nil == tz ? TimeZone.current : tz
+			self.timeZone = tz ?? TimeZone.current
 			self.timeZoneString = tzString
 		}
+		_owner = owner
+	}
+	
+	public func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
+		return description
 	}
 	
 	
@@ -416,18 +481,23 @@ public struct DateTime: DateAndTime {
 		return date.description
 	}
 	
-	public static func <(lhs: DateTime, rhs: DateTime) -> Bool {
-		let lhd = lhs.nsDate
-		let rhd = rhs.nsDate
-		return (lhd.compare(rhd) == .orderedAscending)
-	}
+	
+	// MARK: Equatable, Comparable
 	
 	public static func ==(lhs: DateTime, rhs: DateTime) -> Bool {
 		let lhd = lhs.nsDate
 		let rhd = rhs.nsDate
 		return (lhd.compare(rhd) == .orderedSame)
 	}
+	
+	public static func <(lhs: DateTime, rhs: DateTime) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedAscending)
+	}
 }
+
+// MARK: -
 
 
 /**
@@ -509,14 +579,32 @@ public struct Instant: DateAndTime {
 	- parameter string: The string to parse the instant from
 	*/
 	public init?(string: String) {
-		let (date, time, tz, tzString) = DateAndTimeParser.sharedParser.parse(string: string)
-		if nil == date || nil == date!.month || nil == date!.day || nil == time || nil == time!.second || nil == tz {
+		do { try self.init(json: string) }
+		catch let error {
+			fhir_logIfDebug("\(error)")
 			return nil
 		}
-		self.date = date!
-		self.time = time!
-		self.timeZone = tz!
-		self.timeZoneString = tzString!
+	}
+	
+	
+	// MARK: FHIRJSONType
+	
+	public typealias JSONType = String
+	
+	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
+		let (datep, timep, tzp, tzStringp) = DateAndTimeParser.sharedParser.parse(string: json)
+		guard let date = datep, let time = timep, let tz = tzp, let tzString = tzStringp, nil != date.month, nil != date.day, nil != time.second else {
+			throw FHIRValidationError(key: "", problem: "the string “\(json)” could not be parsed into a \(type(of: self))")
+		}
+		self.date = date
+		self.time = time
+		self.timeZone = tz
+		self.timeZoneString = tzString
+		_owner = owner
+	}
+	
+	public func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
+		return description
 	}
 	
 	
@@ -531,19 +619,21 @@ public struct Instant: DateAndTime {
 		return "\(date.description)T\(time.description)\(tz)"
 	}
 	
-	public static func <(lhs: Instant, rhs: Instant) -> Bool {
-		let lhd = lhs.nsDate
-		let rhd = rhs.nsDate
-		return (lhd.compare(rhd) == .orderedAscending)
-	}
+	
+	// MARK: Equatable, Comparable
 	
 	public static func ==(lhs: Instant, rhs: Instant) -> Bool {
 		let lhd = lhs.nsDate
 		let rhd = rhs.nsDate
 		return (lhd.compare(rhd) == .orderedSame)
 	}
+	
+	public static func <(lhs: Instant, rhs: Instant) -> Bool {
+		let lhd = lhs.nsDate
+		let rhd = rhs.nsDate
+		return (lhd.compare(rhd) == .orderedAscending)
+	}
 }
-
 
 extension Instant {
 	
@@ -580,6 +670,8 @@ extension Instant {
 		return nil
 	}
 }
+
+// MARK: -
 
 
 /**
@@ -664,6 +756,8 @@ class DateNSDateConverter {
 		return calendar.date(from: comp) ?? Date()
 	}
 }
+
+// MARK: -
 
 
 /**
@@ -761,6 +855,8 @@ class DateAndTimeParser {
 		return (date, time, tz, tzString)
 	}
 }
+
+// MARK: -
 
 
 /**

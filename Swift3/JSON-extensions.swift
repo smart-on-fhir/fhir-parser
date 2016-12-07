@@ -10,41 +10,20 @@ import Foundation
 
 
 extension Bool {
-	public func asJSON() -> Bool {
+	public func asJSON(errors: inout [FHIRValidationError]) -> Bool {
 		return self
 	}
 }
 
 extension Int {
-	public func asJSON() -> Int {
+	public func asJSON(errors: inout [FHIRValidationError]) -> Int {
 		return self
 	}
 }
 
 extension UInt {
-	public func asJSON() -> UInt {
+	public func asJSON(errors: inout [FHIRValidationError]) -> UInt {
 		return self
-	}
-}
-
-extension URL {
-	
-	public init?(json: String) {
-		self.init(string: json)
-	}
-	
-	public static func instantiate(fromArray json: [String]) -> [URL] {
-		var arr: [URL] = []
-		for string in json {
-			if let url = URL(string: string) {
-				arr.append(url)
-			}
-		}
-		return arr
-	}
-	
-	public func asJSON() -> String {
-		return self.absoluteString
 	}
 }
 
@@ -67,118 +46,8 @@ extension NSDecimalNumber {
 		}
 	}
 	
-	public func asJSON() -> NSDecimalNumber {
+	public func asJSON(errors: inout [FHIRValidationError]) -> NSDecimalNumber {
 		return self
-	}
-}
-
-extension Base64Binary {
-	
-	public init?(json: String) {
-		self.init(value: json)
-	}
-	
-	public func asJSON() -> String {
-		return self.value ?? ""
-	}
-}
-
-extension FHIRString {
-	
-	public init?(json: String) {
-		self.init(json)
-	}
-	
-	public func asJSON() -> String {
-		return string
-	}
-	
-	public static func instantiate(fromArray: [String]) -> [FHIRString] {
-		return fromArray.map() { self.init($0) }
-	}
-}
-
-extension FHIRDate {
-	
-	public init?(json: String) {
-		self.init(string: json)
-	}
-	
-	public static func instantiate(fromArray json: [String]) -> [FHIRDate] {
-		var arr: [FHIRDate] = []
-		for string in json {
-			if let obj = FHIRDate(string: string) {
-				arr.append(obj)
-			}
-		}
-		return arr
-	}
-	
-	public func asJSON() -> String {
-		return self.description
-	}
-}
-
-extension FHIRTime {
-	
-	public init?(json: String) {
-		self.init(string: json)
-	}
-	
-	public static func instantiate(fromArray json: [String]) -> [FHIRTime] {
-		var arr: [FHIRTime] = []
-		for string in json {
-			if let obj = FHIRTime(string: string) {
-				arr.append(obj)
-			}
-		}
-		return arr
-	}
-	
-	public func asJSON() -> String {
-		return self.description
-	}
-}
-
-extension DateTime {
-	
-	public init?(json: String) {
-		self.init(string: json)
-	}
-	
-	public static func instantiate(fromArray json: [String]) -> [DateTime] {
-		var arr: [DateTime] = []
-		for string in json {
-			if let obj = DateTime(string: string) {
-				arr.append(obj)
-			}
-		}
-		return arr
-	}
-	
-	public func asJSON() -> String {
-		return self.description
-	}
-}
-
-extension Instant {
-	
-	public init?(json: String) {
-		self.init(string: json)
-	}
-	
-	public static func instantiate(fromArray json: [String]) -> [Instant] {
-		var arr: [Instant] = []
-		for string in json {
-			if let obj = Instant(string: string) {
-				arr.append(obj)
-			}
-		}
-		return arr
-	}
-	
-	public func asJSON() -> String {
-		return self.description
 	}
 }
 

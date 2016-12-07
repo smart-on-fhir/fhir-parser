@@ -39,17 +39,21 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
     ('Swift3/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
     ('Swift3/FHIRPrimitive.swift', None, []),
-    ('Swift3/FHIRTypes.swift', None, [
+    ('Swift3/FHIRType.swift', None, [
     	'boolean',
-    	'base64Binary',
     	'decimal', 'integer', 'positiveInt', 'unsignedInt',
-    	'uri',
     ]),
     ('Swift3/FHIRString.swift', None, [
         'string', 'code', 'id', 'oid', 'uuid', 'markdown', 'xhtml',
     ]),
+    ('Swift3/FHIRURL.swift', None, [
+        'uri',
+    ]),
     ('Swift3/DateAndTime.swift', None, [
         'date', 'dateTime', 'time', 'instant',
+    ]),
+    ('Swift3/Base64Binary.swift', None, [
+        'base64Binary',
     ]),
     ('Swift3/JSON-extensions.swift', None, []),
     ('Swift3/FHIRServer.swift', None, []),
