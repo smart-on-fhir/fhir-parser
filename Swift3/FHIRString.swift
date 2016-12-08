@@ -79,7 +79,7 @@ public struct FHIRString: FHIRPrimitive, CustomStringConvertible, ExpressibleByS
 }
 
 
-extension FHIRString: Equatable, Comparable {
+extension FHIRString: Equatable, Comparable, Hashable {
 	
 	public static func ==(l: FHIRString, r: FHIRString) -> Bool {
 		return l.string == r.string
@@ -105,5 +105,10 @@ extension FHIRString: Equatable, Comparable {
 	public static func <(lh: FHIRString, rh: String) -> Bool {
 		return lh.string < rh
 	}
+	
+	
+	public var hashValue: Int {
+        return string.hashValue
+    }
 }
 

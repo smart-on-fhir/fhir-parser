@@ -46,8 +46,8 @@ class {{ class.name }}Tests: XCTestCase {
 		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
 		{%- else %}{% if "UInt" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, UInt({{ onetest.value }}))
-		{%- else %}{% if "Bool" == onetest.klass.name %}
-		XCTAssert{% if onetest.value %}True{% else %}False{% endif %}(inst.{{ onetest.path }} ?? {% if onetest.value %}false{% else %}true{% endif %})
+		{%- else %}{% if "FHIRBool" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, {% if onetest.value %}true{% else %}false{% endif %})
 		{%- else %}{% if "FHIRDate" == onetest.klass.name or "FHIRTime" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}{% if not onetest.array_item %}?{% endif %}.description, "{{ onetest.value }}")
 		{%- else %}{% if "FHIRURL" == onetest.klass.name %}

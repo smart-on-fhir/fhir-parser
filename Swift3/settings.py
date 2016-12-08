@@ -40,7 +40,6 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
     ('Swift3/FHIRPrimitive.swift', None, []),
     ('Swift3/FHIRType.swift', None, [
-    	'boolean',
     	'decimal', 'integer', 'positiveInt', 'unsignedInt',
     ]),
     ('Swift3/FHIRString.swift', None, [
@@ -54,6 +53,9 @@ manual_profiles = [                                     # all these profiles sho
     ]),
     ('Swift3/Base64Binary.swift', None, [
         'base64Binary',
+    ]),
+    ('Swift3/FHIRBool.swift', None, [
+        'boolean',
     ]),
     ('Swift3/JSON-extensions.swift', None, []),
     ('Swift3/FHIRServer.swift', None, []),

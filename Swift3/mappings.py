@@ -1,26 +1,30 @@
 # Mappings for the FHIR class generator
 
-# Which class names to map to resources and elements
+# Which class names to map to resources and elements. Classes not listed here
+# will not be mapped, i.e. their (uppercased) FHIR name will be the class name
 classmap = {
     'Any': 'Resource',
     'Practitioner.role': 'PractRole',   # to avoid Practinioner.role and PractitionerRole generating the same class
     'Protocol': 'ProtocolFHIR',
     
-    'boolean': 'Bool',
+    'boolean': 'FHIRBool',
     'integer': 'Int',
     'positiveInt': 'UInt',
     'unsignedInt': 'UInt',
     'decimal': 'NSDecimalNumber',
     
     'string': 'FHIRString',
+    'code': 'FHIRString',       # we're not generating enums for all codes
     'markdown': 'FHIRString',
-    'id': 'FHIRString',
-    'code': 'FHIRString',       # we're not generating enums for all of these
-    'oid': 'FHIRString',
-    'uuid': 'FHIRString',
     'xhtml': 'FHIRString',
+    
+    'id': 'FHIRString',
+    'oid': 'FHIRURL',
+    'uuid': 'FHIRString',
     'uri': 'FHIRURL',
+    
     'base64Binary': 'Base64Binary',
+    
     'date': 'FHIRDate',
     'time': 'FHIRTime',
 }
@@ -63,21 +67,23 @@ starexpandtypes = {
 # Which class names are native to the language (or can be treated this way)
 natives = ['Bool', 'Int', 'UInt', 'Double', 'NSDecimalNumber']
 
-# Mapping the JSON type (value) expected for every class (key)
+# Which JSON type (dict value) is expected for a given class (dict key)
 jsonmap = {
+    'Bool': 'FHIRBool',
+    
     'Int': 'Int',
     'UInt': 'UInt',
-    'Bool': 'Bool',
     'Double': 'NSNumber',
+    'NSDecimalNumber': 'NSNumber',
     
     'FHIRString': 'String',
+    'FHIRURL': 'String',
+    'Base64Binary': 'String',
+    
     'FHIRDate': 'String',
     'FHIRTime': 'String',
     'DateTime': 'String',
     'Instant': 'String',
-    'NSDecimalNumber': 'NSNumber',
-    'FHIRURL': 'String',
-    'Base64Binary': 'String',
 }
 jsonmap_default = 'FHIRJSON'
 
