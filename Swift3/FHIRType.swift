@@ -33,6 +33,12 @@ public protocol FHIRJSONType: FHIRType {
 	/// The JSON element used to deserialize the receiver from and serialize to.
 	associatedtype JSONType
 	
+	/**
+	Generic initializer to be used on deserialized JSON.
+	
+	- parameter json:  The value in its associated `JSONType`
+	- parameter owner: Optional, the owning element
+	*/
 	init(json: JSONType, owner: FHIRAbstractBase?) throws
 	
 	/**
@@ -52,27 +58,27 @@ public protocol FHIRJSONType: FHIRType {
 	*/
 	mutating func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]?
 	
+	/**
+	Return the receiver's representation in `JSONType`.
+	
+	- parameter errors: Errors encountered during serialization
+	- returns:          The FHIRJSON reperesentation of the receiver
+	*/
+	func asJSON(errors: inout [FHIRValidationError]) -> JSONType
 	
 	/**
-	Represent the receiver in FHIRJSON, ready to be used for JSON serialization.
+	Represent the receiver in the given JSON dictionary.
 	
-	- returns: The FHIRJSON reperesentation of the receiver
+	- note: Values that the instance alreay possesses and are not in the JSON should be left alone.
+	
+	- parameter json:    The FHIRJSON representation to populate
+	- parameter withKey: The key to use
+	- parameter errors:  An in-out array to be stuffed with validation errors encountered along the way
 	*/
-	func asJSON() throws -> JSONType
-	
-	func asJSON(errors: inout [FHIRValidationError]) -> JSONType
+	func decorate(json: inout FHIRJSON, withKey: String, errors: inout [FHIRValidationError])
 }
 
 extension FHIRJSONType {
-	
-	public func asJSON() throws -> JSONType {
-		var errors = [FHIRValidationError]()
-		let json = asJSON(errors: &errors)
-		if !errors.isEmpty {
-			throw FHIRValidationError(errors: errors)
-		}
-		return json
-	}
 	
 	public func populate(from json: FHIRJSON, presentKeys: inout Set<String>) throws -> [FHIRValidationError]? {
 		return nil
@@ -193,75 +199,6 @@ public func createInstances<P: FHIRJSONType>(of type: P.Type, for key: String, i
 	}
 	return primitives.isEmpty ? nil : primitives
 }
-
-// MARK: -
-
-
-/**
-Attempt to create an enum for the given key in the given dictionary, filling presentKeys and errors along the way.
-
-- parameter type:   The enum type to create (as an array)
-- parameter key:    The JSON key to look at in `json`
-- parameter json:   The JSON dictionary to inspect
-- parameter presentKeys: The keys in json found and handled
-- parameter errors: Validation errors encountered are put into this array
-- returns:          An array of enums, or nil
-*/
-public func createEnum<E: RawRepresentable>(type: E.Type, for key: String, in json: FHIRJSON, presentKeys: inout Set<String>, errors: inout [FHIRValidationError]) -> E? {
-	guard let exist = json[key] else {
-		return nil
-	}
-	presentKeys.insert(key)
-	
-	// correct type?
-	guard let value = exist as? E.RawValue else {
-		errors.append(FHIRValidationError(key: key, wants: E.RawValue.self, has: type(of: exist)))
-		return nil
-	}
-	
-	// create enum
-	guard let enumval = E(rawValue: value) else {
-		errors.append(FHIRValidationError(key: key, problem: "“\(value)” is not valid"))
-		return nil
-	}
-	return enumval
-}
-
-
-/**
-Attempt to create an array of enums for the given key in the given dictionary, populating presentKeys and errors appropriately.
-
-- parameter type:   The enum type to create (as an array)
-- parameter key:    The JSON key to look at in `json`
-- parameter json:   The JSON dictionary to inspect
-- parameter presentKeys: The keys in json found and handled
-- parameter errors: Validation errors encountered are put into this array
-- returns:          An array of enums, or nil
-*/
-public func createEnums<E: RawRepresentable>(of type: E.Type, for key: String, in json: FHIRJSON, presentKeys: inout Set<String>, errors: inout [FHIRValidationError]) -> [E]? {
-	guard let exist = json[key] else {
-		return nil
-	}
-	presentKeys.insert(key)
-	
-	// correct type?
-	guard let val = exist as? [E.RawValue] else {
-		errors.append(FHIRValidationError(key: key, wants: Array<E.RawValue>.self, has: type(of: exist)))
-		return nil
-	}
-	
-	// loop over raw values and create enums
-	var enums = [E]()
-	for (i, value) in val.enumerated() {
-		guard let enumval = E(rawValue: value) else {
-			errors.append(FHIRValidationError(key: "\(key).\(i)", problem: "“\(value)” is not valid"))
-			continue
-		}
-		enums.append(enumval)
-	}
-	return enums
-}
-
 
 
 // MARK: - Helper Functions

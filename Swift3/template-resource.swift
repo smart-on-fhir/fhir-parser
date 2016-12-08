@@ -114,32 +114,31 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 		}
 		{%- endfor %}
 		{% endif %}
+		
 		return errors.isEmpty ? nil : errors
 	}
 	
-	override open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
-		var json = super.asJSON(errors: &errors)
+	override open func decorate(json: inout FHIRJSON, errors: inout [FHIRValidationError]) {
+		super.decorate(json: &json, errors: &errors)
 		{% for prop in klass.properties %}
-		if let {{ prop.name }} = self.{{ prop.name }} {
 		
-		{%- if prop.is_array %}{% if prop.enum %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.rawValue }
-		{%- else %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.map() { $0.asJSON(errors: &errors) }
-		{%- endif %}
-		
-		{%- else %}{% if prop.enum %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.rawValue
-		{%- else %}
-			json["{{ prop.orig_name }}"] = {{ prop.name }}.asJSON(errors: &errors)
-		{%- endif %}{% endif %}
-		}
+		{%- if prop.is_array %}
+		arrayDecorate(json: &json, withKey: "{{ prop.orig_name }}", using: self.{{ prop.name }}, errors: &errors)
 		{%- if prop.nonoptional and not prop.one_of_many %}
-		else {
-			errors.append(FHIRValidationError(missing: "{{ prop.name }}"))
+		if nil == {{ prop.name }} || self.{{ prop.name }}!.isEmpty {
+			errors.append(FHIRValidationError(missing: "{{ prop.orig_name }}"))
 		}
 		{%- endif %}
+		
+		{%- else %}
+		self.{{ prop.name }}?.decorate(json: &json, withKey: "{{ prop.orig_name }}", errors: &errors)
+		{%- if prop.nonoptional and not prop.one_of_many %}
+		if nil == self.{{ prop.name }} {
+			errors.append(FHIRValidationError(missing: "{{ prop.orig_name }}"))
+		}
+		{%- endif %}{% endif %}
 		{%- endfor %}
+		
 		{%- if klass.expanded_nonoptionals %}
 		
 		// check if nonoptional expanded properties (i.e. at least one "value" for "value[x]") are present
@@ -148,8 +147,6 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 			errors.append(FHIRValidationError(missing: "{{ exp }}[x]"))
 		}
 		{%- endfor %}{% endif %}
-		
-		return json
 	}
 {%- endif %}
 }

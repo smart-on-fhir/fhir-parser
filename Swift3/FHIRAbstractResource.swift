@@ -42,12 +42,9 @@ open class FHIRAbstractResource: FHIRAbstractBase {
 		return errors.isEmpty ? nil : errors
 	}
 	
-	/** Serialize the receiver to JSON. */
-	override open func asJSON(errors: inout [FHIRValidationError]) -> FHIRJSON {
-		var json = super.asJSON(errors: &errors)
+	override open func decorate(json: inout FHIRJSON, errors: inout [FHIRValidationError]) {
+		super.decorate(json: &json, errors: &errors)
 		json["resourceType"] = type(of: self).resourceType
-		
-		return json
 	}
 	
 	

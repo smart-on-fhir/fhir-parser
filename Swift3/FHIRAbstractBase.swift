@@ -49,7 +49,7 @@ open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
 	}
 	
 	
-	// MARK: - JSON Capabilities
+	// MARK: - FHIRJSONType
 	
 	/**
 	Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the specified resource type;
@@ -94,7 +94,7 @@ open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
 			if nil == _owner {
 				errors = errors.map() { $0.prefixed(with: type(of: self).resourceType) }
 			}
-			throw FHIRValidationError(errors: errors)
+			throw (1 == errors.count) ? errors[0] : FHIRValidationError(errors: errors)
 		}
 	}
 	
@@ -125,14 +125,23 @@ open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
 	}
 	
 	/**
-	Represent the receiver in FHIRJSON, ready to be used for JSON serialization. Non-throwing version that you can use if
-	you want to handle errors yourself or ignore them altogether. Otherwise, just use `asJSON() throws`.
+	Represent the receiver in FHIRJSON, ready to be used for JSON serialization. Non-throwing version that you can use if you want to handle
+	errors yourself or ignore them altogether. Otherwise, just use `asJSON() throws`.
 	
 	- parameter errors: The array that will be filled with FHIRValidationError instances, if there are any
 	- returns: The FHIRJSON reperesentation of the receiver
 	*/
-	open func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
-		return FHIRJSON()
+	public final func asJSON(errors: inout [FHIRValidationError]) -> JSONType {
+		var json = FHIRJSON()
+		decorate(json: &json, errors: &errors)
+		return json
+	}
+	
+	public final func decorate(json: inout FHIRJSON, withKey key: String, errors: inout [FHIRValidationError]) {
+		json[key] = asJSON(errors: &errors)
+	}
+	
+	open func decorate(json: inout FHIRJSON, errors: inout [FHIRValidationError]) {
 	}
 	
 	
