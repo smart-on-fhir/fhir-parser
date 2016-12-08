@@ -73,29 +73,33 @@ open class {{ klass.name }}: {{ klass.superclass.name|default('FHIRAbstractBase'
 		{% for prop in klass.properties %}
 		
 		{%- if prop.enum %}{% if prop.is_array %}
-		{{ prop.name }} = createEnums(of: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors)
+		{{ prop.name }} = createEnums(of: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors) ?? {{ prop.name }}
 		{%- else %}
-		{{ prop.name }} = createEnum(type: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors)
+		{{ prop.name }} = createEnum(type: {{ prop.enum.name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors) ?? {{ prop.name }}
 		{%- endif %}{% else %}
 		
-		{%- if prop.is_array %}{% if prop.is_native %}
-		// TODO: NATIVE ARRAY of {{ prop.class_name }}: {{ prop.orig_name }}
-		presentKeys.insert("{{ prop.orig_name }}")
-		{%- else %}
-		{{ prop.name }} = try createInstances(of: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self)
-		{%- endif %}{% else %}{% if prop.is_native %}
-		// TODO: NATIVE {{ prop.class_name }}: {{ prop.orig_name }}
-		presentKeys.insert("{{ prop.orig_name }}")
-		{%- else %}{% if "Resource" == prop.class_name %}     {#- The `Bundle` and a few others have generic resources #}
-		if let js = json["{{ prop.orig_name }}"] as? FHIRJSON {
-			self.{{ prop.name }} = try Resource.instantiate(from: js, owner: self) as? Resource
+		{%- if "Resource" == prop.class_name %}{% if prop.is_array %}     {#- generic resources must use the factory #}
+		if let js = json["{{ prop.orig_name }}"] as? [FHIRJSON] {
+			presentKeys.insert("{{ prop.orig_name }}")
+			self.{{ prop.name }} = try js.map() { try Resource.instantiate(from: $0, owner: self) as? Resource }.filter() { nil != $0 }.map() { $0! }
 		}
 		{%- else %}
-		{{ prop.name }} = try createInstance(type: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self)
-		{%- endif %}{% endif %}{% endif %}{% endif %}
+		if let js = json["{{ prop.orig_name }}"] as? FHIRJSON {
+			presentKeys.insert("{{ prop.orig_name }}")
+			self.{{ prop.name }} = try Resource.instantiate(from: js, owner: self) as? Resource
+		}
+		{%- endif %}{% else %}
+		
+		{%- if prop.is_array %}
+		{{ prop.name }} = try createInstances(of: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self) ?? {{ prop.name }}
+		{%- else %}
+		{{ prop.name }} = try createInstance(type: {{ prop.class_name }}.self, for: "{{ prop.orig_name }}", in: json, presentKeys: &presentKeys, errors: &errors, owner: self) ?? {{ prop.name }}
+		{%- endif %}
+		
+		{%- endif %}{% endif %}
 		
 		{%- if prop.nonoptional and not prop.one_of_many %}
-		if nil == {{ prop.name }}{% if prop.is_array %} || {{ prop.name }}!.isEmpty{% endif %} {
+		if {% if prop.is_array %}({% endif %}nil == {{ prop.name }}{% if prop.is_array %} || {{ prop.name }}!.isEmpty){% endif %} && !presentKeys.contains("{{ prop.orig_name }}") {
 			errors.append(FHIRValidationError(missing: "{{ prop.orig_name }}"))
 		}
 		{%- endif %}

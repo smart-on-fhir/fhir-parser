@@ -83,7 +83,7 @@ extension FHIRJSONType {
 		present.insert("fhir_comments")
 		var errors = try populate(from: json, presentKeys: &present) ?? [FHIRValidationError]()
 		
-		// superfluous JSON entries? Ignore "fhir_comments".
+		// superfluous JSON entries?
 		let superfluous = json.keys.filter() { !present.contains($0) }
 		if !superfluous.isEmpty {
 			for sup in superfluous {
@@ -124,12 +124,12 @@ public func createInstance<P: FHIRJSONType>(type: P.Type, for key: String, in js
 	
 	do {
 		guard let val = exist as? P.JSONType else {
-			throw FHIRValidationError(key: key, wants: P.JSONType.self, has: type(of: exist))
+			throw FHIRValidationError(key: "", wants: P.JSONType.self, has: type(of: exist))
 		}
 		var prim = try P(json: val, owner: owner)
 		if let ext = json["_\(key)"] as? FHIRJSON {
 			presentKeys.insert("_\(key)")
-			try prim.populate(from: ext)
+			try prim.populate(from: ext, presentKeys: &presentKeys)?.forEach() { errors.append($0) }
 		}
 		return prim
 	}
@@ -183,7 +183,7 @@ public func createInstances<P: FHIRJSONType>(of type: P.Type, for key: String, i
 		do {
 			var prim = try P(json: value, owner: owner)
 			if primitiveExtensions?.count ?? 0 > i, let extended = primitiveExtensions?[i] {
-				try prim.populate(from: extended)
+				try prim.populate(from: extended, presentKeys: &presentKeys)?.forEach() { errors.append($0) }
 			}
 			primitives.append(prim)
 		}

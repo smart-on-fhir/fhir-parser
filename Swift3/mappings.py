@@ -8,10 +8,10 @@ classmap = {
     'Protocol': 'ProtocolFHIR',
     
     'boolean': 'FHIRBool',
-    'integer': 'Int',
-    'positiveInt': 'UInt',
-    'unsignedInt': 'UInt',
-    'decimal': 'NSDecimalNumber',
+    'decimal': 'FHIRDecimal',
+    'integer': 'FHIRInteger',
+    'positiveInt': 'FHIRInteger',
+    'unsignedInt': 'FHIRInteger',
     
     'string': 'FHIRString',
     'code': 'FHIRString',       # we're not generating enums for all codes
@@ -23,10 +23,12 @@ classmap = {
     'uuid': 'FHIRString',
     'uri': 'FHIRURL',
     
-    'base64Binary': 'Base64Binary',
+#   'base64Binary': 'Base64Binary',
     
     'date': 'FHIRDate',
     'time': 'FHIRTime',
+#   'dateTime': 'DateTime',
+#   'instant': 'Instant',
 }
 
 # Classes of properties to be replaced with different ones at resource rendering time
@@ -64,7 +66,8 @@ starexpandtypes = {
     'Reference',
 }
 
-# Which class names are native to the language (or can be treated this way)
+# Which class names in use for properties are native to the language (or can
+# be treated this way)
 natives = ['Bool', 'Int', 'UInt', 'Double', 'NSDecimalNumber']
 
 # Which JSON type (dict value) is expected for a given class (dict key)

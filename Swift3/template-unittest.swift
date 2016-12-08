@@ -40,12 +40,10 @@ class {{ class.name }}Tests: XCTestCase {
 		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.enum }}(rawValue: "{{ onetest.value|replace('"', '\\"') }}")!)
 		{%- else %}{% if "FHIRString" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value|replace('"', '\\"') }}")
-		{%- else %}{% if "NSDecimalNumber" == onetest.klass.name %}
-		XCTAssertEqual(inst.{{ onetest.path }}, NSDecimalNumber(string: "{{ onetest.value }}"))
-		{%- else %}{% if "Int" == onetest.klass.name or "Double" == onetest.klass.name %}
+		{%- else %}{% if "FHIRDecimal" == onetest.klass.name %}
+		XCTAssertEqual(inst.{{ onetest.path }}, "{{ onetest.value }}")
+		{%- else %}{% if "FHIRInteger" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, {{ onetest.value }})
-		{%- else %}{% if "UInt" == onetest.klass.name %}
-		XCTAssertEqual(inst.{{ onetest.path }}, UInt({{ onetest.value }}))
 		{%- else %}{% if "FHIRBool" == onetest.klass.name %}
 		XCTAssertEqual(inst.{{ onetest.path }}, {% if onetest.value %}true{% else %}false{% endif %})
 		{%- else %}{% if "FHIRDate" == onetest.klass.name or "FHIRTime" == onetest.klass.name or "DateTime" == onetest.klass.name or "Instant" == onetest.klass.name %}
@@ -56,7 +54,7 @@ class {{ class.name }}Tests: XCTestCase {
 		XCTAssertEqual(inst.{{ onetest.path }}, Base64Binary(value: "{{ onetest.value }}"))
 		{%- else %}
 		// Don't know how to create unit test for "{{ onetest.path }}", which is a {{ onetest.klass.name }}
-		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
+		{%- endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}{% endif %}
 		{%- endfor %}
 		
 		return inst

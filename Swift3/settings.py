@@ -39,14 +39,12 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/FHIRAbstractBase.swift', None, ['FHIRAbstractBase']),
     ('Swift3/FHIRAbstractResource.swift', None, ['FHIRAbstractResource']),
     ('Swift3/FHIRPrimitive.swift', None, []),
-    ('Swift3/FHIRType.swift', None, [
-    	'decimal', 'integer', 'positiveInt', 'unsignedInt',
-    ]),
+    ('Swift3/FHIRType.swift', None, []),
     ('Swift3/FHIRString.swift', None, [
-        'string', 'code', 'id', 'oid', 'uuid', 'markdown', 'xhtml',
+        'string', 'code', 'id', 'uuid', 'markdown', 'xhtml',
     ]),
     ('Swift3/FHIRURL.swift', None, [
-        'uri',
+        'uri', 'oid'
     ]),
     ('Swift3/DateAndTime.swift', None, [
         'date', 'dateTime', 'time', 'instant',
@@ -57,7 +55,12 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/FHIRBool.swift', None, [
         'boolean',
     ]),
-    ('Swift3/JSON-extensions.swift', None, []),
+    ('Swift3/FHIRDecimal.swift', None, [
+        'decimal',
+    ]),
+    ('Swift3/FHIRInteger.swift', None, [
+        'integer', 'positiveInt', 'unsignedInt',
+    ]),
     ('Swift3/FHIRServer.swift', None, []),
     ('Swift3/FHIRServerResponse.swift', None, []),
     ('Swift3/FHIRError.swift', None, ['FHIRError']),

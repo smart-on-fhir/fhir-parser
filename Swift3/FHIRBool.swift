@@ -12,7 +12,7 @@ import Foundation
 /**
 Struct to hold on to a boolean value.
 */
-public struct FHIRBool: FHIRPrimitive, CustomStringConvertible, ExpressibleByBooleanLiteral {
+public struct FHIRBool: FHIRPrimitive, LosslessStringConvertible, ExpressibleByBooleanLiteral {
 	
 	/// The actual string value.
 	public var bool: Bool
@@ -58,7 +58,14 @@ public struct FHIRBool: FHIRPrimitive, CustomStringConvertible, ExpressibleByBoo
 	}
 	
 	
-	// MARK: - CustomStringConvertible
+	// MARK: - LosslessStringConvertible & CustomStringConvertible
+	
+	public init?(_ description: String) {
+		guard let flag = Bool(description) else {
+			return nil
+		}
+		bool = flag
+	}
 	
 	public var description: String {
 		return bool.description
