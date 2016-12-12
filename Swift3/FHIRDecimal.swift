@@ -34,7 +34,7 @@ public struct FHIRDecimal: FHIRPrimitive, LosslessStringConvertible, Expressible
 	
 	- parameter dcm: The decimal to represent.
 	*/
-	public init(decimal dcm: Decimal) {
+	public init(_ dcm: Decimal) {
 		decimal = dcm
 	}
 	
@@ -57,13 +57,13 @@ public struct FHIRDecimal: FHIRPrimitive, LosslessStringConvertible, Expressible
 	*/
 	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
 		#if os(Linux)
-		self.init(decimal: Decimal(json))
+		self.init(Decimal(json))
 		#else
 		if let _ = json.stringValue.characters.index(of: ".") {
 			self.init(stringLiteral: String(format: "%.15g", json.doubleValue))
 		}
 		else {
-			self.init(decimal: json.decimalValue)
+			self.init(json.decimalValue)
 		}
 		#endif
 		_owner = owner
@@ -84,7 +84,7 @@ public struct FHIRDecimal: FHIRPrimitive, LosslessStringConvertible, Expressible
 		guard let dcm = Decimal(string: description) else {
 			return nil
 		}
-		self.init(decimal: dcm)
+		self.init(dcm)
 	}
 	
 	public var description: String {
@@ -96,7 +96,7 @@ public struct FHIRDecimal: FHIRPrimitive, LosslessStringConvertible, Expressible
 	
 	public init(stringLiteral string: StringLiteralType) {
 		let dcm = Decimal(string: string)
-		self.init(decimal: dcm ?? Decimal())
+		self.init(dcm ?? Decimal())
 	}
 	
 	public init(unicodeScalarLiteral value: Character) {
@@ -108,11 +108,11 @@ public struct FHIRDecimal: FHIRPrimitive, LosslessStringConvertible, Expressible
 	}
 	
 	public init(booleanLiteral bool: Bool) {
-		self.init(decimal: bool ? Decimal(1) : Decimal(0))
+		self.init(bool ? Decimal(1) : Decimal(0))
 	}
 	
 	public init(integerLiteral integer: Int) {
-		self.init(decimal: Decimal(integer))
+		self.init(Decimal(integer))
 	}
 }
 

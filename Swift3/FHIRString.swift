@@ -112,3 +112,12 @@ extension FHIRString: Equatable, Comparable, Hashable {
     }
 }
 
+
+extension String {
+	
+	/// Convert the receiver to `FHIRString`. This is particularly useful when dealing with optional Strings.
+	public var fhir_string: FHIRString {
+		return FHIRString(self)
+	}
+}
+

@@ -14,8 +14,13 @@ Struct to hold on to a 32-bit integer value.
 */
 public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
 	
-	/// The actual decimal value.
-	public var int: Int32
+	/// The actual 32-bit integer value.
+	public var int32: Int32
+	
+	/// The value as an `Int`, computed from `int32`.
+	public var int: Int {
+		return Int(int32)
+	}
 	
 	/// An optional id of the element.
 	public var id: String?
@@ -30,10 +35,10 @@ public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, Expressible
 	/**
 	Designated initializer.
 	
-	- parameter int: The integer to represent.
+	- parameter int: The 32-bit integer to represent.
 	*/
-	public init(int: Int32) {
-		self.int = int
+	public init(_ int32: Int32) {
+		self.int32 = int32
 	}
 	
 	
@@ -46,9 +51,9 @@ public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, Expressible
 	
 	public init(json: JSONType, owner: FHIRAbstractBase? = nil) throws {
 		#if os(Linux)
-		self.init(int: Int32(json))
+		self.init(Int32(json))
 		#else
-		self.init(int: Int32(json.intValue))
+		self.init(Int32(json.intValue))
 		#endif
 		_owner = owner
 	}
@@ -57,7 +62,7 @@ public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, Expressible
 		#if os(Linux)
 		return int
 		#else
-		return NSNumber(value: int)
+		return NSNumber(value: int32)
 		#endif
 	}
 	
@@ -65,22 +70,22 @@ public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, Expressible
 	// MARK: - LosslessStringConvertible & CustomStringConvertible
 	
 	public init?(_ description: String) {
-		guard let int = Int32(description) else {
+		guard let int32 = Int32(description) else {
 			return nil
 		}
-		self.init(int: int)
+		self.init(int32)
 	}
 	
 	public var description: String {
-		return int.description
+		return int32.description
 	}
 	
 	
 	// MARK: - ExpressibleBy
 	
 	public init(stringLiteral string: StringLiteralType) {
-		let int = Int32(string)
-		self.init(int: int ?? Int32())
+		let int32 = Int32(string)
+		self.init(int32 ?? Int32())
 	}
 	
 	public init(unicodeScalarLiteral value: Character) {
@@ -92,39 +97,39 @@ public struct FHIRInteger: FHIRPrimitive, LosslessStringConvertible, Expressible
 	}
 	
 	public init(booleanLiteral bool: Bool) {
-		self.init(int: bool ? 1 : 0)
+		self.init(bool ? 1 : 0)
 	}
 	
 	public init(integerLiteral integer: Int) {
-		self.init(int: Int32(integer))
+		self.init(Int32(integer))
 	}
 }
 
 extension FHIRInteger: Equatable, Comparable {
 	
 	public static func ==(l: FHIRInteger, r: FHIRInteger) -> Bool {
-		return l.int == r.int
+		return l.int32 == r.int32
 	}
 	
 	public static func ==(l: Int, r: FHIRInteger) -> Bool {
-		return Int32(l) == r.int
+		return Int32(l) == r.int32
 	}
 	
 	public static func ==(l: FHIRInteger, r: Int) -> Bool {
-		return l.int == Int32(r)
+		return l.int32 == Int32(r)
 	}
 	
 	
 	public static func <(lh: FHIRInteger, rh: FHIRInteger) -> Bool {
-		return lh.int < rh.int
+		return lh.int32 < rh.int32
 	}
 	
 	public static func <(lh: Int, rh: FHIRInteger) -> Bool {
-		return Int32(lh) < rh.int
+		return Int32(lh) < rh.int32
 	}
 	
 	public static func <(lh: FHIRInteger, rh: Int) -> Bool {
-		return lh.int < Int32(rh)
+		return lh.int32 < Int32(rh)
 	}
 }
 
