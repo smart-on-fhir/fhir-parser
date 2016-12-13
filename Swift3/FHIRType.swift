@@ -42,6 +42,18 @@ public protocol FHIRJSONType: FHIRType {
 	init(json: JSONType, owner: FHIRAbstractBase?) throws
 	
 	/**
+	A static/class function that should return the correct (sub)type, depending on information found in `json`.
+	
+	On primitives, simply forwards to `init(json:owner:)`.
+	
+	- parameter json:  A JSONType instance from which to instantiate
+	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
+	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
+	- throws:          FHIRValidationError
+	*/
+	static func instantiate(from json: JSONType, owner: FHIRAbstractBase?) throws -> Self
+	
+	/**
 	Used during parsing, applies the values found in `json` (id and extension) to the receiver.
 	
 	- parameter json: The JSON dictionary to use to update the receiver
@@ -132,7 +144,7 @@ public func createInstance<P: FHIRJSONType>(type: P.Type, for key: String, in js
 		guard let val = exist as? P.JSONType else {
 			throw FHIRValidationError(key: "", wants: P.JSONType.self, has: type(of: exist))
 		}
-		var prim = try P(json: val, owner: owner)
+		var prim = try P.instantiate(from: val, owner: owner)
 		if let ext = json["_\(key)"] as? FHIRJSON {
 			presentKeys.insert("_\(key)")
 			try prim.populate(from: ext, presentKeys: &presentKeys)?.forEach() { errors.append($0) }
@@ -187,7 +199,7 @@ public func createInstances<P: FHIRJSONType>(of type: P.Type, for key: String, i
 	var primitives = [P]()
 	for (i, value) in val.enumerated() {
 		do {
-			var prim = try P(json: value, owner: owner)
+			var prim = try P.instantiate(from: value, owner: owner)
 			if primitiveExtensions?.count ?? 0 > i, let extended = primitiveExtensions?[i] {
 				try prim.populate(from: extended, presentKeys: &presentKeys)?.forEach() { errors.append($0) }
 			}

@@ -22,6 +22,10 @@ public protocol FHIRPrimitive: FHIRJSONType {
 
 extension FHIRPrimitive {
 	
+	public static func instantiate(from json: JSONType, owner: FHIRAbstractBase?) throws -> Self {
+		return try self.init(json: json, owner: owner)
+	}
+	
 	/**
 	Default implementation to perform JSON parsing on primitives.
 	

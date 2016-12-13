@@ -12,15 +12,16 @@ Extension to FHIRAbstractBase to be able to instantiate by class name.
 */
 extension FHIRAbstractBase {
 	
-	public class func factory(_ className: String, json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
-		switch className {
+	public class func factory<T: FHIRAbstractBase>(_ typeName: String, json: FHIRJSON, owner: FHIRAbstractBase?, type: T.Type) throws -> T {
+		switch typeName {
 		{%- for klass in classes %}{% if klass.resource_type %}
 			case "{{ klass.resource_type }}":
-				return try {{ klass.name }}(json: json, owner: owner)
+				if let res = try {{ klass.resource_type }}(json: json, owner: owner) as? T { return res }
 		{%- endif %}{% endfor %}
 			default:
-				return try FHIRAbstractBase(json: json, owner: owner)
+				break
 		}
+		return try T(json: json, owner: owner)
 	}
 }
 

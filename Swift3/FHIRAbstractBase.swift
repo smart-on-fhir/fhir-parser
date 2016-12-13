@@ -55,14 +55,17 @@ open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
 	Tries to find `resourceType` by inspecting the JSON dictionary, then instantiates the appropriate class for the specified resource type;
 	instantiates the receiver's class otherwise.
 	
+	- note: If the factory does not return a subclass of the receiver, will discard the factory-created instance and use
+	`self.init(json:owner:)` instead.
+	
 	- parameter json:  A FHIRJSON decoded from a JSON response
 	- parameter owner: The FHIRAbstractBase owning the new instance, if appropriate
 	- returns:         If possible the appropriate FHIRAbstractBase subclass, instantiated from the given JSON dictionary, Self otherwise
 	- throws:          FHIRValidationError
 	*/
-	public final class func instantiate(from json: FHIRJSON, owner: FHIRAbstractBase?) throws -> FHIRAbstractBase {
+	public final class func instantiate(from json: FHIRJSON, owner: FHIRAbstractBase?) throws -> Self {
 		if let type = json["resourceType"] as? String {
-			return try factory(type, json: json, owner: owner)
+			return try factory(type, json: json, owner: owner, type: self)
 		}
 		return try self.init(json: json, owner: owner)		// must use 'required' init with dynamic type
 	}
