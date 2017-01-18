@@ -84,5 +84,10 @@ extension URL {
 	public var absoluteFHIRString: FHIRString {
 		return FHIRString(absoluteString)
 	}
+	
+	/// Convert the receiver to `FHIRURL`. This is particularly useful when dealing with optional URLs.
+	public var fhir_url: FHIRURL {
+		return FHIRURL(self)
+	}
 }
 
