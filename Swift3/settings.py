@@ -61,6 +61,7 @@ manual_profiles = [                                     # all these profiles sho
     ('Swift3/FHIRInteger.swift', None, [
         'integer', 'positiveInt', 'unsignedInt',
     ]),
+    ('Swift3/FHIREnum.swift', None, []),
     ('Swift3/FHIRServer.swift', None, []),
     ('Swift3/FHIRServerResponse.swift', None, []),
     ('Swift3/FHIRError.swift', None, ['FHIRError']),

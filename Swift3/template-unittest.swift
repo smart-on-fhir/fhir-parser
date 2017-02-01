@@ -7,17 +7,23 @@
 //
 
 import XCTest
+#if !NO_MODEL_IMPORT
+import Models
+typealias SwiftFHIR{{ class.name }} = Models.{{ class.name }}
+#else
 import SwiftFHIR
+typealias SwiftFHIR{{ class.name }} = SwiftFHIR.{{ class.name }}
+#endif
 
 
 class {{ class.name }}Tests: XCTestCase {
 	
-	func instantiateFrom(filename: String) throws -> SwiftFHIR.{{ class.name }} {
+	func instantiateFrom(filename: String) throws -> SwiftFHIR{{ class.name }} {
 		return try instantiateFrom(json: try readJSONFile(filename))
 	}
 	
-	func instantiateFrom(json: FHIRJSON) throws -> SwiftFHIR.{{ class.name }} {
-		return try SwiftFHIR.{{ class.name }}(json: json)
+	func instantiateFrom(json: FHIRJSON) throws -> SwiftFHIR{{ class.name }} {
+		return try SwiftFHIR{{ class.name }}(json: json)
 	}
 	
 {%- for tcase in tests %}
@@ -33,7 +39,7 @@ class {{ class.name }}Tests: XCTestCase {
 	}
 	
 	@discardableResult
-	func run{{ class.name }}{{ loop.index }}(_ json: FHIRJSON? = nil) throws -> SwiftFHIR.{{ class.name }} {
+	func run{{ class.name }}{{ loop.index }}(_ json: FHIRJSON? = nil) throws -> SwiftFHIR{{ class.name }} {
 		let inst = (nil != json) ? try instantiateFrom(json: json!) : try instantiateFrom(filename: "{{ tcase.filename }}")
 		{% for onetest in tcase.tests %}
 		{%- if onetest.enum %}
