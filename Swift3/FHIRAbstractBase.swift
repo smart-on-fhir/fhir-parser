@@ -6,11 +6,13 @@
 //  2014, SMART Health IT.
 //
 
+import Foundation
+
 
 /**
 Abstract superclass for all FHIR data elements.
 */
-open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
+open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible, CustomDebugStringConvertible {
 	
 	public typealias JSONType = FHIRJSON
 	
@@ -207,6 +209,14 @@ open class FHIRAbstractBase: FHIRJSONType, CustomStringConvertible {
 	
 	open var description: String {
 		return "<\(type(of: self).resourceType)>"
+	}
+	
+	/// The debug description pretty-prints the Element/Resource's JSON representation.
+	open var debugDescription: String {
+		if let json = try? asJSON(), let data = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted), let str = String(data: data, encoding: String.Encoding.utf8) {
+			return str
+		}
+		return description
 	}
 }
 
