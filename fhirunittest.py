@@ -61,12 +61,14 @@ class FHIRUnitTestController(object):
         
         return FHIRUnitTest(self, resource.filepath, resource.content, klass)
     
-    def make_path(self, prefix, key):
+    def make_path(self, prefix, prop):
         """ Takes care of combining prefix and key into a path.
         """
-        path = key
+        path = prop.name
         if prefix:
             path = self.settings.unittest_format_path_key.format(prefix, path)
+        if prop.requires_realm_optional:
+            path = path + ".value"
         return path
 
 
@@ -119,12 +121,14 @@ class FHIRUnitTest(object):
                     logger.error('There is no class "{}" for property "{}" in {}'
                         .format(prop.class_name, path, self.filepath))
                 else:
-                    path = self.controller.make_path(self.prefix, prop.name)
-                    
+                    path = self.controller.make_path(self.prefix, prop)
+
                     if list == type(val):
                         i = 0
                         for ival in val:
                             idxpath = self.controller.settings.unittest_format_path_index.format(path, i)
+                            if prop.is_array and prop.is_primitive:
+                                idxpath = idxpath + ".value"
                             item = FHIRUnitTestItem(self.filepath, idxpath, ival, propclass, True)
                             tests.extend(item.create_tests(self.controller))
                             i += 1
@@ -182,7 +186,7 @@ class FHIRUnitTestItem(object):
                 elif not value.isprintable():
                     return tests
                 
-                value = self.value.replace("\n", "\\n")
+                value = self.value.replace("\n", "\\n").replace("\t", "\\t")
             tests.append(FHIRUnitTestCase(self.path, value, self.klass, self.array_item))
         
         return tests
