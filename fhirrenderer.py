@@ -56,6 +56,8 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
         for filepath, module, contains in self.settings.manual_profiles:
             if os.path.exists(filepath):
                 resource_target_dir = os.path.dirname(self.settings.tpl_resource_target_ptrn)
+                if not os.path.exists(resource_target_dir):
+                    os.makedirs(resource_target_dir)
                 tgt = os.path.join(resource_target_dir, os.path.basename(filepath))
                 logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
