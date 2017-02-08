@@ -236,7 +236,6 @@ class FHIRSpec(object):
     def write(self):
         if self.settings.write_resources:
             renderer = fhirrenderer.FHIRStructureDefinitionRenderer(self, self.settings)
-            renderer.copy_files()
             renderer.render()
             
             vsrenderer = fhirrenderer.FHIRValueSetRenderer(self, self.settings)
