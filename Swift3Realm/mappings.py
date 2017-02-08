@@ -3,25 +3,28 @@
 # Which class names to map to resources and elements
 classmap = {
     'Any': 'Resource',
+    'Protocol': 'ProtocolFHIR',
     
     'boolean': 'Bool',
     'integer': 'Int',
-    'positiveInt': 'UInt',
-    'unsignedInt': 'UInt',
-    'decimal': 'NSDecimalNumber',
+    'positiveInt': 'Int',
+    'unsignedInt': 'Int',
+    'decimal': 'RealmDecimal',
     
     'string': 'String',
     'markdown': 'String',
     'id': 'String',
     'code': 'String',       # for now we're not generating enums for these
-    'uri': 'NSURL',
+    'uri': 'String',
     'oid': 'String',
     'uuid': 'String',
     'xhtml': 'String',
     'base64Binary': 'Base64Binary',
+    'date': 'FHIRDate',
+    'time': 'FHIRTime',
 }
 
-# Classes to be replaced with different ones at resource rendering time
+# Classes of properties to be replaced with different ones at resource rendering time
 replacemap = {}
 
 # Some properties (in Conformance, Profile and Questionnaire currently) can be
@@ -58,13 +61,13 @@ starexpandtypes = {
 }
 
 # Which class names are native to the language (or can be treated this way)
-natives = ['Bool', 'Int', 'UInt', 'String', 'Base64Binary', 'NSNumber', 'NSDecimalNumber', 'Date', 'Time', 'DateTime', 'Instant', 'NSURL']
+natives = ['Bool', 'Int', 'String', 'Base64Binary', 'NSNumber', 'RealmDecimal', 'FHIRDate', 'FHIRTime', 'DateTime', 'Instant', 'RealmURL']
 
 # Which classes are primitives and don't support the RealmSwift.List<> without an Object wrapper
-primitives = []
+primitives = ['Bool', 'Int', 'String', 'NSNumber']
 
 # which class names require to be wrapped in RealmOptional
-realm_optionals = []
+realm_optionals = ['Bool', 'Int', 'NSNumber']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {
@@ -74,12 +77,12 @@ jsonmap = {
     'Double': 'NSNumber',
     
     'String': 'String',
-    'Date': 'String',
-    'Time': 'String',
+    'FHIRDate': 'String',
+    'FHIRTime': 'String',
     'DateTime': 'String',
     'Instant': 'String',
-    'NSDecimalNumber': 'NSNumber',
-    'NSURL': 'String',
+    'RealmDecimal': 'NSNumber',
+    'RealmURL': 'String',
     'Base64Binary': 'String',
 }
 jsonmap_default = 'FHIRJSON'
@@ -94,4 +97,5 @@ reservedmap = {
     'operator': 'operator_fhir',
     'repeat': 'repeat_fhir',
     'description': 'description_fhir',    # Reserved for `Printable` classes
+    'hash': 'hash_fhir'
 }

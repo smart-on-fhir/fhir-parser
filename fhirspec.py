@@ -159,6 +159,12 @@ class FHIRSpec(object):
     def class_name_is_native(self, class_name):
         return class_name in self.settings.natives
     
+    def class_name_is_primitive(self, class_name):
+        return class_name in self.settings.primitives
+
+    def class_name_requires_realm_optional(self, class_name):
+        return class_name in self.settings.realm_optionals
+
     def safe_property_name(self, prop_name):
         return self.settings.reservedmap.get(prop_name, prop_name)
     
