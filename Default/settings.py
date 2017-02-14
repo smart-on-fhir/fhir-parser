@@ -33,27 +33,21 @@ tpl_unittest_target = '../models'               # target directory to write the 
 tpl_unittest_target_ptrn = '{}_tests.py'        # target file name pattern for unit tests; the one placeholder (`{}`) will be the class name
 unittest_copyfiles = []                         # array of file names to copy to the test directory `tpl_unittest_target` (e.g. unit test base classes)
 
-unittest_format_path_prepare = '{}'      # used to format `path` before appending another path element - one placeholder for `path`
-unittest_format_path_key = '{}.{}'       # used to create property paths by appending `key` to the existing `path` - two placeholders
-unittest_format_path_index = '{}[{}]'    # used for array properties - two placeholders, `path` and the array index
+unittest_format_path_prepare = '{}'        # used to format `path` before appending another path element - one placeholder for `path`
+unittest_format_path_key = '{}.{}'         # used to create property paths by appending `key` to the existing `path` - two placeholders
+unittest_format_path_index = '{}[{}]'      # used for array properties - two placeholders, `path` and the array index
 
-
-##
-##  Know what you do when changing the following settings
-##
-
-
-# classes/resources
+# Settings for classes and resources
 default_base = {
-    'complex-type': 'FHIRAbstractBase',               # the class to use for "Element" types
-    'resource': 'FHIRAbstractResource',               # the class to use for "Resource" types
+    'complex-type': 'FHIRAbstractBase',    # the class to use for "Element" types
+    'resource': 'FHIRAbstractResource',    # the class to use for "Resource" types
 }
-resource_modules_lowercase = True                     # whether all resource paths (i.e. modules) should be lowercase
-camelcase_classes = True                              # whether class name generation should use CamelCase
-camelcase_enums = True                                # whether names for enums should be camelCased
-backbone_class_adds_parent = True                     # if True, backbone class names prepend their parent's class name
+resource_modules_lowercase = True          # whether all resource paths (i.e. modules) should be lowercase
+camelcase_classes = True                   # whether class name generation should use CamelCase
+camelcase_enums = True                     # whether names for enums should be camelCased
+backbone_class_adds_parent = True          # if True, backbone class names prepend their parent's class name
 
-# all these files should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path/to/file, module, array-of-class-names)
+# All these files should be copied to `tpl_resource_target`: tuples of (path/to/file, module, array-of-class-names)
 manual_profiles = [
     ('Sample/fhirabstractbase.py', 'fhirabstractbase', [
         'boolean',

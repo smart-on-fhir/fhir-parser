@@ -161,7 +161,8 @@ class FHIRUnitTestRenderer(FHIRRenderer):
         
         # copy unit test files, if any
         if self.settings.unittest_copyfiles is not None:
-            for utfile in self.settings.unittest_copyfiles:
+            for origfile in self.settings.unittest_copyfiles:
+                utfile = os.path.join(*origfile.split('/'))
                 if os.path.exists(utfile):
                     target = os.path.join(self.settings.tpl_unittest_target, os.path.basename(utfile))
                     logger.info('Copying unittest file {} to {}'.format(os.path.basename(utfile), target))

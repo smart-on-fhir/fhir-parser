@@ -36,8 +36,9 @@ Use
     First, import the default mappings using `from Default.mappings import *` (unless you will define all variables yourself anyway).
     Then adjust your `mappings.py` to your liking by overriding the mappings you wish to change.
 3. Similarly, create the file `settings.py` in your project.
-    First, import the mappings you have just created with `from mappings import *`.
-    Then import the default settings using `from Default.settings import *` and override any settings you want to change.
+    First, import the default settings using `from Default.settings import *` and override any settings you want to change.
+    Then, import the mappings you have just created with `from mappings import *`.
+    The default settings import the default mappings, so you may need to overwrite more keys from _mappings_ than you'd first think.
     You most likely want to change the topmost settings found in the default file, which are determining where the templates can be found and generated classes will be copied to.
 4. Install the generator's requirements by running `pip3` (or `pip`):
     ```bash
