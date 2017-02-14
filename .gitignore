@@ -2,12 +2,10 @@
 __pycache__
 env
 
-# ignore the actually used settings file
+# ignore mappings and settings files
+/mappings.py
 /settings.py
 
 # ignore downloads
 /downloads
-
-# ignore IDE files
-*.sublime-*
 

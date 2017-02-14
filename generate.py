@@ -3,6 +3,8 @@
 #
 #  Download and parse FHIR resource definitions
 #  Supply "-f" to force a redownload of the spec
+#  Supply "-d" to load and parse but not write resources
+#  Supply "-l" to only download the spec
 
 import sys
 

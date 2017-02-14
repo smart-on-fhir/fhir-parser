@@ -7,32 +7,50 @@ import re
 import shutil
 import textwrap
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, TemplateNotFound
 from jinja2.filters import environmentfilter
 from logger import logger
 
-jinjaenv = Environment(loader=PackageLoader('generate', '.'))
-
 
 class FHIRRenderer(object):
+    """ Superclass for all renderer implementations.
+    """
+    
     def __init__(self, spec, settings):
         self.spec = spec
-        self.settings = settings
+        self.settings = self.__class__.cleaned_settings(settings)
+        self.jinjaenv = Environment(loader=PackageLoader('generate', self.settings.tpl_base))
+        self.jinjaenv.filters['wordwrap'] = do_wordwrap
+    
+    @classmethod
+    def cleaned_settings(cls, settings):
+        """ Splits paths at '/' and re-joins them using os.path.join().
+        """
+        settings.tpl_base = os.path.join(*settings.tpl_base.split('/'))
+        settings.tpl_resource_target = os.path.join(*settings.tpl_resource_target.split('/'))
+        settings.tpl_factory_target = os.path.join(*settings.tpl_factory_target.split('/'))
+        settings.tpl_unittest_target = os.path.join(*settings.tpl_unittest_target.split('/'))
+        settings.tpl_resource_target = os.path.join(*settings.tpl_resource_target.split('/'))
+        return settings
     
     def render(self):
         """ The main rendering start point, for subclasses to override.
         """
         raise Exception("Cannot use abstract superclass' `render` method")
     
-    def do_render(self, data, template_path, target_path):
+    def do_render(self, data, template_name, target_path):
         """ Render the given data using a Jinja2 template, writing to the file
         at the target path.
         
-        :param template_path: Path to the Jinja2 template to render
+        :param template_name: The Jinja2 template to render, located in settings.tpl_base
         :param target_path: Output path
         """
-        assert os.path.exists(template_path)
-        template = jinjaenv.get_template(template_path)
+        try:
+            template = self.jinjaenv.get_template(template_name)
+        except TemplateNotFound as e:
+            logger.error("Template \"{}\" not found in «{}», cannot render"
+                .format(template_name, self.settings.tpl_base))
+            return
         
         if not target_path:
             raise Exception("No target filepath provided")
@@ -53,7 +71,8 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
     def copy_files(self, target_dir):
         """ Copy base resources to the target location, according to settings.
         """
-        for filepath, module, contains in self.settings.manual_profiles:
+        for origpath, module, contains in self.settings.manual_profiles:
+            filepath = os.path.join(*origpath.split('/'))
             if os.path.exists(filepath):
                 tgt = os.path.join(target_dir, os.path.basename(filepath))
                 logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
@@ -77,7 +96,8 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
             
             ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
             source_path = self.settings.tpl_resource_source
-            target_path = self.settings.tpl_resource_target_ptrn.format(ptrn)
+            target_name = self.settings.tpl_resource_target_ptrn.format(ptrn)
+            target_path = os.path.join(self.settings.tpl_resource_target, target_name)
             
             self.do_render(data, source_path, target_path)
         self.copy_files(os.path.dirname(target_path))
@@ -102,13 +122,18 @@ class FHIRValueSetRenderer(FHIRRenderer):
     """ Write ValueSet and CodeSystem contained in the FHIR spec.
     """
     def render(self):
+        if not self.settings.tpl_codesystems_source:
+            logger.info("Not rendering value sets and code systems since `tpl_codesystems_source` is not set")
+            return
+        
         systems = [v for k,v in self.spec.codesystems.items()]
         data = {
             'info': self.spec.info,
             'systems': sorted(systems, key=lambda x: x.name),
         }
-        target_path = self.settings.tpl_resource_target_ptrn.format('CodeSystems')
-        self.do_render(data, self.settings.tpl_resource_codesystems, target_path)
+        target_name = self.settings.tpl_codesystems_target_name
+        target_path = os.path.join(self.settings.tpl_resource_target, target_name)
+        self.do_render(data, self.settings.tpl_codesystems_source, target_path)
 
 
 class FHIRUnitTestRenderer(FHIRRenderer):
@@ -129,7 +154,8 @@ class FHIRUnitTestRenderer(FHIRRenderer):
             file_pattern = coll.klass.name
             if self.settings.resource_modules_lowercase:
                 file_pattern = file_pattern.lower()
-            file_path = self.settings.tpl_unittest_target_ptrn.format(file_pattern)
+            file_name = self.settings.tpl_unittest_target_ptrn.format(file_pattern)
+            file_path = os.path.join(self.settings.tpl_unittest_target, file_name)
             
             self.do_render(data, self.settings.tpl_unittest_source, file_path)
         
@@ -137,9 +163,12 @@ class FHIRUnitTestRenderer(FHIRRenderer):
         if self.settings.unittest_copyfiles is not None:
             for utfile in self.settings.unittest_copyfiles:
                 if os.path.exists(utfile):
-                    target = os.path.join(os.path.dirname(self.settings.tpl_unittest_target_ptrn), os.path.basename(utfile))
+                    target = os.path.join(self.settings.tpl_unittest_target, os.path.basename(utfile))
                     logger.info('Copying unittest file {} to {}'.format(os.path.basename(utfile), target))
                     shutil.copyfile(utfile, target)
+                else:
+                    logger.warn("Unit test file \"{}\" configured in `unittest_copyfiles` does not exist"
+                        .format(utfile))
 
 
 # There is a bug in Jinja's wordwrap (inherited from `textwrap`) in that it
@@ -173,6 +202,4 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
                 break_long_words=break_long_words)
         )
     return wrapstring.join(accumulator)
-
-jinjaenv.filters['wordwrap'] = do_wordwrap
 

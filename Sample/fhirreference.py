@@ -30,13 +30,7 @@ class FHIRReference(reference.Reference):
             logging.warning("No `reference` set, cannot resolve")
             return None
         
-        # already resolved and cached?
-        resolved = owning_resource.resolvedReference(refid)
-        if resolved is not None:
-            if isinstance(resolved, klass):
-                return resolved
-            logging.warning("Referenced resource {} is not a {} but a {}".format(refid, klass, resolved.__class__))
-            return None
+        # already resolved and cached? -> must be implemented in abstract base/resource
         
         # not yet resolved, see if it's a contained resource
         if owning_resource.contained is not None:

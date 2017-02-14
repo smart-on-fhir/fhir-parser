@@ -1,4 +1,6 @@
-# Mappings for the FHIR class generator
+# Mappings for the FHIR class generator.
+#
+# This should be useable as-is for Python classes.
 
 # Which class names to map to resources and elements
 classmap = {
@@ -98,6 +100,10 @@ enum_map = {
     '*': 'max',
 }
 
+# If you want to give specific names to enums based on their URI
 enum_namemap = {
+    'http://hl7.org/fhir/contracttermsubtypecodes': 'ContractTermSubtypeCodes',
+    'http://hl7.org/fhir/coverage-exception': 'CoverageExceptionCodes',
+    'http://hl7.org/fhir/resource-type-link': 'ResourceTypeLink',
 }
 
