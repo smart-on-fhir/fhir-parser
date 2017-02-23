@@ -588,6 +588,7 @@ class FHIRStructureDefinitionElement(object):
         self.definition = None
         self.n_min = None
         self.n_max = None
+        self.is_summary = False
         self.valueset = None
         self.enum = None      # assigned if the element has a binding to a ValueSet that is a CodeSystem generating an enum
         
@@ -615,6 +616,7 @@ class FHIRStructureDefinitionElement(object):
         
         self.n_min = element_dict.get('min')
         self.n_max = element_dict.get('max')
+        self.is_summary = element_dict.get('isSummary')
     
     def resolve_dependencies(self):
         if self.is_main_profile_element:

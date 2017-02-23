@@ -132,6 +132,7 @@ class FHIRClassProperty(object):
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = False if self.enum else spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == element.n_max else False
+        self.is_summary = element.is_summary
         self.nonoptional = True if element.n_min is not None and 0 != int(element.n_min) else False
         self.reference_to_names = [spec.class_name_for_profile(type_obj.profile)] if type_obj.profile is not None else []
         self.short = element.definition.short
