@@ -683,9 +683,11 @@ class FHIRStructureDefinitionElement(object):
         if self.is_main_profile_element or self.definition is None:
             return None
         
-        if self.definition.slicing:
-            logger.debug('Omitting property "{}" for slicing'.format(self.definition.prop_name))
-            return None
+        # TODO: handle slicing information (not sure why these properties were
+        # omitted previously)
+        #if self.definition.slicing:
+        #    logger.debug('Omitting property "{}" for slicing'.format(self.definition.prop_name))
+        #    return None
         
         # this must be a property
         if self.parent is None:
