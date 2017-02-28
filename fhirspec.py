@@ -451,6 +451,12 @@ class FHIRStructureDefinition(object):
             # resolve element dependencies
             for element in self.elements:
                 element.resolve_dependencies()
+            
+            # run check: if n_min > 0 and parent is in summary, must also be in summary
+            for element in self.elements:
+                if element.n_min is not None and element.n_min > 0:
+                    if element.parent is not None and element.parent.is_summary and not element.is_summary:
+                        logger.error("n_min > 0 but not summary: `{}`".format(element.path))
         
         # create classes and class properties
         if self.main_element is not None:
