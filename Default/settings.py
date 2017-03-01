@@ -48,6 +48,7 @@ camelcase_enums = True                     # whether names for enums should be c
 backbone_class_adds_parent = True          # if True, backbone class names prepend their parent's class name
 
 # All these files should be copied to `tpl_resource_target`: tuples of (path/to/file, module, array-of-class-names)
+# If the path is None, no file will be copied but the class names will still be recognized and it is assumed the class is present.
 manual_profiles = [
     ('Sample/fhirabstractbase.py', 'fhirabstractbase', [
         'boolean',

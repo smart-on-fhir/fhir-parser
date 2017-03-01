@@ -72,6 +72,8 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
         """ Copy base resources to the target location, according to settings.
         """
         for origpath, module, contains in self.settings.manual_profiles:
+            if not origpath:
+                continue
             filepath = os.path.join(*origpath.split('/'))
             if os.path.exists(filepath):
                 tgt = os.path.join(target_dir, os.path.basename(filepath))
