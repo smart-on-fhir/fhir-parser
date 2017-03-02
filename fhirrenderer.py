@@ -120,6 +120,26 @@ class FHIRFactoryRenderer(FHIRRenderer):
         self.do_render(data, self.settings.tpl_factory_source, self.settings.tpl_factory_target)
 
 
+class FHIRDependencyRenderer(FHIRRenderer):
+    """ Puts down dependencies for each of the FHIR resources. Per resource
+    class will grab all class/resource names that are needed for its
+    properties and add them to the "imports" key. Will also check 
+    classes/resources may appear in references and list those in the
+    "references" key.
+    """
+    def render(self):
+        data = {'info': self.spec.info}
+        resources = []
+        for profile in self.spec.writable_profiles():
+            resources.append({
+                'name': profile.targetname,
+                'imports': profile.needed_external_classes(),
+                'references': profile.referenced_classes(),
+            })
+        data['resources'] = sorted(resources, key=lambda x: x['name'])
+        self.do_render(data, self.settings.tpl_dependencies_source, self.settings.tpl_dependencies_target)
+
+
 class FHIRValueSetRenderer(FHIRRenderer):
     """ Write ValueSet and CodeSystem contained in the FHIR spec.
     """

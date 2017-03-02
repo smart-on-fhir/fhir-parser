@@ -21,10 +21,13 @@ tpl_resource_target_ptrn = '{}.py'                    # target class file name p
 tpl_codesystems_source = 'template-codesystems.py'    # the template to use as source when writing enums for CodeSystems; can be `None`
 tpl_codesystems_target_name = 'codesystems.py'        # the filename to use for the generated code systems and value sets (in `tpl_resource_target`)
 
-# Whether and where to put the factory methods
+# Whether and where to put the factory methods and the dependency graph
 write_factory = True
 tpl_factory_source = 'template-elementfactory.py'       # the template to use for factory generation
 tpl_factory_target = '../models/fhirelementfactory.py'  # where to write the generated factory to
+write_dependencies = False
+tpl_dependencies_source = 'template-dependencies.json'  # template used to render the JSON dependency graph
+tpl_dependencies_target = './dependencies.json'         # write dependency JSON to project root
 
 # Whether and where to write unit tests
 write_unittests = True

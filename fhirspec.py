@@ -227,6 +227,8 @@ class FHIRSpec(object):
     # MARK: Writing Data
     
     def writable_profiles(self):
+        """ Returns a list of `FHIRStructureDefinition` instances.
+        """
         profiles = []
         for key, profile in self.profiles.items():
             if not profile.is_manual:
@@ -243,6 +245,10 @@ class FHIRSpec(object):
         
         if self.settings.write_factory:
             renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
+            renderer.render()
+        
+        if self.settings.write_dependencies:
+            renderer = fhirrenderer.FHIRDependencyRenderer(self, self.settings)
             renderer.render()
         
         if self.settings.write_unittests:
@@ -520,6 +526,28 @@ class FHIRStructureDefinition(object):
                             needs.append(prop_cls)
         
         return sorted(needs, key=lambda n: n.module or n.name)
+    
+    def referenced_classes(self):
+        """ Returns a unique list of **external** class names that are
+        referenced from at least one of the receiver's `Reference`-type
+        properties.
+        
+        :raises: Will raise if called before `finalize` has been called.
+        """
+        if not self._did_finalize:
+            raise Exception('Cannot use `referenced_classes` before finalizing')
+        
+        references = set()
+        for klass in self.classes:
+            for prop in klass.properties:
+                if len(prop.reference_to_names) > 0:
+                    references.update(prop.reference_to_names)
+        
+        # no need to list references to our own classes, remove them
+        for klass in self.classes:
+            references.discard(klass.name)
+        
+        return sorted(references)
     
     def writable_classes(self):
         classes = []
