@@ -80,6 +80,20 @@ class FHIRClass(object):
             nonexpanded.append(prop)
         return nonexpanded
     
+    @property
+    def nonexpanded_nonoptionals(self):
+        nonexpanded = []
+        included = set()
+        for prop in self.properties:
+            if not prop.nonoptional:
+                continue
+            if prop.one_of_many:
+                if prop.one_of_many in included:
+                    continue
+                included.add(prop.one_of_many)
+            nonexpanded.append(prop)
+        return nonexpanded
+    
     def property_for(self, prop_name):
         for prop in self.properties:
             if prop.orig_name == prop_name:
