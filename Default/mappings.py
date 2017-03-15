@@ -33,38 +33,6 @@ replacemap = {
     'Reference': 'FHIRReference',     # `FHIRReference` adds dereferencing capabilities
 }
 
-# Some properties can be any (value) type and have the `value[x]` form - how to
-# substitute is defined here
-# see http://hl7.org/fhir/2015May/datatypes.html#1.18.0.17
-starexpandtypes = {
-    'integer',
-    'decimal',
-    'dateTime',
-    'date',
-    'instant',
-    'time',
-    'string',
-    'uri',
-    'boolean',
-    'code',
-    'base64Binary',
-    
-    'Coding',
-    'CodeableConcept',
-    'Attachment',
-    'Identifier',
-    'Quantity',
-    'Range',
-    'Period',
-    'Ratio',
-    'HumanName',
-    'Address',
-    'ContactPoint',
-    'Timing',
-    'Signature',
-    'Reference',
-}
-
 # Which class names are native to the language (or can be treated this way)
 natives = ['bool', 'int', 'float', 'str', 'dict']
 

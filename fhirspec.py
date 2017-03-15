@@ -211,10 +211,6 @@ class FHIRSpec(object):
     def json_class_for_class_name(self, class_name):
         return self.settings.jsonmap.get(class_name, self.settings.jsonmap_default)
     
-    @property
-    def star_expand_types(self):
-        return self.settings.starexpandtypes
-    
     
     # MARK: Unit Tests
     
@@ -739,11 +735,6 @@ class FHIRStructureDefinitionElement(object):
                 if 'BackboneElement' == type_obj.code or 'Element' == type_obj.code:        # data types don't use "BackboneElement"
                     props.append(fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class()))
                     # TODO: look at http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name ?
-                
-                # the wildcard type: expand to all possible types, as defined in our mapping
-                elif '*' == type_obj.code:
-                    for exp_type in self.profile.spec.star_expand_types:
-                        props.append(fhirclass.FHIRClassProperty(self, type_obj, exp_type))
                 else:
                     props.append(fhirclass.FHIRClassProperty(self, type_obj))
             return props
