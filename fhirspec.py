@@ -459,6 +459,7 @@ class FHIRStructureDefinition(object):
                 if element.n_min is not None and element.n_min > 0:
                     if element.parent is not None and element.parent.is_summary and not element.is_summary:
                         logger.error("n_min > 0 but not summary: `{}`".format(element.path))
+                        element.summary_n_min_conflict = True
         
         # create classes and class properties
         if self.main_element is not None:
@@ -619,6 +620,7 @@ class FHIRStructureDefinitionElement(object):
         self.n_min = None
         self.n_max = None
         self.is_summary = False
+        self.summary_n_min_conflict = False  # to mark conflicts, see #13215 (http://gforge.hl7.org/gf/project/fhir/tracker/?action=TrackerItemEdit&tracker_item_id=13125)
         self.valueset = None
         self.enum = None      # assigned if the element has a binding to a ValueSet that is a CodeSystem generating an enum
         
@@ -691,7 +693,7 @@ class FHIRStructureDefinitionElement(object):
         if self.children is not None:
             for child in self.children:
                 properties = child.as_properties()
-                if properties is not None:    
+                if properties is not None:
                     
                     # collect subclasses
                     sub, subsubs = child.create_class(module)
