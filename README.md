@@ -7,8 +7,13 @@ If you've come here because you want _Swift_ or _Python_ classes for FHIR data m
 - [Swift-FHIR][] and [Swift-SMART][]
 - Python [client-py][]
 
+The `master` branch is currently capable of parsing _STU 3, v3.0.0_.  
+The `develop` branch should be capable of parsing the continuous integration build and will be merged into master on new major FHIR releases.
+There may be tags for specific freezes, see [releases](https://github.com/smart-on-fhir/fhir-parser/releases).
+
 This work is licensed under the [APACHE license][license].
 FHIR® is the registered trademark of [HL7][] and is used with the permission of HL7.
+
 
 Tech
 ----
@@ -22,11 +27,6 @@ This repository **does not include the templates and base classes** needed for c
 You will typically add this repo as a submodule to your framework project, create a directory that contains the necessary base classes and templates, create _settings_ and _mappings_ files and run the script.
 Examples on what you would need to do for Python classes can be found in _Sample/settings.py_, _Sample/mappings.py_ and _Sample/templates*_.
 
-The `master` branch is currently on _DSTU 2, v1.0.2_.  
-The `develop` branch is on par with _master_, but points to the continuous integration build, currently on _1.8.0_, maybe newer.
-There may be tags for specific freezes, see [releases](https://github.com/smart-on-fhir/fhir-parser/releases).
-
-See [tags](https://github.com/smart-on-fhir/fhir-parser/releases) for specific FHIR versions.
 
 Use
 ---
