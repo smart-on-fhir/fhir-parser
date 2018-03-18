@@ -363,7 +363,6 @@ class FHIRCodeSystem(object):
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
-
         assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
         if len(concepts) > 100:
             self.generate_enum = False
