@@ -74,7 +74,10 @@ class FHIRSpec(object):
                 self.valuesets[resource['url']] = FHIRValueSet(self, resource)
             elif 'CodeSystem' == resource['resourceType']:
                 assert 'url' in resource
-                self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                ## TODO Need to remove this to think of a better way to handle system with no codes.
+                ## http://hl7.org/fhir/2018Jan/valueset-operation-outcome.html <- bad build of the FHIR spec for R4 snapshot
+                if len(self.codesystems) > 0:
+                    self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
         logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
     
     def valueset_with_uri(self, uri):
@@ -184,10 +187,16 @@ class FHIRSpec(object):
             return None
         return self.settings.replacemap.get(classname, classname)
     
-    def class_name_for_profile(self, profile_name):
-        if not profile_name:
+    def class_name_for_profile(self, profile_names):
+        # TODO need to figure out what to do with this later. Annotation author supports multiples types that caused this to fail
+        if isinstance(profile_names, (list,)) and len(profile_names) > 0:
+            classnames = []
+            for profile_name in profile_names:
+                classnames.append(self.as_class_name(profile_name.split('/')[-1]))  # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
+            return classnames
+        if not profile_names:
             return None
-        type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
+        type_name = profile_names.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
         return self.as_class_name(type_name)
     
     def class_name_is_native(self, class_name):
@@ -338,6 +347,7 @@ class FHIRCodeSystem(object):
         self.spec = spec
         self.definition = resource
         self.url = resource.get('url')
+
         if self.url in self.spec.settings.enum_namemap:
             self.name = self.spec.settings.enum_namemap[self.url]
         else:
@@ -353,7 +363,7 @@ class FHIRCodeSystem(object):
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
-        
+
         assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
         if len(concepts) > 100:
             self.generate_enum = False
@@ -842,7 +852,8 @@ class FHIRStructureDefinitionElementDefinition(object):
             self._content_referenced = elem.definition
         
         # resolve bindings
-        if self.binding is not None and self.binding.is_required:
+        # There seems to be a required binding with no valueset defined this should not be possible this was caused by address
+        if self.binding is not None and self.binding.is_required and (self.binding.uri is not None or self.binding.reference is not None):
             uri = self.binding.reference or self.binding.uri
             if 'http://hl7.org/fhir' != uri[:19]:
                 logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
@@ -889,7 +900,7 @@ class FHIRElementType(object):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
         self.profile = type_dict.get('targetProfile')
-        if self.profile is not None and not _is_string(self.profile):
+        if self.profile is not None and not _is_string(self.profile) and not isinstance(type_dict.get('targetProfile'), (list,)): #Added a check to make sure the targetProfile wasn't a list
             raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
                 .format(self.profile, type(self.profile)))
 
