@@ -8,8 +8,3 @@ env
 
 # ignore downloads
 /downloads
-
-.DS_Store
-.project
-.pydevproject
-.settings/org.eclipse.core.resources.prefs
