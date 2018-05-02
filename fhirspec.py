@@ -74,7 +74,10 @@ class FHIRSpec(object):
                 self.valuesets[resource['url']] = FHIRValueSet(self, resource)
             elif 'CodeSystem' == resource['resourceType']:
                 assert 'url' in resource
-                self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                if 'content' in resource and 'concept' in resource:
+                    self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                else:
+                    logger.warn("CodeSystem with no concepts: {}".format(resource['url']))
         logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
     
     def valueset_with_uri(self, uri):
@@ -185,6 +188,14 @@ class FHIRSpec(object):
         return self.settings.replacemap.get(classname, classname)
     
     def class_name_for_profile(self, profile_name):
+        if not profile_name:
+            return None
+        # TODO need to figure out what to do with this later. Annotation author supports multiples types that caused this to fail
+        if isinstance(profile_name, (list,)) and len(profile_name) > 0:
+            classnames = []
+            for name_part in profile_name:
+                classnames.append(self.as_class_name(name_part.split('/')[-1]))  # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
+            return classnames
         if not profile_name:
             return None
         type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
@@ -353,14 +364,13 @@ class FHIRCodeSystem(object):
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
-        
         assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
-        if len(concepts) > 100:
+        if len(concepts) > 200:
             self.generate_enum = False
-            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 100 ({}) concepts"
+            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 200 ({}) concepts"
                 .format(self.url, len(concepts)))
             return
-        
+		
         self.codes = self.parsed_codes(concepts)
     
     def parsed_codes(self, codes, prefix=None):
@@ -842,8 +852,8 @@ class FHIRStructureDefinitionElementDefinition(object):
             self._content_referenced = elem.definition
         
         # resolve bindings
-        if self.binding is not None and self.binding.is_required:
-            uri = self.binding.reference or self.binding.uri
+        if self.binding is not None and self.binding.is_required and (self.binding.uri is not None or self.binding.canonical is not None):
+            uri = self.binding.canonical or self.binding.uri
             if 'http://hl7.org/fhir' != uri[:19]:
                 logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
                 return
@@ -888,10 +898,11 @@ class FHIRElementType(object):
         if self.code is not None and not _is_string(self.code):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
-        self.profile = type_dict.get('targetProfile')
-        if self.profile is not None and not _is_string(self.profile):
-            raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
-                .format(self.profile, type(self.profile)))
+        if not isinstance(type_dict.get('targetProfile'), (list,)):
+            self.profile = type_dict.get('targetProfile')
+            if self.profile is not None and not _is_string(self.profile) and not isinstance(type_dict.get('targetProfile'), (list,)): #Added a check to make sure the targetProfile wasn't a list
+                raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
+                    .format(self.profile, type(self.profile)))
 
 
 class FHIRElementBinding(object):
@@ -901,7 +912,7 @@ class FHIRElementBinding(object):
         self.strength = binding_obj.get('strength')
         self.description = binding_obj.get('description')
         self.uri = binding_obj.get('valueSetUri')
-        self.reference = binding_obj.get('valueSetReference', {}).get('reference')
+        self.canonical = binding_obj.get('valueSetCanonical')
         self.is_required = 'required' == self.strength
 
 
