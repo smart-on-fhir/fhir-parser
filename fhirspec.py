@@ -196,8 +196,6 @@ class FHIRSpec(object):
             for name_part in profile_name:
                 classnames.append(self.as_class_name(name_part.split('/')[-1]))  # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
             return classnames
-        if not profile_name:
-            return None
         type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
         return self.as_class_name(type_name)
     
@@ -364,6 +362,7 @@ class FHIRCodeSystem(object):
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
+				
         assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
         if len(concepts) > 200:
             self.generate_enum = False
