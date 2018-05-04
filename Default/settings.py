@@ -7,7 +7,7 @@ from Default.mappings import *
 
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/2017Jan/'
+specification_url = 'http://hl7.org/fhir/2018May/'
 #specification_url = 'http://build.fhir.org'
 
 # In which directory to find the templates. See below for settings that start with `tpl_`: these are the template names.
