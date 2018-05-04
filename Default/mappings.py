@@ -22,6 +22,8 @@ classmap = {
     'id': 'str',
     'code': 'str',      # for now we're not generating enums for these
     'uri': 'str',
+    'url': 'str',
+    'canonical': 'str',
     'oid': 'str',
     'uuid': 'str',
     'xhtml': 'str',

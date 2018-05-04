@@ -74,7 +74,11 @@ class FHIRSpec(object):
                 self.valuesets[resource['url']] = FHIRValueSet(self, resource)
             elif 'CodeSystem' == resource['resourceType']:
                 assert 'url' in resource
-                self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                ## TODO Need to remove this to think of a better way to handle system with no codes.
+                ## http://hl7.org/fhir/2018Jan/valueset-operation-outcome.html <- bad build of the FHIR spec for R4 snapshot
+                if len(self.codesystems) > 0:
+                    self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                else: logger.warn("ValueSet with 0 codes: {}".format(resource['url']))
         logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
     
     def valueset_with_uri(self, uri):
@@ -185,6 +189,12 @@ class FHIRSpec(object):
         return self.settings.replacemap.get(classname, classname)
     
     def class_name_for_profile(self, profile_name):
+        # TODO need to figure out what to do with this later. Annotation author supports multiples types that caused this to fail
+        if isinstance(profile_name, (list,)) and len(profile_name) > 0:
+            classnames = []
+            for profile_name in profile_name:
+                classnames.append(self.as_class_name(profile_name.split('/')[-1]))  # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
+            return classnames
         if not profile_name:
             return None
         type_name = profile_name.split('/')[-1]     # may be the full Profile URI, like http://hl7.org/fhir/Profile/MyProfile
@@ -353,14 +363,13 @@ class FHIRCodeSystem(object):
             logger.debug("Will not generate enum for CodeSystem \"{}\" whose content is {}"
                 .format(self.url, resource['content']))
             return
-        
         assert concepts, "Expecting at least one code for \"complete\" CodeSystem"
-        if len(concepts) > 100:
+        if len(concepts) > 200:
             self.generate_enum = False
-            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 100 ({}) concepts"
+            logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 200 ({}) concepts"
                 .format(self.url, len(concepts)))
             return
-        
+
         self.codes = self.parsed_codes(concepts)
     
     def parsed_codes(self, codes, prefix=None):
@@ -842,7 +851,8 @@ class FHIRStructureDefinitionElementDefinition(object):
             self._content_referenced = elem.definition
         
         # resolve bindings
-        if self.binding is not None and self.binding.is_required:
+        # There seems to be a required binding with no valueset defined this should not be possible this was caused by address
+        if self.binding is not None and self.binding.is_required and (self.binding.uri is not None or self.binding.reference is not None):
             uri = self.binding.reference or self.binding.uri
             if 'http://hl7.org/fhir' != uri[:19]:
                 logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
@@ -889,7 +899,7 @@ class FHIRElementType(object):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
         self.profile = type_dict.get('targetProfile')
-        if self.profile is not None and not _is_string(self.profile):
+        if self.profile is not None and not _is_string(self.profile) and not isinstance(type_dict.get('targetProfile'), (list,)): #Added a check to make sure the targetProfile wasn't a list
             raise Exception("Expecting a string for 'targetProfile' definition of an element type, got {} as {}"
                 .format(self.profile, type(self.profile)))
 
