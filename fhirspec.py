@@ -369,7 +369,7 @@ class FHIRCodeSystem(object):
             logger.info("Will not generate enum for CodeSystem \"{}\" because it has > 200 ({}) concepts"
                 .format(self.url, len(concepts)))
             return
-		
+        
         self.codes = self.parsed_codes(concepts)
     
     def parsed_codes(self, codes, prefix=None):
