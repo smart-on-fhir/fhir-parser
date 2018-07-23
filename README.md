@@ -47,7 +47,8 @@ Use
 
 5. Create a script that copies your `mappings.py` and `settings.py` file to the root of `fhir-parser`, _cd_s into `fhir-parser` and then runs `generate.py`.
     The _generate_ script by default wants to use Python _3_, issue `python generate.py` if you don't have Python 3 yet.
-    Supply the `-f` flag to force a re-download of the spec.
+    * Supply the `-f` flag to force a re-download of the spec.
+    * Supply the `--cache-only` (`-c`) flag to deny the re-download of the spec and only use cached resources (incompatible with `-f`).
 
 > NOTE that the script currently overwrites existing files without asking and without regret.
 
