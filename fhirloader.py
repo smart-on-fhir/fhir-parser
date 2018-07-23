@@ -22,12 +22,14 @@ class FHIRLoader(object):
         self.base_url = settings.specification_url
         self.cache = cache
     
-    def load(self, force=False):
+    def load(self, force_download=False, force_cache=False):
         """ Makes sure all the files needed have been downloaded.
         
         :returns: The path to the directory with all our files.
         """
-        if os.path.isdir(self.cache) and force:
+        if force_download: assert not force_cache
+
+        if os.path.isdir(self.cache) and force_download:
             import shutil
             shutil.rmtree(self.cache)
         
@@ -40,6 +42,8 @@ class FHIRLoader(object):
             path = os.path.join(self.cache, local)
             
             if not os.path.exists(path):
+                if force_cache:
+                    raise Exception('Resource missing from cache: {}'.format(local))
                 logger.info('Downloading {}'.format(remote))
                 filename = self.download(remote)
                 
