@@ -15,13 +15,13 @@ from logger import logger
 class FHIRRenderer(object):
     """ Superclass for all renderer implementations.
     """
-    
+
     def __init__(self, spec, settings):
         self.spec = spec
         self.settings = self.__class__.cleaned_settings(settings)
         self.jinjaenv = Environment(loader=PackageLoader('generate', self.settings.tpl_base))
         self.jinjaenv.filters['wordwrap'] = do_wordwrap
-    
+
     @classmethod
     def cleaned_settings(cls, settings):
         """ Splits paths at '/' and re-joins them using os.path.join().
@@ -32,16 +32,16 @@ class FHIRRenderer(object):
         settings.tpl_unittest_target = os.path.join(*settings.tpl_unittest_target.split('/'))
         settings.tpl_resource_target = os.path.join(*settings.tpl_resource_target.split('/'))
         return settings
-    
+
     def render(self):
         """ The main rendering start point, for subclasses to override.
         """
         raise Exception("Cannot use abstract superclass' `render` method")
-    
+
     def do_render(self, data, template_name, target_path):
         """ Render the given data using a Jinja2 template, writing to the file
         at the target path.
-        
+
         :param template_name: The Jinja2 template to render, located in settings.tpl_base
         :param target_path: Output path
         """
@@ -51,13 +51,13 @@ class FHIRRenderer(object):
             logger.error("Template \"{}\" not found in «{}», cannot render"
                 .format(template_name, self.settings.tpl_base))
             return
-        
+
         if not target_path:
             raise Exception("No target filepath provided")
         dirpath = os.path.dirname(target_path)
         if not os.path.isdir(dirpath):
             os.makedirs(dirpath)
-        
+
         with io.open(target_path, 'w', encoding='utf-8') as handle:
             logger.info('Writing {}'.format(target_path))
             rendered = template.render(data)
@@ -67,7 +67,7 @@ class FHIRRenderer(object):
 
 class FHIRStructureDefinitionRenderer(FHIRRenderer):
     """ Write classes for a profile/structure-definition.
-    """    
+    """
     def copy_files(self, target_dir):
         """ Copy base resources to the target location, according to settings.
         """
@@ -79,7 +79,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 tgt = os.path.join(target_dir, os.path.basename(filepath))
                 logger.info("Copying manual profiles in {} to {}".format(os.path.basename(filepath), tgt))
                 shutil.copyfile(filepath, tgt)
-    
+
     def render(self):
         for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
@@ -87,7 +87,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 if profile.url is not None:        # manual profiles have no url and usually write no classes
                     logger.info('Profile "{}" returns zero writable classes, skipping'.format(profile.url))
                 continue
-            
+
             imports = profile.needed_external_classes()
             data = {
                 'profile': profile,
@@ -95,12 +95,12 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 'imports': imports,
                 'classes': classes
             }
-            
+
             ptrn = profile.targetname.lower() if self.settings.resource_modules_lowercase else profile.targetname
             source_path = self.settings.tpl_resource_source
             target_name = self.settings.tpl_resource_target_ptrn.format(ptrn)
             target_path = os.path.join(self.settings.tpl_resource_target, target_name)
-            
+
             self.do_render(data, source_path, target_path)
         self.copy_files(os.path.dirname(target_path))
 
@@ -112,7 +112,7 @@ class FHIRFactoryRenderer(FHIRRenderer):
         classes = []
         for profile in self.spec.writable_profiles():
             classes.extend(profile.writable_classes())
-        
+
         data = {
             'info': self.spec.info,
             'classes': sorted(classes, key=lambda x: x.name),
@@ -123,7 +123,7 @@ class FHIRFactoryRenderer(FHIRRenderer):
 class FHIRDependencyRenderer(FHIRRenderer):
     """ Puts down dependencies for each of the FHIR resources. Per resource
     class will grab all class/resource names that are needed for its
-    properties and add them to the "imports" key. Will also check 
+    properties and add them to the "imports" key. Will also check
     classes/resources may appear in references and list those in the
     "references" key.
     """
@@ -147,7 +147,7 @@ class FHIRValueSetRenderer(FHIRRenderer):
         if not self.settings.tpl_codesystems_source:
             logger.info("Not rendering value sets and code systems since `tpl_codesystems_source` is not set")
             return
-        
+
         systems = [v for k,v in self.spec.codesystems.items()]
         data = {
             'info': self.spec.info,
@@ -164,7 +164,7 @@ class FHIRUnitTestRenderer(FHIRRenderer):
     def render(self):
         if self.spec.unit_tests is None:
             return
-        
+
         # render all unit test collections
         for coll in self.spec.unit_tests:
             data = {
@@ -172,15 +172,15 @@ class FHIRUnitTestRenderer(FHIRRenderer):
                 'class': coll.klass,
                 'tests': coll.tests,
             }
-            
+
             file_pattern = coll.klass.name
             if self.settings.resource_modules_lowercase:
                 file_pattern = file_pattern.lower()
             file_name = self.settings.tpl_unittest_target_ptrn.format(file_pattern)
             file_path = os.path.join(self.settings.tpl_unittest_target, file_name)
-            
+
             self.do_render(data, self.settings.tpl_unittest_source, file_path)
-        
+
         # copy unit test files, if any
         if self.settings.unittest_copyfiles is not None:
             for origfile in self.settings.unittest_copyfiles:
@@ -208,13 +208,13 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
     """
     if not s:
     	return s
-    
+
     if not wrapstring:
         wrapstring = environment.newline_sequence
-    
+
     accumulator = []
     # Workaround: pre-split the string on \r, \r\n and \n
-    for component in re.split(r"\r?\n?", s):
+    for component in re.split(r"\r|\r?\n", s):
         # textwrap will eat empty strings for breakfirst. Therefore we route them around it.
         if len(component) is 0:
             accumulator.append(component)
@@ -225,4 +225,3 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
                 break_long_words=break_long_words)
         )
     return wrapstring.join(accumulator)
-
