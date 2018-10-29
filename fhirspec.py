@@ -894,7 +894,17 @@ class FHIRElementType(object):
     
     def parse_from(self, type_dict):
         self.code = type_dict.get('code')
-        if self.code is not None and not _is_string(self.code):
+        ext_code = type_dict.get('_code')
+        if self.code is None and ext_code is not None:
+            json_ext = [e for e in ext_code.get('extension', []) if e.get('url') == 'http://hl7.org/fhir/StructureDefinition/structuredefinition-json-type']
+            if len(json_ext) < 1:
+                raise Exception(f'Expecting either "code" or "_code" and a JSON type extension, found neither in {type_dict}')
+            if len(json_ext) > 1:
+                raise Exception(f'Found more than one structure definition JSON type in {type_dict}')
+            self.code = json_ext[0].get('valueString')
+        if self.code is None:
+            raise Exception(f'No JSON type found in {type_dict}')
+        if not _is_string(self.code):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
         if not isinstance(type_dict.get('targetProfile'), (list,)):
