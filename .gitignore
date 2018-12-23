@@ -8,3 +8,9 @@ env
 
 # ignore downloads
 /downloads
+
+# ignore these useless Mac files
+.DS_Store
+
+# and Sample/draft folder
+Sample/draft
