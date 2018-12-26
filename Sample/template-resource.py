@@ -5,6 +5,8 @@
 #  {{ info.year }}, SMART Health IT.
 
 {%- set imported = {} %}
+{%- set excluded_props = [('id','Any'),('url','Extension')] %}
+{%- set ns  = namespace(addfp = false) %}
 {%- for klass in classes %}
 
 
@@ -36,16 +38,24 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     {%- for prop in klass.properties %}
         
         self.{{ prop.name }} = None
+        
         """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
         {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
         {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
         {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
+        
+        {%- if prop.is_native and prop.name != "id" and (prop.name, klass.resource_type) not in excluded_props %}
+        
+        self._{{ prop.name }} = None
+        
+        """ extension for fhir primitive  {{ prop.name }}"""
+        {%- endif -%}
     {%- endfor %}
         
         super({{ klass.name }}, self).__init__(jsondict=jsondict, strict=strict)
     
 {%- if klass.properties %}
-    
+
     def elementProperties(self):
         js = super({{ klass.name }}, self).elementProperties()
         {%- if 'element' == klass.module and 'Element' == klass.name %}
@@ -61,6 +71,10 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
             {{- prop.is_array }},
             {%- if prop.one_of_many %} "{{ prop.one_of_many }}"{% else %} None{% endif %}, {# #}
             {{- prop.nonoptional }}),
+            {%- if prop.is_native and prop.name != "id" and (prop.name, klass.resource_type) not in excluded_props %}
+            ("_{{ prop.name }}", "_{{ prop.orig_name }}",fhirprimitive.FHIRPrimitive, False, None, False),
+            {%- set ns.addfp = true %}
+            {%- endif %}
         {%- endfor %}
         ])
         return js
@@ -71,4 +85,8 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
 {% for imp in imports %}{% if imp.module not in imported %}
 from . import {{ imp.module }}
 {%- endif %}{% endfor %}
+{%- if ns.addfp == true %}
+from . import fhirprimitive
+{%- endif %}
+
 

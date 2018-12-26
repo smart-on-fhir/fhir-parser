@@ -36,7 +36,7 @@ replacemap = {
 }
 
 # Which class names are native to the language (or can be treated this way)
-natives = ['bool', 'int', 'float', 'str', 'dict']
+natives = ['bool', 'int', 'float', 'str', 'dict', 'FHIRDate']
 
 # Which classes are to be expected from JSON decoding
 jsonmap = {

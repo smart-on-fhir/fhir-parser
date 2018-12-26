@@ -7,8 +7,8 @@ from Default.mappings import *
 
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/2018May/'
-#specification_url = 'http://build.fhir.org'
+#specification_url = 'http://hl7.org/fhir/2018May/'
+specification_url = 'http://build.fhir.org'
 
 # In which directory to find the templates. See below for settings that start with `tpl_`: these are the template names.
 tpl_base = 'Sample'
@@ -63,4 +63,5 @@ manual_profiles = [
     ('Sample/fhirabstractresource.py', 'fhirabstractresource', ['FHIRAbstractResource']),
     ('Sample/fhirreference.py', 'fhirreference', ['FHIRReference']),
     ('Sample/fhirdate.py', 'fhirdate', ['date', 'dateTime', 'instant', 'time']),
+    ('Sample/fhirprimitive.py', 'fhirprimitive', ['FHIRPrimitive']),
 ]
