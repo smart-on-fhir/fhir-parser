@@ -8,3 +8,7 @@ env
 
 # ignore downloads
 /downloads
+
+# Editors
+.idea
+.vscode
