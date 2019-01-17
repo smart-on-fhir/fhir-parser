@@ -15,6 +15,7 @@ import sys
 import settings
 import fhirloader
 import fhirspec
+import fhirclass
 
 _cache = "downloads"
 
@@ -41,10 +42,10 @@ def ensure_init_py(settings, version_info):
                         parts.append('"{0}"'.format(version_info.version))
 
                         line = "= ".join(parts)
-                    lines.append(line.strip())
+                    lines.append(line.rstrip('\n'))
 
             if not has_fhir_version:
-                lines.append('__fhir_version__ = "{0}"\n'.format(version_info.version))
+                lines.append('__fhir_version__ = "{0}"'.format(version_info.version))
 
             txt = "\n".join(lines)
         else:
@@ -73,6 +74,8 @@ if "__main__" == __name__:
         spec = fhirspec.FHIRSpec(spec_source, settings)
         if not dry:
             spec.write()
+            # ensure init py has been created
+            ensure_init_py(settings, spec.info)
 
     # checks for previous version maintain handler
     previous_version_info = getattr(settings, "previous_versions", [])
@@ -83,11 +86,10 @@ if "__main__" == __name__:
         org_tpl_resource_target = settings.tpl_resource_target
         org_tpl_factory_target = settings.tpl_factory_target
         org_tpl_unittest_target = settings.tpl_unittest_target
-        org_unittest_copyfiles = settings.unittest_copyfiles
-
-        settings.unittest_copyfiles = []
 
         for version in previous_version_info:
+            # reset cache
+            fhirclass.FHIRClass.known = {}
 
             settings.specification_url = (
                 "/".join(org_specification_url.split("/")[:-1]) + "/" + version
@@ -114,6 +116,7 @@ if "__main__" == __name__:
             # parse
             if not load_only:
                 spec = fhirspec.FHIRSpec(spec_source, settings)
+
                 if not dry:
                     spec.write()
                     # ensure init py has been created
@@ -124,4 +127,3 @@ if "__main__" == __name__:
         settings.tpl_resource_target = org_tpl_resource_target
         settings.tpl_factory_target = org_tpl_factory_target
         settings.tpl_unittest_target = org_tpl_unittest_target
-        settings.unittest_copyfiles = org_unittest_copyfiles
