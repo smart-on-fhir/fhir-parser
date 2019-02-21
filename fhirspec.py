@@ -851,12 +851,15 @@ class FHIRStructureDefinitionElementDefinition(object):
             self._content_referenced = elem.definition
         
         # resolve bindings
-        if self.binding is not None and self.binding.is_required and (self.binding.uri is not None or self.binding.canonical is not None):
-            uri = self.binding.canonical or self.binding.uri
+        if self.binding is not None and self.binding.is_required and (self.binding.valueSet is not None or self.binding.legacy_uri is not None or self.binding.legacy_canonical is not None):
+            uri = self.binding.valueSet or self.binding.legacy_canonical or self.binding.legacy_uri
             if 'http://hl7.org/fhir' != uri[:19]:
                 logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
                 return
-            
+	        # remove version from canonical URI, if present, e.g. "http://hl7.org/fhir/ValueSet/name-use|4.0.0"
+            if '|' in uri:
+                uri = uri.split('|')[0]
+
             valueset = self.element.profile.spec.valueset_with_uri(uri)
             if valueset is None:
                 logger.error("There is no ValueSet for required binding \"{}\" on {} in {}"
@@ -920,8 +923,9 @@ class FHIRElementBinding(object):
     def __init__(self, binding_obj):
         self.strength = binding_obj.get('strength')
         self.description = binding_obj.get('description')
-        self.uri = binding_obj.get('valueSetUri')
-        self.canonical = binding_obj.get('valueSetCanonical')
+        self.valueSet = binding_obj.get('valueSet')
+        self.legacy_uri = binding_obj.get('valueSetUri')
+        self.legacy_canonical = binding_obj.get('valueSetCanonical')
         self.is_required = 'required' == self.strength
 
 
