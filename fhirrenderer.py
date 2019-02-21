@@ -214,7 +214,7 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
     
     accumulator = []
     # Workaround: pre-split the string on \r, \r\n and \n
-    for component in re.split(r"\r?\n?", s):
+    for component in re.split(r"\r\n|\n|\r", s):
         # textwrap will eat empty strings for breakfirst. Therefore we route them around it.
         if len(component) is 0:
             accumulator.append(component)
