@@ -133,7 +133,7 @@ class FHIRSpec(object):
         for filepath, module, contains in self.settings.manual_profiles:
             for contained in contains:
                 profile = FHIRStructureDefinition(self, None)
-                profile.is_manual = True
+                profile.manual_module = module
                 
                 prof_dict = {
                     'name': contained,
@@ -236,7 +236,7 @@ class FHIRSpec(object):
         """
         profiles = []
         for key, profile in self.profiles.items():
-            if not profile.is_manual:
+            if profile.manual_module is None:
                 profiles.append(profile)
         return profiles
     
@@ -401,7 +401,7 @@ class FHIRStructureDefinition(object):
     """
     
     def __init__(self, spec, profile):
-        self.is_manual = False
+        self.manual_module = None
         self.spec = spec
         self.url = None
         self.targetname = None
@@ -692,11 +692,14 @@ class FHIRStructureDefinitionElement(object):
         class_name = self.name_if_class()
         subs = []
         cls, did_create = fhirclass.FHIRClass.for_element(self)
-        if did_create:
-            logger.debug('Created class "{}"'.format(cls.name))
-            if module is None and self.is_main_profile_element:
-                module = self.profile.spec.as_module_name(cls.name)
+        if did_create:  # manual_profiles
+            if module is None:
+                if self.profile.manual_module is not None:
+                    module = self.profile.manual_module
+                elif self.is_main_profile_element:
+                    module = self.profile.spec.as_module_name(cls.name)
             cls.module = module
+            logger.debug('Created class "{}", module {}'.format(cls.name, module))
         
         # child classes
         if self.children is not None:

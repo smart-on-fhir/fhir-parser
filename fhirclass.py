@@ -98,7 +98,7 @@ class FHIRClass(object):
         for prop in self.properties:
             if prop.orig_name == prop_name:
                 return prop
-        if self.superclass and self != self.superclass:         # Element is its own superclass
+        if self.superclass:
             return self.superclass.property_for(prop_name)
         return None
     
