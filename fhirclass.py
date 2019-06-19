@@ -60,7 +60,7 @@ class FHIRClass(object):
                 return
         
         self.properties.append(prop)
-        self.properties = sorted(self.properties, key=lambda x: x.name)
+        self.properties = self.properties
         
         if prop.nonoptional and prop.one_of_many is not None:
             if prop.one_of_many in self.expanded_nonoptionals:

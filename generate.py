@@ -16,7 +16,7 @@ import fhirspec
 _cache = 'downloads'
 
 
-if '__main__' == __name__:
+def main():
     force_download = len(sys.argv) > 1 and '-f' in sys.argv
     dry = len(sys.argv) > 1 and ('-d' in sys.argv or '--dry-run' in sys.argv)
     load_only = len(sys.argv) > 1 and ('-l' in sys.argv or '--load-only' in sys.argv)

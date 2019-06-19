@@ -82,7 +82,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
     
     def render(self):
         for profile in self.spec.writable_profiles():
-            classes = sorted(profile.writable_classes(), key=lambda x: x.name)
+            classes = profile.writable_classes()
             if 0 == len(classes):
                 if profile.url is not None:        # manual profiles have no url and usually write no classes
                     logger.info('Profile "{}" returns zero writable classes, skipping'.format(profile.url))
@@ -115,7 +115,7 @@ class FHIRFactoryRenderer(FHIRRenderer):
         
         data = {
             'info': self.spec.info,
-            'classes': sorted(classes, key=lambda x: x.name),
+            'classes': classes,
         }
         self.do_render(data, self.settings.tpl_factory_source, self.settings.tpl_factory_target)
 
@@ -136,7 +136,7 @@ class FHIRDependencyRenderer(FHIRRenderer):
                 'imports': profile.needed_external_classes(),
                 'references': profile.referenced_classes(),
             })
-        data['resources'] = sorted(resources, key=lambda x: x['name'])
+        data['resources'] = resources
         self.do_render(data, self.settings.tpl_dependencies_source, self.settings.tpl_dependencies_target)
 
 
@@ -151,7 +151,7 @@ class FHIRValueSetRenderer(FHIRRenderer):
         systems = [v for k,v in self.spec.codesystems.items()]
         data = {
             'info': self.spec.info,
-            'systems': sorted(systems, key=lambda x: x.name),
+            'systems': systems,
         }
         target_name = self.settings.tpl_codesystems_target_name
         target_path = os.path.join(self.settings.tpl_resource_target, target_name)
