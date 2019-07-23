@@ -100,7 +100,8 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
             source_path = self.settings.tpl_resource_source
             target_name = self.settings.tpl_resource_target_ptrn.format(ptrn)
             target_path = os.path.join(self.settings.tpl_resource_target, target_name)
-            
+            # Iterate over data.classes.properties and set is_forward on any property that references a class further
+            # behind
             self.do_render(data, source_path, target_path)
         self.copy_files(os.path.dirname(target_path))
 

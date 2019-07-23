@@ -31,3 +31,7 @@ def main():
         spec = fhirspec.FHIRSpec(spec_source, settings)
         if not dry:
             spec.write()
+
+
+if __name__ == '__main__':
+    main()

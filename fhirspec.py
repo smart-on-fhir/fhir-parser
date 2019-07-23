@@ -709,11 +709,11 @@ class FHIRStructureDefinitionElement(object):
                     
                     # collect subclasses
                     sub, subsubs = child.create_class(module)
-                    if sub is not None:
-                        subs.append(sub)
-                    if subsubs is not None:
+                    if subsubs:
                         subs.extend(subsubs)
-                    
+                    if sub is not None:
+                        subs.insert(0, sub)
+
                     # add properties to class
                     if did_create:
                         for prop in properties:

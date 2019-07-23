@@ -153,4 +153,5 @@ class FHIRClassProperty(object):
         self.short = element.definition.short
         self.formal = element.definition.formal
         self.representation = element.definition.representation
+        self.is_forward = False
 
