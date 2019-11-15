@@ -3,6 +3,9 @@
 #
 #  Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
 #  {{ info.year }}, SMART Health IT.
+#
+#  THIS TEMPLATE IS FOR ILLUSTRATIVE PURPOSES ONLY, YOU NEED TO CREATE YOUR OWN
+#  WHEN USING fhir-parser.
 
 {%- set imported = {} %}
 {%- for klass in classes %}

@@ -16,11 +16,11 @@ class FHIRClass(object):
         Returns a tuple with the class and a bool indicating creation.
         """
         assert element.represents_class
-        class_name = element.name_if_class()
+        class_name = element.name_if_class
         if class_name in cls.known:
             return cls.known[class_name], False
         
-        klass = cls(element)
+        klass = cls(element, class_name)
         cls.known[class_name] = klass
         return klass, True
     
@@ -28,10 +28,10 @@ class FHIRClass(object):
     def with_name(cls, class_name):
         return cls.known.get(class_name)
     
-    def __init__(self, element):
+    def __init__(self, element, class_name):
         assert element.represents_class
         self.path = element.path
-        self.name = element.name_if_class()
+        self.name = class_name
         self.module = None
         self.resource_type = element.name_of_resource()
         self.superclass = None
@@ -60,13 +60,14 @@ class FHIRClass(object):
                 return
         
         self.properties.append(prop)
-        self.properties = sorted(self.properties, key=lambda x: x.name)
         
-        if prop.nonoptional and prop.one_of_many is not None:
-            if prop.one_of_many in self.expanded_nonoptionals:
-                self.expanded_nonoptionals[prop.one_of_many].append(prop)
+        if prop.nonoptional:
+            if prop.one_of_many is not None:
+                existing = self.expanded_nonoptionals[prop.one_of_many] if prop.one_of_many in self.expanded_nonoptionals else []
+                existing.append(prop)
+                self.expanded_nonoptionals[prop.one_of_many] = sorted(existing, key=lambda x: x.name)
             else:
-                self.expanded_nonoptionals[prop.one_of_many] = [prop]
+                self.expanded_nonoptionals[prop.name] = [prop]
     
     @property
     def nonexpanded_properties(self):
@@ -81,6 +82,13 @@ class FHIRClass(object):
         return nonexpanded
     
     @property
+    def nonexpanded_properties_all(self):
+        nonexpanded = self.nonexpanded_properties.copy()
+        if self.superclass is not None:
+            nonexpanded.extend(self.superclass.nonexpanded_properties_all)
+        return nonexpanded
+    
+    @property
     def nonexpanded_nonoptionals(self):
         nonexpanded = []
         included = set()
@@ -92,6 +100,13 @@ class FHIRClass(object):
                     continue
                 included.add(prop.one_of_many)
             nonexpanded.append(prop)
+        return nonexpanded
+    
+    @property
+    def nonexpanded_nonoptionals_all(self):
+        nonexpanded = self.nonexpanded_nonoptionals.copy()
+        if self.superclass is not None:
+            nonexpanded.extend(self.superclass.nonexpanded_nonoptionals_all)
         return nonexpanded
     
     def property_for(self, prop_name):
@@ -115,8 +130,58 @@ class FHIRClass(object):
         return False
     
     @property
+    def has_one_of_many(self):
+        for prop in self.properties:
+            if prop.one_of_many is not None:
+                return True
+        return False
+    
+    @property
+    def sorted_properties(self):
+        return sorted(self.properties, key=lambda x: x.name)
+    
+    @property
+    def sorted_properties_all(self):
+        properties = self.properties.copy()
+        if self.superclass is not None:
+            properties.extend(self.superclass.sorted_properties_all)
+        return sorted(properties, key=lambda x: x.name)
+    
+    @property
+    def sorted_nonexpanded_properties(self):
+        return sorted(self.nonexpanded_properties, key=lambda x: x.name)
+    
+    @property
+    def sorted_nonexpanded_properties_all(self):
+        return sorted(self.nonexpanded_properties_all, key=lambda x: x.name)
+    
+    @property
     def sorted_nonoptionals(self):
         return sorted(self.expanded_nonoptionals.items())
+    
+    @property
+    def sorted_nonexpanded_nonoptionals(self):
+        return sorted(self.nonexpanded_nonoptionals, key=lambda x: x.name)
+    
+    @property
+    def sorted_nonexpanded_nonoptionals_all(self):
+        return sorted(self.nonexpanded_nonoptionals_all, key=lambda x: x.name)
+    
+    @property
+    def has_expanded_nonoptionals(self):
+        return len([p for p in self.properties if p.one_of_many and p.nonoptional]) > 0
+    
+    @property
+    def has_only_expandable_properties(self):
+        return len([p for p in self.properties if not p.one_of_many]) < 1
+    
+    @property
+    def resource_type_enum(self):
+        return self.resource_type[:1].lower() + self.resource_type[1:]
+    
+    
+    def __repr__(self):
+        return f"<{self.__class__.__name__}> path: {self.path}, name: {self.name}, resourceType: {self.resource_type}"
 
 
 class FHIRClassProperty(object):
@@ -134,7 +199,7 @@ class FHIRClassProperty(object):
         
         name = element.definition.prop_name
         if '[x]' in name:
-            self.one_of_many = name.replace('[x]', '')
+            self.one_of_many = spec.safe_property_name(name.replace('[x]', ''))
             name = name.replace('[x]', '{}{}'.format(type_name[:1].upper(), type_name[1:]))
         
         self.orig_name = name
@@ -153,4 +218,35 @@ class FHIRClassProperty(object):
         self.short = element.definition.short
         self.formal = element.definition.formal
         self.representation = element.definition.representation
+    
+    @property
+    def documentation(self):
+        doc = ""
+        if self.enum is not None:
+            doc = self.formal
+            if self.enum.restricted_to is not None:
+                add = f"\nRestricted to: {self.enum.restricted_to}"
+                doc = doc + add if doc is not None and len(doc) > 0 else add
+        else:
+            doc = self.short
+        
+        if self.one_of_many is not None:
+            add = f"\nOne of `{self.one_of_many}[x]`"
+            doc = doc + add if doc is not None and len(doc) > 0 else add
+        
+        return doc
+    
+    @property
+    def desired_classname(self):
+        return self.enum.name if self.enum is not None else self.class_name
+    
+    @property
+    def nonexpanded_name(self):
+        return self.one_of_many if self.one_of_many is not None else self.name
+    
+    @property
+    def nonexpanded_classname(self):
+        if self.one_of_many is not None:    # We leave it up to the template to supply a class name in this case
+            return None
+        return self.desired_classname
 

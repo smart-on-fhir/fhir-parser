@@ -17,10 +17,10 @@ class FHIRLoader(object):
         'profiles-resources.json': 'examples-json.zip',
     }
     
-    def __init__(self, settings, cache):
+    def __init__(self, settings):
         self.settings = settings
         self.base_url = settings.specification_url
-        self.cache = cache
+        self.cache = os.path.join(*settings.download_directory.split('/'))
     
     def load(self, force_download=False, force_cache=False):
         """ Makes sure all the files needed have been downloaded.

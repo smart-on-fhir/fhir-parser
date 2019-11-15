@@ -71,14 +71,24 @@ class FHIRSpec(object):
         for resource in resources:
             if 'ValueSet' == resource['resourceType']:
                 assert 'url' in resource
-                self.valuesets[resource['url']] = FHIRValueSet(self, resource)
+                valueset = FHIRValueSet(self, resource)
+                self.valuesets[valueset.url] = valueset
+                if valueset.dstu2_inlined_codesystem:
+                    codesystem = FHIRCodeSystem(self, valueset.dstu2_inlined_codesystem)
+                    codesystem.valueset_url = valueset.url
+                    self.found_codesystem(codesystem)
             elif 'CodeSystem' == resource['resourceType']:
                 assert 'url' in resource
                 if 'content' in resource and 'concept' in resource:
-                    self.codesystems[resource['url']] = FHIRCodeSystem(self, resource)
+                    codesystem = FHIRCodeSystem(self, resource)
+                    self.found_codesystem(codesystem)
                 else:
                     logger.warn("CodeSystem with no concepts: {}".format(resource['url']))
         logger.info("Found {} ValueSets and {} CodeSystems".format(len(self.valuesets), len(self.codesystems)))
+    
+    def found_codesystem(self, codesystem):
+        if codesystem.url not in self.settings.enum_ignore:
+            self.codesystems[codesystem.url] = codesystem
     
     def valueset_with_uri(self, uri):
         assert uri
@@ -161,6 +171,9 @@ class FHIRSpec(object):
         return name.lower() if name and self.settings.resource_modules_lowercase else name
     
     def as_class_name(self, classname, parent_name=None):
+        """ This method formulates a class name from the given arguments,
+        applying formatting according to settings.
+        """
         if not classname or 0 == len(classname):
             return None
         
@@ -208,13 +221,17 @@ class FHIRSpec(object):
     def safe_enum_name(self, enum_name, ucfirst=False):
         assert enum_name, "Must have a name"
         name = self.settings.enum_map.get(enum_name, enum_name)
-        parts = re.split('\W+', name)
+        parts = re.split(r'\W+', name)
         if self.settings.camelcase_enums:
             name = ''.join([n[:1].upper() + n[1:] for n in parts])
             if not ucfirst and name.upper() != name:
                 name = name[:1].lower() + name[1:]
         else:
             name = '_'.join(parts)
+        
+        if re.match(r'^\d', name):
+            name = f'_{name}'
+        
         return self.settings.reservedmap.get(name, name)
     
     def json_class_for_class_name(self, class_name):
@@ -288,6 +305,28 @@ class FHIRVersionInfo(object):
                         self.version = v
 
 
+class FHIRValueSetEnum(object):
+    """ Holds on to parsed `FHIRValueSet` properties.
+    """
+    
+    def __init__(self, name, restricted_to, value_set):
+        self.name = name
+        self.restricted_to = restricted_to if len(restricted_to) > 0 else None
+        self.value_set = value_set
+        self.represents_class = True    # required for FHIRClass compatibily
+        self.module = name              # required for FHIRClass compatibily
+        self.name_if_class = name       # required for FHIRClass compatibily
+        self.superclass_name = None     # required for FHIRClass compatibily
+        self.path = None                # required for FHIRClass compatibily
+    
+    @property
+    def definition(self):
+        return self.value_set
+    
+    def name_of_resource(self):         # required for FHIRClass compatibily
+        return None
+
+
 class FHIRValueSet(object):
     """ Holds on to ValueSets bundled with the spec.
     """
@@ -295,21 +334,43 @@ class FHIRValueSet(object):
     def __init__(self, spec, set_dict):
         self.spec = spec
         self.definition = set_dict
+        self.url = set_dict.get('url')
+        self.dstu2_inlined_codesystem = self.definition.get('codeSystem')
+        if self.dstu2_inlined_codesystem is not None:
+            self.dstu2_inlined_codesystem['url'] = self.dstu2_inlined_codesystem['system']
+            self.dstu2_inlined_codesystem['content'] = "complete"
+            self.dstu2_inlined_codesystem['name'] = self.definition.get('name')
+            self.dstu2_inlined_codesystem['description'] = self.definition.get('description')
+        
         self._enum = None
     
     @property
+    def short(self):
+        return self.definition.get('title')
+    
+    @property
+    def formal(self):
+        return self.definition.get('description')
+    
+    @property
     def enum(self):
-        """ Returns FHIRCodeSystem if this valueset can be represented by one.
+        """ Returns FHIRValueSetEnum if this valueset can be represented by one.
         """
         if self._enum is not None:
             return self._enum
         
-        compose = self.definition.get('compose')
-        if compose is None:
-            raise Exception("Currently only composed ValueSets are supported")
-        if 'exclude' in compose:
-            raise Exception("Not currently supporting 'exclude' on ValueSet")
-        include = compose.get('include')
+        include = None
+        
+        if self.dstu2_inlined_codesystem is not None:
+            include = [self.dstu2_inlined_codesystem]
+        else:
+            compose = self.definition.get('compose')
+            if compose is None:
+                raise Exception(f"Currently only composed ValueSets are supported. {self.definition}")
+            if 'exclude' in compose:
+                raise Exception("Not currently supporting 'exclude' on ValueSet")
+            include = compose.get('include') or compose.get('import')   # "import" is for DSTU-2 compatibility
+        
         if 1 != len(include):
             logger.warn("Ignoring ValueSet with more than 1 includes ({}: {})".format(len(include), include))
             return None
@@ -331,10 +392,7 @@ class FHIRValueSet(object):
                 assert 'code' in concept
                 restricted_to.append(concept['code'])
         
-        self._enum = {
-            'name': cs.name,
-            'restricted_to': restricted_to if len(restricted_to) > 0 else None,
-        }
+        self._enum = FHIRValueSetEnum(name=cs.name, restricted_to=restricted_to, value_set=self)
         return self._enum
 
 
@@ -351,9 +409,13 @@ class FHIRCodeSystem(object):
             self.name = self.spec.settings.enum_namemap[self.url]
         else:
             self.name = self.spec.safe_enum_name(resource.get('name'), ucfirst=True)
+        if len(self.name) < 1:
+            raise Exception(f"Unable to create a name for enum of system {self.url}. You may need to specify a name explicitly in mappings.enum_namemap. Code system content: {resource}")
+        self.description = resource.get('description')
+        self.valueset_url = resource.get('valueSet')
         self.codes = None
         self.generate_enum = False
-        concepts = self.definition.get('concept', [])
+        concepts = resource.get('concept', [])
         
         if resource.get('experimental'):
             return
@@ -383,7 +445,10 @@ class FHIRCodeSystem(object):
             
             cd = c['code']
             name = '{}-{}'.format(prefix, cd) if prefix and not cd.startswith(prefix) else cd
-            c['name'] = self.spec.safe_enum_name(cd)
+            code_name = self.spec.safe_enum_name(cd)
+            if len(code_name) < 1:
+                raise Exception(f"Unable to create a member name for enum '{cd}' in {self.url}. You may need to add '{cd}' to mappings.enum_map")
+            c['name'] = code_name
             c['definition'] = c.get('definition') or c['name']
             found.append(c)
             
@@ -414,6 +479,9 @@ class FHIRStructureDefinition(object):
         
         if profile is not None:
             self.parse_profile(profile)
+    
+    def __repr__(self):
+        return f'<{self.__class__.__name__}> name: {self.name}, url: {self.url}'
     
     @property
     def name(self):
@@ -492,6 +560,16 @@ class FHIRStructureDefinition(object):
                     return element
         return None
     
+    def dstu2_element_with_name(self, name):
+        """ Returns a FHIRStructureDefinitionElementDefinition with the given
+        name, if found. Used to retrieve elements defined via `nameReference`
+        used in DSTU-2.
+        """
+        if self.elements is not None:
+            for element in self.elements:
+                if element.definition.name == name:
+                    return element
+        return None
     
     # MARK: Class Handling
     
@@ -521,7 +599,15 @@ class FHIRStructureDefinition(object):
             # look at all properties' classes and assign their modules
             for prop in klass.properties:
                 prop_cls_name = prop.class_name
-                if prop_cls_name not in internal and not self.spec.class_name_is_native(prop_cls_name):
+                if prop.enum is not None:
+                    enum_cls, did_create = fhirclass.FHIRClass.for_element(prop.enum)
+                    enum_cls.module = prop.enum.name
+                    prop.module_name = enum_cls.module
+                    if not enum_cls.name in needed:
+                        needed.add(enum_cls.name)
+                        needs.append(enum_cls)
+                
+                elif prop_cls_name not in internal and not self.spec.class_name_is_native(prop_cls_name):
                     prop_cls = fhirclass.FHIRClass.with_name(prop_cls_name)
                     if prop_cls is None:
                         raise Exception('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
@@ -637,6 +723,7 @@ class FHIRStructureDefinitionElement(object):
         self.represents_class = False
         
         self._superclass_name = None
+        self._name_if_class = None
         self._did_resolve_dependencies = False
         
         if element_dict is not None:
@@ -689,7 +776,6 @@ class FHIRStructureDefinitionElement(object):
         if not self.represents_class:
             return None, None
         
-        class_name = self.name_if_class()
         subs = []
         cls, did_create = fhirclass.FHIRClass.for_element(self)
         if did_create:  # manual_profiles
@@ -747,7 +833,7 @@ class FHIRStructureDefinitionElement(object):
                 
                 # an inline class
                 if 'BackboneElement' == type_obj.code or 'Element' == type_obj.code:        # data types don't use "BackboneElement"
-                    props.append(fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class()))
+                    props.append(fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class))
                     # TODO: look at http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name ?
                 else:
                     props.append(fhirclass.FHIRClassProperty(self, type_obj))
@@ -755,19 +841,22 @@ class FHIRStructureDefinitionElement(object):
         
         # no `type` definition in the element: it's a property with an inline class definition
         type_obj = FHIRElementType()
-        return [fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class())]
+        return [fhirclass.FHIRClassProperty(self, type_obj, self.name_if_class)]
     
     
     # MARK: Name Utils
     
     def name_of_resource(self):
         assert self._did_resolve_dependencies
-        if not self.is_main_profile_element:
-            return self.name_if_class()
-        return self.definition.name or self.path
+        if not self.is_main_profile_element or self.profile.structure.kind is None or self.profile.structure.kind != 'resource':
+            return None
+        return self.profile.name
     
+    @property
     def name_if_class(self):
-        return self.definition.name_if_class()
+        if self._name_if_class is None:
+            self._name_if_class = self.definition.name_if_class()
+        return self._name_if_class
     
     @property
     def superclass_name(self):
@@ -789,6 +878,9 @@ class FHIRStructureDefinitionElement(object):
             self._superclass_name = self.profile.spec.class_name_for_type(type_code)
         
         return self._superclass_name
+    
+    def __repr__(self):
+        return f"<{self.__class__.__name__}> path: {self.path}"
 
 
 class FHIRStructureDefinitionElementDefinition(object):
@@ -825,6 +917,7 @@ class FHIRStructureDefinitionElementDefinition(object):
         
         self.name = definition_dict.get('name')
         self.content_reference = definition_dict.get('contentReference')
+        self.dstu2_name_reference = definition_dict.get('nameReference')
         
         self.short = definition_dict.get('short')
         self.formal = definition_dict.get('definition')
@@ -849,13 +942,17 @@ class FHIRStructureDefinitionElementDefinition(object):
                 raise Exception("Only relative 'contentReference' element definitions are supported right now")
             elem = self.element.profile.element_with_id(self.content_reference[1:])
             if elem is None:
-                raise Exception("There is no element definiton with id \"{}\", as referenced by {} in {}"
-                    .format(self.content_reference, self.path, self.profile.url))
+                raise Exception(f'There is no element definiton with id "{self.content_reference}", as referenced by {self.path} in {self.profile.url}')
+            self._content_referenced = elem.definition
+        elif self.dstu2_name_reference is not None:      # DSTU-2 backwards-compatibility
+            elem = self.element.profile.dstu2_element_with_name(self.dstu2_name_reference)
+            if elem is None:
+                raise Exception(f'There is no element definiton with name "{self.dstu2_name_reference}", as referenced by {self.path} in {self.profile.url}')
             self._content_referenced = elem.definition
         
         # resolve bindings
-        if self.binding is not None and self.binding.is_required and (self.binding.valueSet is not None or self.binding.legacy_uri is not None or self.binding.legacy_canonical is not None):
-            uri = self.binding.valueSet or self.binding.legacy_canonical or self.binding.legacy_uri
+        if self.binding is not None and self.binding.is_required and self.binding.has_valueset:
+            uri = self.binding.valueset_uri
             if 'http://hl7.org/fhir' != uri[:19]:
                 logger.debug("Ignoring foreign ValueSet \"{}\"".format(uri))
                 return
@@ -874,13 +971,17 @@ class FHIRStructureDefinitionElementDefinition(object):
     def name_if_class(self):
         """ Determines the class-name that the element would have if it was
         defining a class. This means it uses "name", if present, and the last
-        "path" component otherwise.
+        "path" component otherwise. It also detects if the definition is a
+        reference and will re-use the class name defined by the referenced
+        element (such as `ValueSet.codeSystem.concept.concept`).
         """
+        
+        # This Element is a reference, pick up the original name
         if self._content_referenced is not None:
             return self._content_referenced.name_if_class()
         
         with_name = self.name or self.prop_name
-        parent_name = self.element.parent.name_if_class() if self.element.parent is not None else None
+        parent_name = self.element.parent.name_if_class if self.element.parent is not None else None
         classname = self.element.profile.spec.class_name_for_type(with_name, parent_name)
         if parent_name is not None and self.element.profile.spec.settings.backbone_class_adds_parent:
             classname = parent_name + classname
@@ -900,6 +1001,15 @@ class FHIRElementType(object):
     
     def parse_from(self, type_dict):
         self.code = type_dict.get('code')
+        
+        # Look for the "structuredefinition-fhir-type" extension, introduced after R4
+        ext_type = type_dict.get('extension')
+        if ext_type is not None:
+            fhir_ext = [e for e in ext_type if e.get('url') == 'http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type']
+            if len(fhir_ext) == 1:      # This may hit after R4
+                self.code = fhir_ext[0].get('valueUri')
+        
+        # This may hit on R4 or earlier
         ext_code = type_dict.get('_code')
         if self.code is None and ext_code is not None:
             json_ext = [e for e in ext_code.get('extension', []) if e.get('url') == 'http://hl7.org/fhir/StructureDefinition/structuredefinition-json-type']
@@ -908,8 +1018,9 @@ class FHIRElementType(object):
             if len(json_ext) > 1:
                 raise Exception(f'Found more than one structure definition JSON type in {type_dict}')
             self.code = json_ext[0].get('valueString')
+        
         if self.code is None:
-            raise Exception(f'No JSON type found in {type_dict}')
+            raise Exception(f'No element type code found in {type_dict}')
         if not _is_string(self.code):
             raise Exception("Expecting a string for 'code' definition of an element type, got {} as {}"
                 .format(self.code, type(self.code)))
@@ -926,10 +1037,21 @@ class FHIRElementBinding(object):
     def __init__(self, binding_obj):
         self.strength = binding_obj.get('strength')
         self.description = binding_obj.get('description')
-        self.valueSet = binding_obj.get('valueSet')
+        self.valueset = binding_obj.get('valueSet')
         self.legacy_uri = binding_obj.get('valueSetUri')
         self.legacy_canonical = binding_obj.get('valueSetCanonical')
+        self.dstu2_reference = binding_obj.get('valueSetReference', {}).get('reference')
         self.is_required = 'required' == self.strength
+    
+    @property
+    def has_valueset(self):
+        return self.valueset_uri is not None
+    
+    @property
+    def valueset_uri(self):
+        return self.valueset or self.legacy_uri or self.legacy_canonical or self.dstu2_reference
+    
+    
 
 
 class FHIRElementConstraint(object):

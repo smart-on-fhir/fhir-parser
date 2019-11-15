@@ -10,6 +10,9 @@ from Default.mappings import *
 specification_url = 'http://hl7.org/fhir/2018May/'
 #specification_url = 'http://build.fhir.org'
 
+# To which directory to download to
+download_directory = 'downloads'
+
 # In which directory to find the templates. See below for settings that start with `tpl_`: these are the template names.
 tpl_base = 'Sample'
 
@@ -19,7 +22,7 @@ tpl_resource_source = 'template-resource.py'          # the template to use as s
 tpl_resource_target = '../models'                     # target directory to write the generated class files to
 tpl_resource_target_ptrn = '{}.py'                    # target class file name pattern, with one placeholder (`{}`) for the class name
 tpl_codesystems_source = 'template-codesystems.py'    # the template to use as source when writing enums for CodeSystems; can be `None`
-tpl_codesystems_target_name = 'codesystems.py'        # the filename to use for the generated code systems and value sets (in `tpl_resource_target`)
+tpl_codesystems_target_ptrn = 'codesystem_{}.py'      # the filename pattern to use for generated code systems and value sets, with one placeholder (`{}`) for the class name
 
 # Whether and where to put the factory methods and the dependency graph
 write_factory = True

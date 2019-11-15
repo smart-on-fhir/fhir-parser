@@ -13,8 +13,6 @@ import settings
 import fhirloader
 import fhirspec
 
-_cache = 'downloads'
-
 
 if '__main__' == __name__:
     force_download = len(sys.argv) > 1 and '-f' in sys.argv
@@ -23,7 +21,7 @@ if '__main__' == __name__:
     force_cache = len(sys.argv) > 1 and ('-c' in sys.argv or '--cache-only' in sys.argv)
 
     # assure we have all files
-    loader = fhirloader.FHIRLoader(settings, _cache)
+    loader = fhirloader.FHIRLoader(settings)
     spec_source = loader.load(force_download=force_download, force_cache=force_cache)
 
     # parse

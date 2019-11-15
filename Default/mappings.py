@@ -72,8 +72,10 @@ enum_map = {
 
 # If you want to give specific names to enums based on their URI
 enum_namemap = {
-    'http://hl7.org/fhir/contracttermsubtypecodes': 'ContractTermSubtypeCodes',
-    'http://hl7.org/fhir/coverage-exception': 'CoverageExceptionCodes',
-    'http://hl7.org/fhir/resource-type-link': 'ResourceTypeLink',
+    # 'http://hl7.org/fhir/coverage-exception': 'CoverageExceptionCodes',
 }
 
+# If certain CodeSystems don't need to generate an enum
+enum_ignore = {
+    # 'http://hl7.org/fhir/resource-type-link',
+}
