@@ -8,7 +8,7 @@
 #  THIS HAS BEEN ADAPTED FROM Swift Enums WITHOUT EVER BEING IMPLEMENTED IN
 #  Python, FOR DEMONSTRATION PURPOSES ONLY.
 #
-{% for system in systems %}{% if system.generate_enum %}
+{% if system.generate_enum %}
 
 class {{ system.name }}(object) {
 	""" {{ system.definition.description|wordwrap(width=120, wrapstring="\n") }}
@@ -25,4 +25,4 @@ class {{ system.name }}(object) {
 	"""
 	{%- endfor %}
 }
-{% endif %}{% endfor %}
+{% endif %}

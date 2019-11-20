@@ -149,13 +149,17 @@ class FHIRValueSetRenderer(FHIRRenderer):
             return
         
         systems = [v for k,v in self.spec.codesystems.items()]
-        data = {
-            'info': self.spec.info,
-            'systems': sorted(systems, key=lambda x: x.name),
-        }
-        target_name = self.settings.tpl_codesystems_target_name
-        target_path = os.path.join(self.settings.tpl_resource_target, target_name)
-        self.do_render(data, self.settings.tpl_codesystems_source, target_path)
+        for system in sorted(systems, key=lambda x: x.name):
+            if not system.generate_enum:
+                continue
+            
+            data = {
+                'info': self.spec.info,
+                'system': system,
+            }
+            target_name = self.settings.tpl_codesystems_target_ptrn.format(system.name)
+            target_path = os.path.join(self.settings.tpl_resource_target, target_name)
+            self.do_render(data, self.settings.tpl_codesystems_source, target_path)
 
 
 class FHIRUnitTestRenderer(FHIRRenderer):
