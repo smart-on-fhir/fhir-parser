@@ -8,8 +8,8 @@ import glob
 import json
 import os.path
 
-from logger import logger
-import fhirclass
+from .logger import logger
+from . import fhirclass
 
 
 class FHIRUnitTestController(object):

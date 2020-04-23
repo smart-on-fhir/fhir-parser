@@ -1,24 +1,61 @@
-Python FHIR Parser
-==================
+FHIR Zeug - A FHIR Spec Compiler
+================================
 
-A Python FHIR specification parser for model class generation.
-If you've come here because you want _Swift_ or _Python_ classes for FHIR data models, look at our client libraries instead:
+(forked from https://github.com/smart-on-fhir/fhir-parser)
 
-- [Swift-FHIR][] and [Swift-SMART][]
-- Python [client-py][]
 
-The `master` branch is currently capable of parsing _STU 3, v3.0.0_.  
-The `develop` branch should be capable of parsing the continuous integration build and will be merged into master on new major FHIR releases.
-There may be tags for specific freezes, see [releases](https://github.com/smart-on-fhir/fhir-parser/releases).
+Why a fork?
+-----------
+The original project seemed to abandoned and its structure was not quite pythonic. The work which 
+has been done was great and we wanted to continue development here. We wanted to have a more
+self-contained project, which already has the definitions for the languages on board.
+
+Our main support goals are Python (3.8) with [pydantic](https://github.com/samuelcolvin/pydantic/)
+and [FHIR R4](https://hl7.org/fhir/R4/).
+
 
 This work is licensed under the [APACHE license][license].
-FHIR® is the registered trademark of [HL7][] and is used with the permission of HL7.
+FHIR® is the registered trademark of [HL7](http://hl7.org) and is used with the permission of HL7.
 
 
-Tech
-----
+Usage
+-----
 
-The _generate.py_ script downloads [FHIR specification][fhir] files, parses the profiles (using _fhirspec.py_) and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
+The `fhir_zeug.cli` module is the central cli utility included. In an installed environment it can
+be called with
+
+```
+# fhir-zeug --help
+Usage: fhir-zeug [OPTIONS]
+
+  Download and parse FHIR resource definitions.
+
+Options:
+  --force-download / --no-force-download
+  --dry-run / --no-dry-run
+  --force-cache / --no-force-cache
+  --load-only / --no-load-only
+  --install-completion [bash|zsh|fish|powershell|pwsh]
+                                  Install completion for the specified shell.
+  --show-completion [bash|zsh|fish|powershell|pwsh]
+                                  Show completion for the specified shell, to
+                                  copy it or customize the installation.
+
+  --help                          Show this message and exit.
+```
+
+It will:
+- Download the [FHIR specification][fhir]
+- Parse it
+- Generate source files for python pydantic
+
+
+
+
+# Obsolete
+
+
+downloads [FHIR specification][fhir] files, parses the profiles (using _fhirspec.py_) and represents them as `FHIRClass` instances with `FHIRClassProperty` properties (found in _fhirclass.py_).
 Additionally, `FHIRUnitTest` (in _fhirunittest.py_) instances get created that can generate unit tests from provided FHIR examples.
 These representations are then used by [Jinja][] templates to create classes in certain programming languages, mentioned below.
 
@@ -53,16 +90,8 @@ Use
 > NOTE that the script currently overwrites existing files without asking and without regret.
 
 
-Languages
-=========
 
-This repo used to contain templates for Python and Swift classes, but these have been moved to the respective framework repositories.
-A very basic Python sample implementation is included in the `Sample` directory, complementing the default _mapping_ and _settings_ files in `Default`.
 
-To get a sense of how to use _fhir-parser_, take a look at these libraries:
-
-- [**Swift-FHIR**][swift-fhir]
-- [**fhirclient**][client-py]
 
 
 Tech Details
@@ -88,7 +117,3 @@ The class of this property is derived from `element.type`, which is expected to 
 [hl7]: http://hl7.org/
 [fhir]: http://www.hl7.org/implement/standards/fhir/
 [jinja]: http://jinja.pocoo.org/
-[swift]: https://developer.apple.com/swift/
-[swift-fhir]: https://github.com/smart-on-fhir/Swift-FHIR
-[swift-smart]: https://github.com/smart-on-fhir/Swift-SMART
-[client-py]: https://github.com/smart-on-fhir/client-py

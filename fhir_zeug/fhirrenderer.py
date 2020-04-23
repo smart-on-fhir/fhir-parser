@@ -9,7 +9,7 @@ import textwrap
 
 from jinja2 import Environment, PackageLoader, TemplateNotFound
 from jinja2.filters import environmentfilter
-from logger import logger
+from .logger import logger
 
 
 class FHIRRenderer(object):
@@ -220,7 +220,7 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
     # Workaround: pre-split the string on \r, \r\n and \n
     for component in re.split(r"\r\n|\n|\r", s):
         # textwrap will eat empty strings for breakfirst. Therefore we route them around it.
-        if len(component) is 0:
+        if len(component) == 0:
             accumulator.append(component)
             continue
         accumulator.extend(
