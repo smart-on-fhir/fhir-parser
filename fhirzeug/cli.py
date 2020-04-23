@@ -8,6 +8,7 @@ from .generators.python_pydantic import settings
 
 app = typer.Typer()
 
+
 @app.command()
 def main(
     force_download: bool = False,
