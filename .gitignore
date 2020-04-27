@@ -194,3 +194,5 @@ $RECYCLE.BIN/
 
 # ignore downloads
 /downloads
+
+fhirclient/

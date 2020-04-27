@@ -20,7 +20,7 @@ class FHIRRenderer(object):
         self.spec = spec
         self.settings = self.__class__.cleaned_settings(settings)
         self.jinjaenv = Environment(
-            loader=PackageLoader("generate", self.settings.tpl_base)
+            loader=PackageLoader("fhirzeug.generators.python_pydantic", self.settings.tpl_base)
         )
         self.jinjaenv.filters["wordwrap"] = do_wordwrap
 
