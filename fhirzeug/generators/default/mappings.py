@@ -31,6 +31,7 @@ classmap = {
 # Classes to be replaced with different ones at resource rendering time
 replacemap = {
     "Reference": "FHIRReference",  # `FHIRReference` adds dereferencing capabilities
+    "Http://hl7.org/fhirpath/System.String": "str",
 }
 
 # Which class names are native to the language (or can be treated this way)
@@ -60,6 +61,7 @@ reservedmap = {
 # For enum codes where a computer just cannot generate reasonable names
 enum_map = {
     "=": "eq",
+    "!=": "ne",
     "<": "lt",
     "<=": "lte",
     ">": "gt",
