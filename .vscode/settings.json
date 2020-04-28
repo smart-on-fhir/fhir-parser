@@ -1,3 +1,11 @@
 {
-    "python.pythonPath": "/home/julian/.cache/pypoetry/virtualenvs/fhir-zeug-2pgta825-py3.8/bin/python",
+    "python.pythonPath": ".venv/bin/python3",
+    "editor.formatOnSave": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.formatting.provider": "black"
 }

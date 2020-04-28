@@ -1103,7 +1103,9 @@ class FHIRStructureDefinitionElementDefinition(object):
 
 
 class FHIRElementType(object):
-    """ Representing a type of an element.
+    """Representing a type of an element.
+
+    https://www.hl7.org/fhir/element.html
     """
 
     def __init__(self, type_dict=None):
@@ -1114,22 +1116,25 @@ class FHIRElementType(object):
             self.parse_from(type_dict)
 
     def parse_from(self, type_dict):
+        print(type_dict)
         self.code = type_dict.get("code")
 
         # Look for the "structuredefinition-fhir-type" extension, introduced after R4
         ext_type = type_dict.get("extension")
 
-        # this breaks R4
-        # TODO: investigate
-        # if ext_type is not None:
-        #     fhir_ext = [
-        #         e
-        #         for e in ext_type
-        #         if e.get("url")
-        #         == "http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type"
-        #     ]
-        #     if len(fhir_ext) == 1:  # This may hit after R4
-        #         self.code = fhir_ext[0].get("valueUri")
+        # http://hl7.org/fhir/2020Feb/extensibility.html#Extension
+        if ext_type is not None:
+            fhir_ext = [
+                e
+                for e in ext_type
+                if e.get("url")
+                == "http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type"
+            ]
+            if len(fhir_ext) == 1:  # This may hit after R4
+                if "valueUri" in fhir_ext[0]:
+                    self.code = fhir_ext[0].get("valueUri")
+                if "valueUrl" in fhir_ext[0]:
+                    self.code = fhir_ext[0].get("valueUrl")
 
         # This may hit on R4 or earlier
         ext_code = type_dict.get("_code")
