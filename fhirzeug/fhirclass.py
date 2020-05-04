@@ -235,6 +235,7 @@ class FHIRClassProperty(object):
         self.nonoptional = (
             True if element.n_min is not None and 0 != int(element.n_min) else False
         )
+        self.is_optional = not self.nonoptional
         self.reference_to_names = (
             [spec.class_name_for_profile(type_obj.profile)]
             if type_obj.profile is not None

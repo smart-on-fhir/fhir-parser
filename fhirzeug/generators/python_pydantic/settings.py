@@ -15,7 +15,7 @@ write_resources = True
 tpl_resource_target = (
     "./fhirclient/models"  # target directory to write the generated class files to
 )
-tpl_codesystems_source = None  # the template to use as source when writing enums for CodeSystems; can be `None`
+tpl_codesystems_source = "codesystems.py.jinja2"  # the template to use as source when writing enums for CodeSystems; can be `None`
 
 # factory methods
 write_factory = True

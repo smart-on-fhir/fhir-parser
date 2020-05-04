@@ -1,11 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import io
 import os
 import re
 import shutil
 import textwrap
+from pprint import pprint
 
 from pathlib import Path
 
@@ -73,6 +71,10 @@ class FHIRRenderer(object):
         if not os.path.isdir(dirpath):
             os.makedirs(dirpath)
 
+        print("=" * 80)
+        print(target_path)
+        print("=" * 80)
+        pprint(data)
         with io.open(target_path, "w", encoding="utf-8") as handle:
             logger.info("Writing {}".format(target_path))
             rendered = template.render(data)

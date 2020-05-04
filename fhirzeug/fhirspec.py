@@ -23,7 +23,7 @@ class FHIRSpec(object):
     """ The FHIR specification.
     """
 
-    def __init__(self, directory, settings, generator_module: str):
+    def __init__(self, directory: str, settings, generator_module: str):
         assert os.path.isdir(directory)
         assert settings is not None
         self.directory = directory
@@ -239,9 +239,13 @@ class FHIRSpec(object):
         return self.settings.reservedmap.get(prop_name, prop_name)
 
     def safe_enum_name(self, enum_name, ucfirst=False):
+        """ """
+
         assert enum_name, "Must have a name"
+
         name = self.settings.enum_map.get(enum_name, enum_name)
         parts = re.split(r"\W+", name)
+
         if self.settings.camelcase_enums:
             name = "".join([n[:1].upper() + n[1:] for n in parts])
             if not ucfirst and name.upper() != name:
@@ -442,7 +446,7 @@ class FHIRCodeSystem(object):
     """ Holds on to CodeSystems bundled with the spec.
     """
 
-    def __init__(self, spec, resource):
+    def __init__(self, spec: FHIRSpec, resource):
         assert "content" in resource
         self.spec = spec
         self.definition = resource

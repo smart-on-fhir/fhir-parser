@@ -195,7 +195,6 @@ $RECYCLE.BIN/
 # ignore downloads
 /downloads
 
-py_classic
-py_pedantic/
+py_*
 .venv
 

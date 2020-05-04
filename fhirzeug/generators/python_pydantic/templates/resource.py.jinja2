@@ -2,19 +2,17 @@
 {{ info.year }}, Skalar Systems, BlackTusk.
 """
 
+import typing
 {%- set imported = {} %}
 {%- for klass in classes %}
 
-
+{# this is the import for the base class, all other dependencies will be imported after the class 
+definition to prefent circular import problems #}
 {% if klass.superclass in imports and klass.superclass.module not in imported -%}
 from . import {{ klass.superclass.module }}
 {% set _ = imported.update({klass.superclass.module: True}) %}
 {% endif -%}
 
-{%- for imp in imports %}
-# {{ imp }}
-from .{{ imp.module }} import {{imp.name}}
-{% endfor %}
 
 class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.module }}.{% endif -%}
     {{ klass.superclass.name|default('object')}}):
@@ -29,14 +27,36 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     resource_type = "{{ klass.resource_type }}"
 {%- endif %}
     
+    # {{klass.properties}}
   
-{%- for prop in klass.properties %}
+{% for prop in klass.properties %}
     
-    {{ prop.name }}: {{ prop.class_name }}
+
+    {%- set type_name = prop.class_name %}
+    {%- if not prop.is_native %}
+        {%- set type_name = "\"{}\"".format(type_name) %}
+    {%- endif %}
+    {%- if prop.is_array %}
+        {%- set type_name = "typing.List[{}]".format(type_name) %}
+    {%- endif %}
+    {%- if prop.is_optional %}
+        {%- set type_name = "typing.Optional[{}]".format(type_name) %}
+    {%- endif %}
+    {{ prop.name }}: {{ type_name }}
+
+
     """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
     {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
     {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
     {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
-{%- endfor %}
+{% endfor %}
     
+{%- for imp in imports %}
+from .{{ imp.module }} import {{imp.name}}
+{% endfor %}
+
 {%- endfor %}
+
+{# {%- for klass in classes %}
+{{ klass.name }}.update_forward_refs()
+{%- endfor %} #}

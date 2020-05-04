@@ -48,13 +48,14 @@ jsonmap_default = "dict"
 
 # Properties that need to be renamed because of language keyword conflicts
 reservedmap = {
-    "for": "for_fhir",
-    "from": "from_fhir",
-    "class": "class_fhir",
-    "import": "import_fhir",
-    "global": "global_fhir",
-    "assert": "assert_fhir",
-    "except": "except_fhir",
+    "for": "for_",
+    "from": "from_",
+    "class": "class_",
+    "import": "import_",
+    "global": "global_",
+    "assert": "assert_",
+    "except": "except_",
+    "in": "in_",
 }
 
 # For enum codes where a computer just cannot generate reasonable names
