@@ -195,5 +195,7 @@ $RECYCLE.BIN/
 # ignore downloads
 /downloads
 
-fhirclient/
+py_classic
+py_pedantic/
 .venv
+

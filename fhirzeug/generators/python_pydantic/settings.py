@@ -31,7 +31,7 @@ tpl_unittest_target = (
 # all these files should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path/to/file, module, array-of-class-names)
 manual_profiles = [
     (
-        "../fhir-parser-resources/fhirabstractbase.py",
+        "./fhirzeug/generators/python_pydantic/templates/fhirabstractbase.py",
         "fhirabstractbase",
         [
             "boolean",
@@ -50,15 +50,23 @@ manual_profiles = [
         ],
     ),
     (
-        "../fhir-parser-resources/fhirabstractresource.py",
+        "./fhirzeug/generators/python_pydantic/templates/fhirabstractresource.py",
         "fhirabstractresource",
         ["FHIRAbstractResource"],
     ),
-    ("../fhir-parser-resources/fhirreference.py", "fhirreference", ["FHIRReference"]),
     (
-        "../fhir-parser-resources/fhirdate.py",
+        "./fhirzeug/generators/python_pydantic/templates/fhirreference.py",
+        "fhirreference",
+        ["FHIRReference"],
+    ),
+    (
+        "./fhirzeug/generators/python_pydantic/templates/fhirdate.py",
         "fhirdate",
         ["date", "dateTime", "instant", "time"],
     ),
-    ("../fhir-parser-resources/fhirsearch.py", "fhirsearch", ["FHIRSearch"]),
+    (
+        "./fhirzeug/generators/python_pydantic/templates/fhirsearch.py",
+        "fhirsearch",
+        ["FHIRSearch"],
+    ),
 ]

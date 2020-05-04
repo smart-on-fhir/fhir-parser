@@ -7,6 +7,8 @@ import re
 import shutil
 import textwrap
 
+from pathlib import Path
+
 from jinja2 import Environment, PackageLoader, TemplateNotFound
 from jinja2.filters import environmentfilter
 from .logger import logger
@@ -16,11 +18,11 @@ class FHIRRenderer(object):
     """ Superclass for all renderer implementations.
     """
 
-    def __init__(self, spec, settings):
+    def __init__(self, spec, settings, generator_module):
         self.spec = spec
         self.settings = self.__class__.cleaned_settings(settings)
         self.jinjaenv = Environment(
-            loader=PackageLoader("fhirzeug.generators.python_pydantic", self.settings.tpl_base)
+            loader=PackageLoader(generator_module, self.settings.tpl_base)
         )
         self.jinjaenv.filters["wordwrap"] = do_wordwrap
 
@@ -99,6 +101,9 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 shutil.copyfile(filepath, tgt)
 
     def render(self):
+        module_init = Path(self.settings.tpl_resource_target, "__init__.py")
+        module_init.parent.mkdir(parents=True, exist_ok=True)
+        module_init.touch()
         for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):

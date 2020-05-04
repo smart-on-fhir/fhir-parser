@@ -23,7 +23,7 @@ class FHIRSpec(object):
     """ The FHIR specification.
     """
 
-    def __init__(self, directory, settings):
+    def __init__(self, directory, settings, generator_module: str):
         assert os.path.isdir(directory)
         assert settings is not None
         self.directory = directory
@@ -33,6 +33,8 @@ class FHIRSpec(object):
         self.codesystems = {}  # system-url: FHIRCodeSystem()
         self.profiles = {}  # profile-name: FHIRStructureDefinition()
         self.unit_tests = None  # FHIRUnitTestCollection()
+
+        self.generator_module = generator_module
 
         self.prepare()
         self.read_profiles()
@@ -275,23 +277,33 @@ class FHIRSpec(object):
 
     def write(self):
         if self.settings.write_resources:
-            renderer = fhirrenderer.FHIRStructureDefinitionRenderer(self, self.settings)
+            renderer = fhirrenderer.FHIRStructureDefinitionRenderer(
+                self, self.settings, self.generator_module
+            )
             renderer.render()
 
-            vsrenderer = fhirrenderer.FHIRValueSetRenderer(self, self.settings)
+            vsrenderer = fhirrenderer.FHIRValueSetRenderer(
+                self, self.settings, self.generator_module
+            )
             vsrenderer.render()
 
         if self.settings.write_factory:
-            renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
+            renderer = fhirrenderer.FHIRFactoryRenderer(
+                self, self.settings, self.generator_module
+            )
             renderer.render()
 
         if self.settings.write_dependencies:
-            renderer = fhirrenderer.FHIRDependencyRenderer(self, self.settings)
+            renderer = fhirrenderer.FHIRDependencyRenderer(
+                self, self.settings, self.generator_module
+            )
             renderer.render()
 
         if self.settings.write_unittests:
             self.parse_unit_tests()
-            renderer = fhirrenderer.FHIRUnitTestRenderer(self, self.settings)
+            renderer = fhirrenderer.FHIRUnitTestRenderer(
+                self, self.settings, self.generator_module
+            )
             renderer.render()
 
 
