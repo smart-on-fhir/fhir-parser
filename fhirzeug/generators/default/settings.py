@@ -18,18 +18,18 @@ tpl_base = "Sample"
 
 # Whether and where to put the generated class models
 write_resources = True
-tpl_resource_source = "template-resource.py"  # the template to use as source when writing resource implementations for profiles
+tpl_resource_source = "resource.py.jinja2"  # the template to use as source when writing resource implementations for profiles
 tpl_resource_target = (
     "../models"  # target directory to write the generated class files to
 )
 tpl_resource_target_ptrn = "{}.py"  # target class file name pattern, with one placeholder (`{}`) for the class name
-tpl_codesystems_source = "template-codesystems.py"  # the template to use as source when writing enums for CodeSystems; can be `None`
+tpl_codesystems_source = "codesystems.py.jinja2"  # the template to use as source when writing enums for CodeSystems; can be `None`
 tpl_codesystems_target_ptrn = "codesystem_{}.py"  # the filename pattern to use for generated code systems and value sets, with one placeholder (`{}`) for the class name
 
 # Whether and where to put the factory methods and the dependency graph
 write_factory = True
 tpl_factory_source = (
-    "template-elementfactory.py"  # the template to use for factory generation
+    "elementfactory.py.jinja2"  # the template to use for factory generation
 )
 tpl_factory_target = (
     "../models/fhirelementfactory.py"  # where to write the generated factory to
@@ -43,7 +43,7 @@ tpl_dependencies_target = "./dependencies.json"  # write dependency JSON to proj
 # Whether and where to write unit tests
 write_unittests = True
 tpl_unittest_source = (
-    "template-unittest.py"  # the template to use for unit test generation
+    "unittest.py.jinja2"  # the template to use for unit test generation
 )
 tpl_unittest_target = (
     "../models"  # target directory to write the generated unit test files to
