@@ -92,7 +92,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
     """ Write classes for a profile/structure-definition.
     """
 
-    def copy_files(self, target_dir):
+    def copy_files(self, target_dir, f_out):
         """ Copy base resources to the target location, according to settings.
         """
         for origpath, module, contains in self.settings.manual_profiles:
@@ -100,15 +100,22 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 continue
             filepath = os.path.join(*origpath.split("/"))
             if os.path.exists(filepath):
-                tgt = os.path.join(target_dir, os.path.basename(filepath))
-                logger.info(
-                    "Copying manual profiles in {} to {}".format(
-                        os.path.basename(filepath), tgt
+
+                if f_out:
+                    with open(filepath, "r") as f_in:
+                        shutil.copyfileobj(f_in, f_out)
+
+                else:
+                    logger.info(
+                        "Copying manual profiles in {} to {}".format(
+                            os.path.basename(filepath), tgt
+                        )
                     )
-                )
-                shutil.copyfile(filepath, tgt)
+                    tgt = os.path.join(target_dir, os.path.basename(filepath))
+                    shutil.copyfile(filepath, tgt)
 
     def render(self, f_out):
+        self.copy_files(None, f_out)
         for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
@@ -140,7 +147,6 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
             target_path = os.path.join(self.settings.tpl_resource_target, target_name)
 
             self.do_render(data, source_path, None, f_out)
-        self.copy_files(os.path.dirname(target_path))
 
 
 class FHIRFactoryRenderer(FHIRRenderer):
