@@ -4,7 +4,7 @@ import re
 import shutil
 import textwrap
 from pprint import pprint
-
+from typing import Optional, TextIO
 from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, TemplateNotFound
@@ -12,11 +12,11 @@ from jinja2.filters import environmentfilter
 from .logger import logger
 
 
-class FHIRRenderer(object):
+class FHIRRenderer:
     """ Superclass for all renderer implementations.
     """
 
-    def __init__(self, spec, settings, generator_module):
+    def __init__(self, spec: "FHIRSpec", settings, generator_module):
         self.spec = spec
         self.settings = self.__class__.cleaned_settings(settings)
         self.jinjaenv = Environment(
@@ -43,18 +43,25 @@ class FHIRRenderer(object):
         )
         return settings
 
-    def render(self):
+    def render(self, f_out: Optional[TextIO] = None) -> None:
         """ The main rendering start point, for subclasses to override.
         """
         raise Exception("Cannot use abstract superclass' `render` method")
 
-    def do_render(self, data, template_name, target_path):
+    def do_render(
+        self,
+        data,
+        template_name: str,
+        target_path: Optional[Path] = None,
+        f_out: Optional[TextIO] = None,
+    ) -> None:
         """ Render the given data using a Jinja2 template, writing to the file
         at the target path.
         
         :param template_name: The Jinja2 template to render, located in settings.tpl_base
         :param target_path: Output path
         """
+
         try:
             template = self.jinjaenv.get_template(template_name)
         except TemplateNotFound as e:
@@ -65,21 +72,20 @@ class FHIRRenderer(object):
             )
             return
 
-        if not target_path:
-            raise Exception("No target filepath provided")
-        dirpath = os.path.dirname(target_path)
-        if not os.path.isdir(dirpath):
-            os.makedirs(dirpath)
+        if not target_path and not f_out:
+            raise ValueError("No target filepath or file object provided")
 
-        print("=" * 80)
-        print(target_path)
-        print("=" * 80)
-        pprint(data)
-        with io.open(target_path, "w", encoding="utf-8") as handle:
-            logger.info("Writing {}".format(target_path))
-            rendered = template.render(data)
-            handle.write(rendered)
-            # handle.write(rendered.encode('utf-8'))
+        if target_path:
+            dirpath = os.path.dirname(target_path)
+
+            if not os.path.isdir(dirpath):
+                os.makedirs(dirpath)
+
+            f_out = open(target_path, "w")
+
+        logger.info("Writing {}".format(target_path))
+        rendered = template.render(data)
+        f_out.write(rendered)
 
 
 class FHIRStructureDefinitionRenderer(FHIRRenderer):
@@ -102,10 +108,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
                 )
                 shutil.copyfile(filepath, tgt)
 
-    def render(self):
-        module_init = Path(self.settings.tpl_resource_target, "__init__.py")
-        module_init.parent.mkdir(parents=True, exist_ok=True)
-        module_init.touch()
+    def render(self, f_out):
         for profile in self.spec.writable_profiles():
             classes = sorted(profile.writable_classes(), key=lambda x: x.name)
             if 0 == len(classes):
@@ -136,7 +139,7 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
             target_name = self.settings.tpl_resource_target_ptrn.format(ptrn)
             target_path = os.path.join(self.settings.tpl_resource_target, target_name)
 
-            self.do_render(data, source_path, target_path)
+            self.do_render(data, source_path, None, f_out)
         self.copy_files(os.path.dirname(target_path))
 
 
@@ -189,7 +192,7 @@ class FHIRValueSetRenderer(FHIRRenderer):
     """ Write ValueSet and CodeSystem contained in the FHIR spec.
     """
 
-    def render(self):
+    def render(self, f_out):
         if not self.settings.tpl_codesystems_source:
             logger.info(
                 "Not rendering value sets and code systems since `tpl_codesystems_source` is not set"
@@ -207,7 +210,7 @@ class FHIRValueSetRenderer(FHIRRenderer):
             }
             target_name = self.settings.tpl_codesystems_target_ptrn.format(system.name)
             target_path = os.path.join(self.settings.tpl_resource_target, target_name)
-            self.do_render(data, self.settings.tpl_codesystems_source, target_path)
+            self.do_render(data, self.settings.tpl_codesystems_source, None, f_out)
 
 
 class FHIRUnitTestRenderer(FHIRRenderer):
