@@ -116,27 +116,60 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
 
     def render(self, f_out):
         self.copy_files(None, f_out)
+
+        derive_graph = {}
+
+        # sort according to derive
         for profile in self.spec.writable_profiles():
-            classes = sorted(profile.writable_classes(), key=lambda x: x.name)
-            if 0 == len(classes):
-                if (
-                    profile.url is not None
-                ):  # manual profiles have no url and usually write no classes
-                    logger.info(
-                        'Profile "{}" returns zero writable classes, skipping'.format(
-                            profile.url
-                        )
-                    )
-                continue
+            classes = profile.writable_classes()
+            for cl in classes:
+                # deps[cl.name] = cl.superclass_name
+                derive_graph.setdefault(cl.superclass_name, []).append(cl)
 
-            imports = profile.needed_external_classes()
-            data = {
-                "profile": profile,
-                "info": self.spec.info,
-                "imports": imports,
-                "classes": classes,
-            }
+        classes = []
+        work_stack = [
+            "FHIRAbstractBase",
+            "FHIRAbstractResource",
+        ]
 
+        with open("output/derive_graph", "w") as o:
+            import pprint
+
+            o.write(pprint.pformat(derive_graph))
+
+        while work_stack:
+            current = work_stack.pop()
+            for elm in derive_graph.get(current, []):
+                work_stack.append(elm.name)
+                classes.append(elm)
+
+        with open("output/class_order", "w") as o:
+            import pprint
+
+            o.write(pprint.pformat(classes))
+
+        for clazz in classes:
+            # classes = sorted(profile.writable_classes(), key=lambda x: x.name)
+            # if 0 == len(classes):
+            #     if (
+            #         profile.url is not None
+            #     ):  # manual profiles have no url and usually write no classes
+            #         logger.info(
+            #             'Profile "{}" returns zero writable classes, skipping'.format(
+            #                 profile.url
+            #             )
+            #         )
+            #     continue
+
+            # imports = profile.needed_external_classes()
+            # data = {
+            #     "profile": profile,
+            #     "info": self.spec.info,
+            #     "imports": imports,
+            #     "classes": classes,
+            # }
+
+            data = {"clazz": clazz}
             ptrn = (
                 profile.targetname.lower()
                 if self.settings.resource_modules_lowercase

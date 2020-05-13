@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-#  Base class for all FHIR elements.
-
-import sys
-import logging
-from pydantic import BaseModel
-
-logger = logging.getLogger(__name__)
 
 
 class FHIRValidationError(Exception):
@@ -47,6 +37,6 @@ class FHIRValidationError(Exception):
         return self.__class__(self.errors, path)
 
 
-class FHIRAbstractBase(BaseModel):
+class FHIRAbstractBase(pydantic.BaseModel):
     """Abstract base class for all FHIR elements.
     """

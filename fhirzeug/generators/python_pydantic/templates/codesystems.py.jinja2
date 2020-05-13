@@ -1,9 +1,6 @@
-from enum import Enum
 
-
-class {{system.name}}(Enum):
+class {{system.name}}(enum.Enum):
     {% for code in system.codes %}
     {{code.name}} = "{{code.code}}"
     """{{code.definition}} """
     {% endfor %}
-

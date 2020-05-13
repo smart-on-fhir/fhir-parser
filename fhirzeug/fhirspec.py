@@ -8,6 +8,7 @@ import sys
 import glob
 import json
 import datetime
+import shutil
 
 from .logger import logger
 from . import fhirclass, fhirunittest, fhirrenderer
@@ -283,16 +284,24 @@ class FHIRSpec(object):
 
         if self.settings.write_resources:
             with open("output/r4.py", "w") as f_out:
+                with open(
+                    "fhirzeug/generators/python_pydantic/templates/resource_header.py"
+                ) as f_in:
+                    shutil.copyfileobj(f_in, f_out)
                 value_set_renderer = fhirrenderer.FHIRValueSetRenderer(
                     self, self.settings, self.generator_module
                 )
                 value_set_renderer.render(f_out)
 
-
                 renderer = fhirrenderer.FHIRStructureDefinitionRenderer(
                     self, self.settings, self.generator_module
                 )
                 renderer.render(f_out)
+
+                with open(
+                    "fhirzeug/generators/python_pydantic/templates/resource_footer.py"
+                ) as f_in:
+                    shutil.copyfileobj(f_in, f_out)
 
         # if self.settings.write_factory:
         #     renderer = fhirrenderer.FHIRFactoryRenderer(

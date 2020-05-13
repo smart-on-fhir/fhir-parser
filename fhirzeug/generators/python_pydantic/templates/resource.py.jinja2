@@ -1,31 +1,20 @@
-{# import typing #}
-{# {%- set imported = {} %} #}
-{%- for klass in classes %}
-
-{# this is the import for the base class, all other dependencies will be imported after the class 
-definition to prefent circular import problems #}
-{# {% if klass.superclass in imports and klass.superclass.module not in imported -%}
-from . import {{ klass.superclass.module }}
-{% set _ = imported.update({klass.superclass.module: True}) %}
-{% endif -%} #}
 
 
-class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.module }}.{% endif -%}
-    {{ klass.superclass.name|default('object')}}):
-    """ {{ klass.short|wordwrap(width=75, wrapstring="\n    ") }}.
-{%- if klass.formal %}
+class {{ clazz.name }}({{ clazz.superclass.name|default('object')}}):
+    """ {{ clazz.short|wordwrap(width=75, wrapstring="\n    ") }}.
+{%- if clazz.formal %}
     
-    {{ klass.formal|wordwrap(width=75, wrapstring="\n    ") }}
+    {{ clazz.formal|wordwrap(width=75, wrapstring="\n    ") }}
 {%- endif %}
     """
-{%- if klass.resource_type %}
+{%- if clazz.resource_type %}
     
-    resource_type = "{{ klass.resource_type }}"
+    resource_type = "{{ clazz.resource_type }}"
 {%- endif %}
     
-    # {{klass.properties}}
+    # {{clazz.properties}}
   
-{% for prop in klass.properties %}
+{% for prop in clazz.properties %}
     
 
     {%- set type_name = prop.class_name %}
@@ -47,12 +36,7 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
 {% endfor %}
     
-{# {%- for imp in imports %}
-from .{{ imp.module }} import {{imp.name}}
-{% endfor %} #}
 
-{%- endfor %}
-
-{# {%- for klass in classes %}
-{{ klass.name }}.update_forward_refs()
+{# {%- for clazz in classes %}
+{{ clazz.name }}.update_forward_refs()
 {%- endfor %} #}

@@ -55,11 +55,11 @@ manual_profiles = [
         "fhirabstractresource",
         ["FHIRAbstractResource"],
     ),
-    (
-        "./fhirzeug/generators/python_pydantic/templates/fhirreference.py",
-        "fhirreference",
-        ["FHIRReference"],
-    ),
+    # (
+    #     "./fhirzeug/generators/python_pydantic/templates/fhirreference.py",
+    #     "fhirreference",
+    #     ["FHIRReference"],
+    # ),
     (
         "./fhirzeug/generators/python_pydantic/templates/fhirdate.py",
         "fhirdate",
