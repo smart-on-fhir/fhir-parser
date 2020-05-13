@@ -1,3 +1,5 @@
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
+
 # FHIR Zeug - A FHIR Spec Compiler
 
 (forked from https://github.com/smart-on-fhir/fhir-parser)

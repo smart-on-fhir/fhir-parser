@@ -1,17 +1,13 @@
-"""Generated from FHIR {{ info.version }} ({{ profile.url }}) on {{ info.date }}.
-{{ info.year }}, Skalar Systems, BlackTusk.
-"""
-
-import typing
-{%- set imported = {} %}
+{# import typing #}
+{# {%- set imported = {} %} #}
 {%- for klass in classes %}
 
 {# this is the import for the base class, all other dependencies will be imported after the class 
 definition to prefent circular import problems #}
-{% if klass.superclass in imports and klass.superclass.module not in imported -%}
+{# {% if klass.superclass in imports and klass.superclass.module not in imported -%}
 from . import {{ klass.superclass.module }}
 {% set _ = imported.update({klass.superclass.module: True}) %}
-{% endif -%}
+{% endif -%} #}
 
 
 class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.module }}.{% endif -%}
@@ -51,9 +47,9 @@ class {{ klass.name }}({% if klass.superclass in imports %}{{ klass.superclass.m
     {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
 {% endfor %}
     
-{%- for imp in imports %}
+{# {%- for imp in imports %}
 from .{{ imp.module }} import {{imp.name}}
-{% endfor %}
+{% endfor %} #}
 
 {%- endfor %}
 

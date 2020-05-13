@@ -56,6 +56,11 @@ reservedmap = {
     "assert": "assert_",
     "except": "except_",
     "in": "in_",
+    "del": "del_",
+    "return": "return_",
+    "as": "as_",
+    "not": "not_",
+    "pass": "pass_",
 }
 
 # For enum codes where a computer just cannot generate reasonable names
