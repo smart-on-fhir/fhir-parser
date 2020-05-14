@@ -136,6 +136,9 @@ class FHIRSpec(object):
         self.profiles[profile.name.lower()] = profile
         return True
     
+    def profile_named(self, profile_name):
+        return self.profiles.get(profile_name.lower())
+    
     def handle_manual_profiles(self):
         """ Creates in-memory representations for all our manually defined
         profiles.
@@ -253,7 +256,7 @@ class FHIRSpec(object):
         """
         profiles = []
         for key, profile in self.profiles.items():
-            if profile.manual_module is None:
+            if profile.manual_module is None and not profile.is_interface:
                 profiles.append(profile)
         return profiles
     
@@ -316,7 +319,6 @@ class FHIRValueSetEnum(object):
         self.represents_class = True    # required for FHIRClass compatibily
         self.module = name              # required for FHIRClass compatibily
         self.name_if_class = name       # required for FHIRClass compatibily
-        self.superclass_name = None     # required for FHIRClass compatibily
         self.path = None                # required for FHIRClass compatibily
     
     @property
@@ -473,6 +475,7 @@ class FHIRStructureDefinition(object):
         self.structure = None
         self.elements = None
         self.main_element = None
+        self.is_interface = False
         self._class_map = {}
         self.classes = []
         self._did_finalize = False
@@ -511,6 +514,13 @@ class FHIRStructureDefinition(object):
     def process_profile(self):
         """ Extract all elements and create classes.
         """
+        
+        # Is this an interface and not a resource? This is new in 4.2
+        is_interface_ext = FHIRExtension.extensionForURL('http://hl7.org/fhir/StructureDefinition/structuredefinition-interface', self.structure.extensions)
+        if is_interface_ext is not None and is_interface_ext.valueBoolean:
+            self.is_interface = True
+        
+        # Parse the differential to find classes we need to build
         struct = self.structure.differential# or self.structure.snapshot
         if struct is not None:
             mapped = {}
@@ -658,12 +668,14 @@ class FHIRStructureDefinition(object):
         # assign all super-classes as objects
         for cls in self.classes:
             if cls.superclass is None:
-                super_cls = fhirclass.FHIRClass.with_name(cls.superclass_name)
-                if super_cls is None and cls.superclass_name is not None:
+                superclass_name = cls.from_element.superclass_name
+                super_cls = fhirclass.FHIRClass.with_name(superclass_name)
+                if super_cls is None and superclass_name is not None:
                     raise Exception('There is no class implementation for class named "{}" in profile "{}"'
-                        .format(cls.superclass_name, self.url))
+                        .format(superclass_name, self.url))
                 else:
                     cls.superclass = super_cls
+                    cls.interfaces = cls.from_element.interfaces_if_main_element
         
         self._did_finalize = True
 
@@ -680,6 +692,7 @@ class FHIRStructureDefinitionStructure(object):
         self.subclass_of = None
         self.snapshot = None
         self.differential = None
+        self.extensions = None
         
         self.parse_from(profile_dict)
     
@@ -692,6 +705,7 @@ class FHIRStructureDefinitionStructure(object):
         self.kind = json_dict.get('kind')
         if self.base:
             self.subclass_of = self.profile.spec.class_name_for_profile(self.base)
+        self.extensions = json_dict.get('extension')
         
         # find element definitions
         if 'snapshot' in json_dict:
@@ -758,6 +772,48 @@ class FHIRStructureDefinitionElement(object):
     
     
     # MARK: Hierarchy
+    
+    @property
+    def non_interface_superclass_if_main_element(self):
+        if not self.is_main_profile_element:
+            return None
+        
+        next_up = self.profile.structure
+        while next_up.subclass_of is not None:
+            profile_up = next_up.profile.spec.profile_named(next_up.subclass_of)
+            if profile_up is None:
+                raise Exception('StructureDefinitionElement {} defines a base of \"{}\", which I know nothing about'
+                    .format(self.path, next_up.subclass_of))
+            
+            if profile_up.is_interface:
+                next_up = profile_up.structure
+            else:
+                # This is a 4.2 workaround for `Resource` inheriting from `Base`, which we can't support right now
+                # because the `resourceType` property is undefined
+                if self.profile.structure.kind != profile_up.structure.kind:
+                    return None
+                return profile_up.structure.name
+        
+        return None
+    
+    @property
+    def interfaces_if_main_element(self):
+        if not self.is_main_profile_element:
+            return None
+        
+        interfaces = []
+        next_up = self.profile.structure
+        while next_up.subclass_of is not None:
+            profile = next_up.profile.spec.profile_named(next_up.subclass_of)
+            if profile is None:
+                raise Exception('StructureDefinitionElement {} defines a base of \"{}\", which I know nothing about'
+                    .format(self.path, next_up.subclass_of))
+            
+            if profile.is_interface:
+                interfaces.append(profile)
+            next_up = profile.structure
+        
+        return interfaces if len(interfaces) > 0 else None
     
     def add_child(self, element):
         assert isinstance(element, FHIRStructureDefinitionElement)
@@ -869,8 +925,9 @@ class FHIRStructureDefinitionElement(object):
                     .format(self.path, tps))
             type_code = None
             
-            if self.is_main_profile_element and self.profile.structure.subclass_of is not None:
-                type_code = self.profile.structure.subclass_of
+            main_superclass_type_code = self.non_interface_superclass_if_main_element
+            if self.is_main_profile_element and main_superclass_type_code is not None:
+                type_code = main_superclass_type_code
             elif len(tps) > 0:
                 type_code = tps[0].code
             elif self.profile.structure.kind:
@@ -1003,11 +1060,11 @@ class FHIRElementType(object):
         self.code = type_dict.get('code')
         
         # Look for the "structuredefinition-fhir-type" extension, introduced after R4
-        ext_type = type_dict.get('extension')
-        if ext_type is not None:
-            fhir_ext = [e for e in ext_type if e.get('url') == 'http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type']
-            if len(fhir_ext) == 1:      # This may hit after R4
-                self.code = fhir_ext[0].get('valueUri')
+        extensions = type_dict.get('extension')
+        if extensions is not None:
+            fhir_ext = FHIRExtension.extensionForURL('http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type', extensions)
+            if fhir_ext is not None:      # Supported in R4 and newer
+                self.code = fhir_ext.valueUri or fhir_ext.valueUrl  # 'valueUrl' for R4 support
         
         # This may hit on R4 or earlier
         ext_code = type_dict.get('_code')
@@ -1050,8 +1107,6 @@ class FHIRElementBinding(object):
     @property
     def valueset_uri(self):
         return self.valueset or self.legacy_uri or self.legacy_canonical or self.dstu2_reference
-    
-    
 
 
 class FHIRElementConstraint(object):
@@ -1066,6 +1121,31 @@ class FHIRElementMapping(object):
     """
     def __init__(self, mapping_arr):
         pass
+
+
+class FHIRExtension(object):
+    """ A FHIR Extension.
+    """
+    def __init__(self, extension):
+        self.url = extension.get('url')
+        self.extension = extension
+    
+    @classmethod
+    def extensionForURL(cls, url, extension_dicts):
+        """ Provided with an array of extension dictionaries (!), returns an
+        instance of FHIRExtension if the url matches.
+        """
+        if extension_dicts is None:
+            return None
+        for extension_dict in extension_dicts:
+            if extension_dict.get('url') == url:
+                return cls(extension_dict)
+        return None
+    
+    def __getattr__(self, name):
+        if name not in self.extension:
+            return None     # we don't want to raise AttributeError
+        return self.extension[name]
 
 
 def _is_string(element):

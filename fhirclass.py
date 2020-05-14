@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+
 from logger import logger
 
 
@@ -30,12 +32,13 @@ class FHIRClass(object):
     
     def __init__(self, element, class_name):
         assert element.represents_class
+        self.from_element = element
         self.path = element.path
         self.name = class_name
         self.module = None
         self.resource_type = element.name_of_resource()
         self.superclass = None
-        self.superclass_name = element.superclass_name
+        self.interfaces = None
         self.short = element.definition.short
         self.formal = element.definition.formal
         self.properties = []
@@ -65,27 +68,33 @@ class FHIRClass(object):
             if prop.one_of_many is not None:
                 existing = self.expanded_nonoptionals[prop.one_of_many] if prop.one_of_many in self.expanded_nonoptionals else []
                 existing.append(prop)
-                self.expanded_nonoptionals[prop.one_of_many] = sorted(existing, key=lambda x: x.name)
+                self.expanded_nonoptionals[prop.one_of_many] = sorted(existing, key=lambda x: re.sub(r'\W', '', x.name))
             else:
                 self.expanded_nonoptionals[prop.name] = [prop]
     
     @property
     def nonexpanded_properties(self):
         nonexpanded = []
-        included = set()
+        included = {}
         for prop in self.properties:
-            if prop.one_of_many:
-                if prop.one_of_many in included:
-                    continue
-                included.add(prop.one_of_many)
-            nonexpanded.append(prop)
+            if prop.nonexpanded_name not in included:
+                included[prop.nonexpanded_name] = prop
+                nonexpanded.append(prop)
+                prop.expansions = [prop]
+            else:
+                included[prop.nonexpanded_name].expansions.append(prop)
         return nonexpanded
     
     @property
     def nonexpanded_properties_all(self):
         nonexpanded = self.nonexpanded_properties.copy()
         if self.superclass is not None:
-            nonexpanded.extend(self.superclass.nonexpanded_properties_all)
+            included = set([p.nonexpanded_name for p in nonexpanded])
+            for prop in self.superclass.nonexpanded_properties_all:
+                if prop.nonexpanded_name in included:
+                    continue
+                included.add(prop.nonexpanded_name)
+                nonexpanded.append(prop)
         return nonexpanded
     
     @property
@@ -95,10 +104,9 @@ class FHIRClass(object):
         for prop in self.properties:
             if not prop.nonoptional:
                 continue
-            if prop.one_of_many:
-                if prop.one_of_many in included:
-                    continue
-                included.add(prop.one_of_many)
+            if prop.nonexpanded_name in included:
+                continue
+            included.add(prop.nonexpanded_name)
             nonexpanded.append(prop)
         return nonexpanded
     
@@ -106,7 +114,12 @@ class FHIRClass(object):
     def nonexpanded_nonoptionals_all(self):
         nonexpanded = self.nonexpanded_nonoptionals.copy()
         if self.superclass is not None:
-            nonexpanded.extend(self.superclass.nonexpanded_nonoptionals_all)
+            included = set([p.nonexpanded_name for p in nonexpanded])
+            for prop in self.superclass.nonexpanded_nonoptionals_all:
+                if prop.nonexpanded_name in included:
+                    continue
+                included.add(prop.nonexpanded_name)
+                nonexpanded.append(prop)
         return nonexpanded
     
     def property_for(self, prop_name):
@@ -138,22 +151,22 @@ class FHIRClass(object):
     
     @property
     def sorted_properties(self):
-        return sorted(self.properties, key=lambda x: x.name)
+        return sorted(self.properties, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def sorted_properties_all(self):
         properties = self.properties.copy()
         if self.superclass is not None:
             properties.extend(self.superclass.sorted_properties_all)
-        return sorted(properties, key=lambda x: x.name)
+        return sorted(properties, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def sorted_nonexpanded_properties(self):
-        return sorted(self.nonexpanded_properties, key=lambda x: x.name)
+        return sorted(self.nonexpanded_properties, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def sorted_nonexpanded_properties_all(self):
-        return sorted(self.nonexpanded_properties_all, key=lambda x: x.name)
+        return sorted(self.nonexpanded_properties_all, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def sorted_nonoptionals(self):
@@ -161,11 +174,11 @@ class FHIRClass(object):
     
     @property
     def sorted_nonexpanded_nonoptionals(self):
-        return sorted(self.nonexpanded_nonoptionals, key=lambda x: x.name)
+        return sorted(self.nonexpanded_nonoptionals, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def sorted_nonexpanded_nonoptionals_all(self):
-        return sorted(self.nonexpanded_nonoptionals_all, key=lambda x: x.name)
+        return sorted(self.nonexpanded_nonoptionals_all, key=lambda x: re.sub(r'\W', '', x.name))
     
     @property
     def has_expanded_nonoptionals(self):
@@ -196,6 +209,7 @@ class FHIRClassProperty(object):
         self.one_of_many = None         # assign if this property has been expanded from "property[x]"
         if not type_name:
             type_name = type_obj.code
+        self.type_name = type_name
         
         name = element.definition.prop_name
         if '[x]' in name:
@@ -208,6 +222,7 @@ class FHIRClassProperty(object):
         self.class_name = spec.class_name_for_type_if_property(type_name)
         self.enum = element.enum if 'code' == type_name else None
         self.module_name = None             # should only be set if it's an external module (think Python)
+        self.expansions = None              # will be populated in the class' `nonexpanded` property lists
         self.json_class = spec.json_class_for_class_name(self.class_name)
         self.is_native = False if self.enum else spec.class_name_is_native(self.class_name)
         self.is_array = True if '*' == element.n_max else False
