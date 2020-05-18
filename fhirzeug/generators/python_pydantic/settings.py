@@ -27,6 +27,7 @@ tpl_unittest_target = (
     "./fhirclient/models"  # target directory to write the generated unit test files to
 )
 
+single_file_output = True
 
 # all these files should be copied to dirname(`tpl_resource_target_ptrn`): tuples of (path/to/file, module, array-of-class-names)
 manual_profiles = [
@@ -54,11 +55,11 @@ manual_profiles = [
         "fhirabstractresource",
         ["FHIRAbstractResource"],
     ),
-    (
-        "./fhirzeug/generators/python_pydantic/templates/fhirreference.py",
-        "fhirreference",
-        ["FHIRReference"],
-    ),
+    # (
+    #     "./fhirzeug/generators/python_pydantic/templates/fhirreference.py",
+    #     "fhirreference",
+    #     ["FHIRReference"],
+    # ),
     (
         "./fhirzeug/generators/python_pydantic/templates/fhirdate.py",
         "fhirdate",

@@ -8,6 +8,7 @@ import sys
 import glob
 import json
 import datetime
+import shutil
 
 from .logger import logger
 from . import fhirclass, fhirunittest, fhirrenderer
@@ -280,35 +281,46 @@ class FHIRSpec(object):
         return profiles
 
     def write(self):
+
         if self.settings.write_resources:
-            renderer = fhirrenderer.FHIRStructureDefinitionRenderer(
-                self, self.settings, self.generator_module
-            )
-            renderer.render()
+            with open("output/r4.py", "w") as f_out:
+                with open(
+                    "fhirzeug/generators/python_pydantic/templates/resource_header.py"
+                ) as f_in:
+                    shutil.copyfileobj(f_in, f_out)
+                value_set_renderer = fhirrenderer.FHIRValueSetRenderer(
+                    self, self.settings, self.generator_module
+                )
+                value_set_renderer.render(f_out)
 
-            vsrenderer = fhirrenderer.FHIRValueSetRenderer(
-                self, self.settings, self.generator_module
-            )
-            vsrenderer.render()
+                renderer = fhirrenderer.FHIRStructureDefinitionRenderer(
+                    self, self.settings, self.generator_module
+                )
+                renderer.render(f_out)
 
-        if self.settings.write_factory:
-            renderer = fhirrenderer.FHIRFactoryRenderer(
-                self, self.settings, self.generator_module
-            )
-            renderer.render()
+                with open(
+                    "fhirzeug/generators/python_pydantic/templates/resource_footer.py"
+                ) as f_in:
+                    shutil.copyfileobj(f_in, f_out)
 
-        if self.settings.write_dependencies:
-            renderer = fhirrenderer.FHIRDependencyRenderer(
-                self, self.settings, self.generator_module
-            )
-            renderer.render()
+        # if self.settings.write_factory:
+        #     renderer = fhirrenderer.FHIRFactoryRenderer(
+        #         self, self.settings, self.generator_module
+        #     )
+        #     renderer.render()
 
-        if self.settings.write_unittests:
-            self.parse_unit_tests()
-            renderer = fhirrenderer.FHIRUnitTestRenderer(
-                self, self.settings, self.generator_module
-            )
-            renderer.render()
+        # if self.settings.write_dependencies:
+        #     renderer = fhirrenderer.FHIRDependencyRenderer(
+        #         self, self.settings, self.generator_module
+        #     )
+        #     renderer.render()
+
+        # if self.settings.write_unittests:
+        #     self.parse_unit_tests()
+        #     renderer = fhirrenderer.FHIRUnitTestRenderer(
+        #         self, self.settings, self.generator_module
+        #     )
+        #     renderer.render()
 
 
 class FHIRVersionInfo(object):
