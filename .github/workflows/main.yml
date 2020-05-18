@@ -25,6 +25,7 @@ jobs:
     # Runs a single command using the runners shell
     - name: Install Poetry
       uses: dschep/install-poetry-action@v1.3
-    - run: poetry run pytest tests
+    - name: Install dependencies
+      run: poetry install
 
 
