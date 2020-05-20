@@ -1,5 +1,7 @@
 ![CI](https://github.com/skalarsystems/fhirzeug/workflows/CI/badge.svg)
 [![GitHub license](https://img.shields.io/github/license/skalarsystems/fhirzeug.svg)](./LICENSE.txt)
+[![Codecov](https://codecov.io/gh/skalarsystems/fhirzeug/branch/master/graphs/badge.svg?branch=master)](https://codecov.io/gh/skalarsystems/fhirzeug/branch/master)
+
 
 
 # FHIR Zeug - A FHIR Spec Compiler
