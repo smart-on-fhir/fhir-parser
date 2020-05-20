@@ -1,3 +1,1 @@
-import datetime
-
-FHIRDate = datetime.datetime
+FHIRDate = str

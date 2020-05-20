@@ -1,14 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from .logger import logger
+from typing import List, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .fhirspec import FHIRStructureDefinitionElement, FHIRElementType
 
 
-class FHIRClass(object):
+class FHIRClass:
     """ An element/resource that should become its own class.
     """
 
-    known = {}
+    known: Dict[str, "FHIRClass"] = {}
 
     @classmethod
     def for_element(cls, element):
@@ -25,23 +26,23 @@ class FHIRClass(object):
         return klass, True
 
     @classmethod
-    def with_name(cls, class_name):
+    def with_name(cls, class_name) -> str:
         return cls.known.get(class_name)
 
     def __init__(self, element, class_name):
         assert element.represents_class
-        self.path = element.path
-        self.name = class_name
+        self.path: str = element.path
+        self.name: str = class_name
         self.module = None
         self.resource_type = element.name_of_resource()
         self.superclass = None
-        self.superclass_name = element.superclass_name
-        self.short = element.definition.short
-        self.formal = element.definition.formal
-        self.properties = []
+        self.superclass_name: str = element.superclass_name
+        self.short: str = element.definition.short
+        self.formal: str = element.definition.formal
+        self.properties: "FHIRClassProperty" = []
         self.expanded_nonoptionals = {}
 
-    def add_property(self, prop):
+    def add_property(self, prop: "FHIRClassProperty") -> None:
         """ Add a property to the receiver.
         
         :param FHIRClassProperty prop: A FHIRClassProperty instance
@@ -66,28 +67,28 @@ class FHIRClass(object):
         self.properties.append(prop)
 
         if prop.nonoptional:
-            if prop.one_of_many is not None:
+            if prop.choice_of_type is not None:
                 existing = (
-                    self.expanded_nonoptionals[prop.one_of_many]
-                    if prop.one_of_many in self.expanded_nonoptionals
+                    self.expanded_nonoptionals[prop.choice_of_type]
+                    if prop.choice_of_type in self.expanded_nonoptionals
                     else []
                 )
                 existing.append(prop)
-                self.expanded_nonoptionals[prop.one_of_many] = sorted(
+                self.expanded_nonoptionals[prop.choice_of_type] = sorted(
                     existing, key=lambda x: x.name
                 )
             else:
                 self.expanded_nonoptionals[prop.name] = [prop]
 
     @property
-    def nonexpanded_properties(self):
+    def nonexpanded_properties(self) -> List["FHIRProperty"]:
         nonexpanded = []
         included = set()
         for prop in self.properties:
-            if prop.one_of_many:
-                if prop.one_of_many in included:
+            if prop.choice_of_type:
+                if prop.choice_of_type in included:
                     continue
-                included.add(prop.one_of_many)
+                included.add(prop.choice_of_type)
             nonexpanded.append(prop)
         return nonexpanded
 
@@ -105,10 +106,10 @@ class FHIRClass(object):
         for prop in self.properties:
             if not prop.nonoptional:
                 continue
-            if prop.one_of_many:
-                if prop.one_of_many in included:
+            if prop.choice_of_type:
+                if prop.choice_of_type in included:
                     continue
-                included.add(prop.one_of_many)
+                included.add(prop.choice_of_type)
             nonexpanded.append(prop)
         return nonexpanded
 
@@ -140,9 +141,9 @@ class FHIRClass(object):
         return False
 
     @property
-    def has_one_of_many(self):
+    def has_choice_of_type(self):
         for prop in self.properties:
-            if prop.one_of_many is not None:
+            if prop.choice_of_type is not None:
                 return True
         return False
 
@@ -179,32 +180,57 @@ class FHIRClass(object):
 
     @property
     def has_expanded_nonoptionals(self):
-        return len([p for p in self.properties if p.one_of_many and p.nonoptional]) > 0
+        return (
+            len([p for p in self.properties if p.choice_of_type and p.nonoptional]) > 0
+        )
 
     @property
     def has_only_expandable_properties(self):
-        return len([p for p in self.properties if not p.one_of_many]) < 1
+        return len([p for p in self.properties if not p.choice_of_type]) < 1
 
     @property
     def resource_type_enum(self):
         return self.resource_type[:1].lower() + self.resource_type[1:]
 
+    @property
+    def choice_properties(self) -> Dict[str, list]:
+        result: Dict[str, list] = {}
+        for p in self.properties:
+            if p.choice_of_type:
+                result.setdefault(p.choice_of_type, []).append(p.name)
+        return result
+
+    @property
+    def properties_map(self) -> Dict[str, "FHIRClassProperty"]:
+        result: Dict[str, "FHIRClassProperty"] = {}
+        for p in self.properties:
+            result[p.name] = p
+        return result
+
     def __repr__(self):
         return f"<{self.__class__.__name__}> path: {self.path}, name: {self.name}, resourceType: {self.resource_type}"
 
 
-class FHIRClassProperty(object):
+class FHIRClassProperty:
     """ An element describing an instance property.
     """
 
-    def __init__(self, element, type_obj, type_name=None):
+    def __init__(
+        self,
+        element: "FHIRStructureDefinitionElement",
+        type_obj: "FHIRElementType",
+        type_name: str = None,
+    ):
+
         assert (
             element and type_obj
         )  # and must be instances of FHIRStructureDefinitionElement and FHIRElementType
         spec = element.profile.spec
 
         self.path = element.path
-        self.one_of_many = (
+
+        # https://www.hl7.org/fhir/formats.html#choice
+        self.choice_of_type = (
             None  # assign if this property has been expanded from "property[x]"
         )
         if not type_name:
@@ -212,7 +238,7 @@ class FHIRClassProperty(object):
 
         name = element.definition.prop_name
         if "[x]" in name:
-            self.one_of_many = spec.safe_property_name(name.replace("[x]", ""))
+            self.choice_of_type = spec.safe_property_name(name.replace("[x]", ""))
             name = name.replace(
                 "[x]", "{}{}".format(type_name[:1].upper(), type_name[1:])
             )
@@ -256,8 +282,8 @@ class FHIRClassProperty(object):
         else:
             doc = self.short
 
-        if self.one_of_many is not None:
-            add = f"\nOne of `{self.one_of_many}[x]`"
+        if self.choice_of_type is not None:
+            add = f"\nOne of `{self.choice_of_type}[x]`"
             doc = doc + add if doc is not None and len(doc) > 0 else add
 
         return doc
@@ -268,12 +294,15 @@ class FHIRClassProperty(object):
 
     @property
     def nonexpanded_name(self):
-        return self.one_of_many if self.one_of_many is not None else self.name
+        return self.choice_of_type if self.choice_of_type is not None else self.name
 
     @property
     def nonexpanded_classname(self):
         if (
-            self.one_of_many is not None
+            self.choice_of_type is not None
         ):  # We leave it up to the template to supply a class name in this case
             return None
         return self.desired_classname
+
+    def __repr__(self):
+        return f"<FHIRClassProperty {self.name=} >"

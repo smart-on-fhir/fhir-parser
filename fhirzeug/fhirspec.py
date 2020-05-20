@@ -9,6 +9,7 @@ import glob
 import json
 import datetime
 import shutil
+from typing import Dict, List
 
 from .logger import logger
 from . import fhirclass, fhirunittest, fhirrenderer
@@ -30,9 +31,13 @@ class FHIRSpec(object):
         self.directory = directory
         self.settings = settings
         self.info = FHIRVersionInfo(self, directory)
-        self.valuesets = {}  # system-url: FHIRValueSet()
-        self.codesystems = {}  # system-url: FHIRCodeSystem()
-        self.profiles = {}  # profile-name: FHIRStructureDefinition()
+        self.valuesets: Dict[str, "FHIRValueSet"] = {}  # system-url: FHIRValueSet()
+        self.codesystems: Dict[
+            str, "FHIRCodeSystem"
+        ] = {}  # system-url: FHIRCodeSystem()
+        self.profiles: Dict[
+            str, "FHIRStructureDefinition"
+        ] = {}  # profile-name: FHIRStructureDefinition()
         self.unit_tests = None  # FHIRUnitTestCollection()
 
         self.generator_module = generator_module
@@ -88,7 +93,7 @@ class FHIRSpec(object):
                     codesystem = FHIRCodeSystem(self, resource)
                     self.found_codesystem(codesystem)
                 else:
-                    logger.warn(
+                    logger.warning(
                         "CodeSystem with no concepts: {}".format(resource["url"])
                     )
         logger.info(
@@ -424,7 +429,7 @@ class FHIRValueSet(object):
             )  # "import" is for DSTU-2 compatibility
 
         if 1 != len(include):
-            logger.warn(
+            logger.warning(
                 "Ignoring ValueSet with more than 1 includes ({}: {})".format(
                     len(include), include
                 )
@@ -549,7 +554,7 @@ class FHIRStructureDefinition(object):
         self.elements = None
         self.main_element = None
         self._class_map = {}
-        self.classes = []
+        self.classes: List[fhirclass.FHIRClass] = []
         self._did_finalize = False
 
         if profile is not None:
@@ -1144,7 +1149,6 @@ class FHIRElementType(object):
             self.parse_from(type_dict)
 
     def parse_from(self, type_dict):
-        print(type_dict)
         self.code = type_dict.get("code")
 
         # Look for the "structuredefinition-fhir-type" extension, introduced after R4

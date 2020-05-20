@@ -132,21 +132,11 @@ class FHIRStructureDefinitionRenderer(FHIRRenderer):
             "FHIRAbstractResource",
         ]
 
-        with open("output/derive_graph", "w") as o:
-            import pprint
-
-            o.write(pprint.pformat(derive_graph))
-
         while work_stack:
             current = work_stack.pop()
             for elm in derive_graph.get(current, []):
                 work_stack.append(elm.name)
                 classes.append(elm)
-
-        with open("output/class_order", "w") as o:
-            import pprint
-
-            o.write(pprint.pformat(classes))
 
         for clazz in classes:
             # classes = sorted(profile.writable_classes(), key=lambda x: x.name)

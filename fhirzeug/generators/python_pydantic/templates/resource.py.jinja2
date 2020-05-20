@@ -24,17 +24,31 @@ class {{ clazz.name }}({{ clazz.superclass.name|default('object')}}):
     {%- if prop.is_array %}
         {%- set type_name = "typing.List[{}]".format(type_name) %}
     {%- endif %}
-    {%- if prop.is_optional %}
+    {%- if prop.is_optional or prop.choice_of_type %}{# one of many https://www.hl7.org/fhir/formats.html#choice #}
         {%- set type_name = "typing.Optional[{}]".format(type_name) %}
     {%- endif %}
     {{ prop.name }}: {{ type_name }}
-
 
     """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
     {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
     {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
     {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
 {% endfor %}
+
+{% for choice_prop, compound in clazz.choice_properties.items() %}
+#   {{ clazz.properties_map[compound[0]].__dict__}}
+
+    _{{choice_prop}}_choice_of_type_validator = pydantic.root_validator(allow_reuse=True) \
+     (choice_of_validator(set({{compound}}), {{clazz.properties_map[compound[0]].is_optional}}))
+{% endfor %}
+
+    {# {% for prop in clazz.properties %} #}
+
+     {# @validator('b')
+  def check_a_or_b(cls, v, values):
+    if 'a' not in values and not b:
+      raise ValueError('either a or b is required')
+    return b #}
     
 
 {# {%- for clazz in classes %}

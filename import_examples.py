@@ -5,7 +5,7 @@ from pydantic.error_wrappers import ValidationError
 
 import r4
 
-for file_path in pathlib.Path("./downloads").glob("*-example.json"):
+for file_path in pathlib.Path("./downloads/httphl7orgfhirR4").glob("*-example.json"):
     print(file_path)
     with file_path.open() as f_in:
         doc = json.load(f_in)
