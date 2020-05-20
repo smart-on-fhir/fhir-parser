@@ -17,7 +17,7 @@ class {{ clazz.name }}({{ clazz.superclass.name|default('object')}}):
 {% for prop in clazz.properties %}
     
 
-    {%- set type_name = prop.class_name %}
+    {%- set type_name = prop.desired_classname %}
     {%- if not prop.is_native %}
         {%- set type_name = "\"{}\"".format(type_name) %}
     {%- endif %}
@@ -30,9 +30,9 @@ class {{ clazz.name }}({{ clazz.superclass.name|default('object')}}):
     {{ prop.name }}: {{ type_name }}
 
     """ {{ prop.short|wordwrap(67, wrapstring="\n        ") }}.
-    {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.class_name }}`{% if prop.is_array %} items{% endif %}
+    {% if prop.is_array %}List of{% else %}Type{% endif %} `{{ prop.desired_classname }}`{% if prop.is_array %} items{% endif %}
     {%- if prop.reference_to_names|length > 0 %} referencing `{{ prop.reference_to_names|join(', ') }}`{% endif %}
-    {%- if prop.json_class != prop.class_name %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
+    {%- if prop.json_class != prop.desired_classname %} (represented as `{{ prop.json_class }}` in JSON){% endif %}. """
 {% endfor %}
 
 {% for choice_prop, compound in clazz.choice_properties.items() %}
