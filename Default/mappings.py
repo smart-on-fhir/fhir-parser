@@ -63,6 +63,7 @@ reservedmap = {
 # For enum codes where a computer just cannot generate reasonable names
 enum_map = {
     '=': 'eq',
+    '!=': 'ne',
     '<': 'lt',
     '<=': 'lte',
     '>': 'gt',
