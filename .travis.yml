@@ -1,0 +1,4 @@
+language: python
+script:
+  - echo "from Default.settings import *" > settings.py
+  - ./generate.py
