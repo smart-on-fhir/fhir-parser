@@ -154,7 +154,7 @@ class FHIRUnitTestItem(object):
         self.value = value
         self.klass = klass
         self.array_item = array_item
-        self.enum = enum_item['name'] if enum_item is not None else None
+        self.enum = enum_item.name if enum_item is not None else None
     
     def create_tests(self, controller):
         """ Creates as many FHIRUnitTestItem instances as the item defines, or
