@@ -147,8 +147,7 @@ class FHIRUnitTestItem(object):
     
     def __init__(self, filepath, path, value, klass, array_item, enum_item):
         assert path
-        if filepath.find("plandefinition-example-cardiology-os") == -1: # this example has a null value
-            assert value is not None, (filepath, path)
+        assert value is not None, (filepath, path)
         assert klass
         self.filepath = filepath        # needed for debug logging
         self.path = path
