@@ -7,7 +7,7 @@ from Default.mappings import *
 
 
 # Base URL for where to load specification data from
-specification_url = 'http://hl7.org/fhir/2018May/'
+specification_url = 'http://hl7.org/fhir/R4'
 #specification_url = 'http://build.fhir.org'
 
 # To which directory to download to

@@ -147,14 +147,14 @@ class FHIRUnitTestItem(object):
     
     def __init__(self, filepath, path, value, klass, array_item, enum_item):
         assert path
-        assert value is not None
+        assert value is not None, (filepath, path)
         assert klass
         self.filepath = filepath        # needed for debug logging
         self.path = path
         self.value = value
         self.klass = klass
         self.array_item = array_item
-        self.enum = enum_item['name'] if enum_item is not None else None
+        self.enum = enum_item.name if enum_item is not None else None
     
     def create_tests(self, controller):
         """ Creates as many FHIRUnitTestItem instances as the item defines, or
