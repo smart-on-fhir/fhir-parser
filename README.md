@@ -1,14 +1,12 @@
 Python FHIR Parser
 ==================
-[![Build Status](https://travis-ci.org/palfrey/fhir-parser.svg?branch=master)](https://travis-ci.org/palfrey/fhir-parser)
-
 A Python FHIR specification parser for model class generation.
 If you've come here because you want _Swift_ or _Python_ classes for FHIR data models, look at our client libraries instead:
 
 - [Swift-FHIR][] and [Swift-SMART][]
 - Python [client-py][]
 
-The `master` branch is currently capable of parsing _R5_.
+The `main` branch is currently capable of parsing _R5_.
 
 This work is licensed under the [APACHE license][license].
 FHIR® is the registered trademark of [HL7][] and is used with the permission of HL7.
@@ -24,7 +22,7 @@ These representations are then used by [Jinja][] templates to create classes in 
 This script does its job for the most part, but it doesn't yet handle all FHIR peculiarities and there's no guarantee the output is correct or complete.
 This repository **does not include the templates and base classes** needed for class generation, you must do this yourself in your project.
 You will typically add this repo as a submodule to your framework project, create a directory that contains the necessary base classes and templates, create _settings_ and _mappings_ files and run the script.
-Examples on what you would need to do for Python classes can be found in _Sample/settings.py_, _Sample/mappings.py_ and _Sample/templates*_.
+Examples on what you would need to do for Python classes can be found in _Default/settings.py_, _Default/mappings.py_ and _Sample/templates*_.
 
 
 Use
