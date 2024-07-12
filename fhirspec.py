@@ -623,7 +623,7 @@ class FHIRStructureDefinition(object):
                         raise Exception('There is no class "{}" for property "{}" on "{}" in {}'.format(prop_cls_name, prop.name, klass.name, self.name))
                     else:
                         prop.module_name = prop_cls.module
-                        if not prop_cls_name in needed:
+                        if prop_cls_name not in needed:
                             needed.add(prop_cls_name)
                             needs.append(prop_cls)
         
