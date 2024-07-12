@@ -1,6 +1,7 @@
 *.pyc
 __pycache__
 env
+/.idea/
 
 # ignore mappings and settings files
 /mappings.py
