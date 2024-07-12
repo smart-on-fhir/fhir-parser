@@ -31,8 +31,47 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          # isodate is used by our sample templates and pytest is our runner of choice
+          pip install isodate pytest
 
-      - name: Test generation
+      - name: Cache R5 download
+        uses: actions/cache@v4
+        with:
+          path: downloads-r5
+          key: downloads-r5
+
+      - name: Generate R5
         run: |
-          echo "from Default.settings import *" > settings.py
+          cp ./Default/settings.py .
+          sed -i "s|'../models|'models|g" settings.py
+          sed -i "s|'downloads'|'downloads-r5'|g" settings.py
+          sed -i "s|\(^specification_url = \)'.*'|\1'http://hl7.org/fhir/R5'|g" settings.py
+          rm -rf models
           ./generate.py
+          grep 'Generated from FHIR 5.0.0' models/account.py # sanity check
+
+# FIXME: The R5 tests fail to pass currently (due to some wrong types and missing properties)
+#        See https://github.com/smart-on-fhir/fhir-parser/issues/51
+#      - name: Test R5
+#        run: |
+#          FHIR_UNITTEST_DATADIR=downloads-r5 pytest
+
+      - name: Cache R4 download
+        uses: actions/cache@v4
+        with:
+          path: downloads-r4
+          key: downloads-r4
+
+      - name: Generate R4
+        run: |
+          cp ./Default/settings.py .
+          sed -i "s|'../models|'models|g" settings.py
+          sed -i "s|'downloads'|'downloads-r4'|g" settings.py
+          sed -i "s|\(^specification_url = \)'.*'|\1'http://hl7.org/fhir/R4'|g" settings.py
+          rm -rf models
+          ./generate.py
+          grep 'Generated from FHIR 4.0.1' models/account.py # sanity check
+
+      - name: Test R4
+        run: |
+          FHIR_UNITTEST_DATADIR=downloads-r4 pytest

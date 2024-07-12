@@ -8,6 +8,7 @@ import sys
 import glob
 import json
 import datetime
+import pathlib
 
 from logger import logger
 import fhirclass
@@ -267,6 +268,9 @@ class FHIRSpec(object):
             
             vsrenderer = fhirrenderer.FHIRValueSetRenderer(self, self.settings)
             vsrenderer.render()
+
+            # Create init file so that our relative imports work out of the box
+            pathlib.Path(self.settings.tpl_resource_target, "__init__.py").touch()
         
         if self.settings.write_factory:
             renderer = fhirrenderer.FHIRFactoryRenderer(self, self.settings)
@@ -609,11 +613,11 @@ class FHIRStructureDefinition(object):
             # look at all properties' classes and assign their modules
             for prop in klass.properties:
                 prop_cls_name = prop.class_name
-                if prop.enum is not None:
+                if prop.enum is not None and not self.spec.class_name_is_native(prop_cls_name):
                     enum_cls, did_create = fhirclass.FHIRClass.for_element(prop.enum)
                     enum_cls.module = prop.enum.name
                     prop.module_name = enum_cls.module
-                    if not enum_cls.name in needed:
+                    if enum_cls.name not in needed:
                         needed.add(enum_cls.name)
                         needs.append(enum_cls)
                 

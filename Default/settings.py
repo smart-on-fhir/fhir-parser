@@ -36,7 +36,7 @@ tpl_dependencies_target = './dependencies.json'         # write dependency JSON 
 write_unittests = True
 tpl_unittest_source = 'template-unittest.py'    # the template to use for unit test generation
 tpl_unittest_target = '../models'               # target directory to write the generated unit test files to
-tpl_unittest_target_ptrn = '{}_tests.py'        # target file name pattern for unit tests; the one placeholder (`{}`) will be the class name
+tpl_unittest_target_ptrn = '{}_test.py'         # target file name pattern for unit tests; the one placeholder (`{}`) will be the class name
 unittest_copyfiles = []                         # array of file names to copy to the test directory `tpl_unittest_target` (e.g. unit test base classes)
 
 unittest_format_path_prepare = '{}'        # used to format `path` before appending another path element - one placeholder for `path`
