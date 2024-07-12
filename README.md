@@ -6,7 +6,8 @@ If you've come here because you want _Swift_ or _Python_ classes for FHIR data m
 - [Swift-FHIR][] and [Swift-SMART][]
 - Python [client-py][]
 
-The `main` branch is currently capable of parsing _R5_.
+The `main` branch is currently capable of parsing _R4_
+and has preliminary support for _R5_.
 
 This work is licensed under the [APACHE license][license].
 FHIR® is the registered trademark of [HL7][] and is used with the permission of HL7.
@@ -75,7 +76,6 @@ If an element itself defines a class, e.g. `Patient.animal`, calling the instanc
 The class of this property is derived from `element.type`, which is expected to only contain one entry, in this matter:
 
 - If _type_ is `BackboneElement`, a class name is constructed from the parent element (in this case _Patient_) and the property name (in this case _animal_), camel-cased (in this case _PatientAnimal_).
-- If _type_ is `*`, a class for all classes found in settings` `star_expand_types` is created
 - Otherwise, the type is taken as-is (e.g. _CodeableConcept_) and mapped according to mappings' `classmap`, which is expected to be a valid FHIR class.
 
 > TODO: should `http://hl7.org/fhir/StructureDefinition/structuredefinition-explicit-type-name` be respected?
