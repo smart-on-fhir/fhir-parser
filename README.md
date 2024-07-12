@@ -1,7 +1,5 @@
 Python FHIR Parser
 ==================
-[![Build Status](https://travis-ci.org/palfrey/fhir-parser.svg?branch=master)](https://travis-ci.org/palfrey/fhir-parser)
-
 A Python FHIR specification parser for model class generation.
 If you've come here because you want _Swift_ or _Python_ classes for FHIR data models, look at our client libraries instead:
 
