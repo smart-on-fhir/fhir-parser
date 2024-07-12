@@ -5,7 +5,7 @@
 # Which class names to map to resources and elements
 classmap = {
     'Any': 'Resource',
-    'Practitioner.role': 'PractRole',   # to avoid Practinioner.role and PractitionerRole generating the same class
+    'Practitioner.role': 'PractRole',   # to avoid Practitioner.role and PractitionerRole generating the same class
     
     'boolean': 'bool',
     'integer': 'int',
