@@ -1,79 +1,48 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-#  Facilitate working with dates.
-#  2014, SMART Health IT.
+"""Facilitate working with FHIR date fields."""
+# 2024, SMART Health IT.
 
-import sys
-import logging
-import isodate
 import datetime
+import re
+from typing import Any, Union
+
+from ._dateutils import _FHIRDateTimeMixin
 
 
-class FHIRDate(object):
-    """ Facilitate working with dates.
-    
-    - `date`: datetime object representing the receiver's date-time
+class FHIRDate(_FHIRDateTimeMixin):
     """
-    
-    def __init__(self, jsonval=None):
-        self.date = None
-        if jsonval is not None:
-            isstr = isinstance(jsonval, str)
-            if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
-                isstr = isinstance(jsonval, basestring)
-            if not isstr:
-                raise TypeError("Expecting string when initializing {}, but got {}"
-                    .format(type(self), type(jsonval)))
-            try:
-                if 'T' in jsonval:
-                    self.date = isodate.parse_datetime(jsonval)
-                else:
-                    self.date = isodate.parse_date(jsonval)
-            except Exception as e:
-                logging.warning("Failed to initialize FHIRDate from \"{}\": {}"
-                    .format(jsonval, e))
-        
-        self.origval = jsonval
-    
-    def __setattr__(self, prop, value):
-        if 'date' == prop:
-            self.origval = None
-        object.__setattr__(self, prop, value)
-    
-    @property
-    def isostring(self):
-        if self.date is None:
-            return None
-        if isinstance(self.date, datetime.datetime):
-            return isodate.datetime_isoformat(self.date)
-        return isodate.date_isoformat(self.date)
-    
+    A convenience class for working with FHIR dates in Python.
+
+    http://hl7.org/fhir/R4/datatypes.html#date
+
+    Converting to a Python representation does require some compromises:
+    - This class will convert partial dates ("reduced precision dates") like "2024" into full
+      dates using the earliest possible time (in this example, "2024-01-01") because Python's
+      date class does not support partial dates.
+
+    If such compromise is not useful for you, avoid using the `date` or `isostring`
+    properties and just use the `as_json()` method in order to work with the original,
+    exact string.
+
+    Public properties:
+    - `date`: datetime.date representing the JSON value
+    - `isostring`: an ISO 8601 string version of the above Python object
+
+    Public methods:
+    - `as_json`: returns the original JSON used to construct the instance
+    """
+
+    def __init__(self, jsonval: Union[str, None] = None):
+        self.date: Union[datetime.date, None] = None
+        super().__init__(jsonval)
+
+    ##################################
+    # Private properties and methods #
+    ##################################
+
+    # Pulled from spec for date
+    _REGEX = re.compile(r"([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?")
+    _FIELD = "date"
+
     @classmethod
-    def with_json(cls, jsonobj):
-        """ Initialize a date from an ISO date string.
-        """
-        isstr = isinstance(jsonobj, str)
-        if not isstr and sys.version_info[0] < 3:       # Python 2.x has 'str' and 'unicode'
-            isstr = isinstance(jsonobj, basestring)
-        if isstr:
-            return cls(jsonobj)
-        
-        if isinstance(jsonobj, list):
-            return [cls(jsonval) for jsonval in jsonobj]
-        
-        raise TypeError("`cls.with_json()` only takes string or list of strings, but you provided {}"
-            .format(type(jsonobj)))
-    
-    @classmethod
-    def with_json_and_owner(cls, jsonobj, owner):
-        """ Added for compatibility reasons to FHIRElement; "owner" is
-        discarded.
-        """
-        return cls.with_json(jsonobj)
-    
-    def as_json(self):
-        if self.origval is not None:
-            return self.origval
-        return self.isostring
-    
+    def _from_string(cls, value: str) -> Any:
+        return cls._parse_date(value)

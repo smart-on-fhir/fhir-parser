@@ -157,5 +157,4 @@ class FHIRAbstractResource(fhirabstractbase.FHIRAbstractBase):
         return None
 
 
-from . import fhirdate
 from . import fhirelementfactory
