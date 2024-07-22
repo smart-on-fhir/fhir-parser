@@ -12,9 +12,9 @@ classmap = {
     'positiveInt': 'int',
     'unsignedInt': 'int',
     'date': 'FHIRDate',
-    'dateTime': 'FHIRDate',
-    'instant': 'FHIRDate',
-    'time': 'FHIRDate',
+    'dateTime': 'FHIRDateTime',
+    'instant': 'FHIRInstant',
+    'time': 'FHIRTime',
     'decimal': 'float',
     
     'string': 'str',
@@ -46,6 +46,9 @@ jsonmap = {
     'float': 'float',
     
     'FHIRDate': 'str',
+    'FHIRDateTime': 'str',
+    'FHIRInstant': 'str',
+    'FHIRTime': 'str',
 }
 jsonmap_default = 'dict'
 

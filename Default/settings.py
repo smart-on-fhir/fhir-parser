@@ -65,5 +65,9 @@ manual_profiles = [
     ]),
     ('Sample/fhirabstractresource.py', 'fhirabstractresource', ['FHIRAbstractResource']),
     ('Sample/fhirreference.py', 'fhirreference', ['FHIRReference']),
-    ('Sample/fhirdate.py', 'fhirdate', ['date', 'dateTime', 'instant', 'time']),
+    ('Sample/fhirdate.py', 'fhirdate', ['date']),
+    ('Sample/fhirdatetime.py', 'fhirdatetime', ['dateTime']),
+    ('Sample/fhirinstant.py', 'fhirinstant', ['instant']),
+    ('Sample/fhirtime.py', 'fhirtime', ['time']),
+    ('Sample/_dateutils.py', '_dateutils', []),
 ]
