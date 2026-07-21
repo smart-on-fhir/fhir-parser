@@ -1003,12 +1003,12 @@ class FHIRStructureDefinitionElementDefinition(object):
                 raise Exception("Only relative 'contentReference' element definitions are supported right now")
             elem = self.element.profile.element_with_id(self.content_reference[1:])
             if elem is None:
-                raise Exception(f'There is no element definiton with id "{self.content_reference}", as referenced by {self.path} in {self.profile.url}')
+                raise Exception(f'There is no element definition with id "{self.content_reference}", as referenced by {self.path} in {self.profile.url}')
             self._content_referenced = elem.definition
         elif self.dstu2_name_reference is not None:      # DSTU-2 backwards-compatibility
             elem = self.element.profile.dstu2_element_with_name(self.dstu2_name_reference)
             if elem is None:
-                raise Exception(f'There is no element definiton with name "{self.dstu2_name_reference}", as referenced by {self.path} in {self.profile.url}')
+                raise Exception(f'There is no element definition with name "{self.dstu2_name_reference}", as referenced by {self.path} in {self.profile.url}')
             self._content_referenced = elem.definition
         
         # resolve bindings
