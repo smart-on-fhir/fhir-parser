@@ -49,11 +49,9 @@ jobs:
           ./generate.py
           grep 'Generated from FHIR 5.0.0' models/account.py # sanity check
 
-# FIXME: The R5 tests fail to pass currently (due to some wrong types and missing properties)
-#        See https://github.com/smart-on-fhir/fhir-parser/issues/51
-#      - name: Test R5
-#        run: |
-#          FHIR_UNITTEST_DATADIR=downloads-r5 pytest
+      - name: Test R5
+        run: |
+          FHIR_UNITTEST_DATADIR=downloads-r5 pytest
 
       - name: Cache R4 download
         uses: actions/cache@v4

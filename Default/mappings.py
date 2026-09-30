@@ -11,6 +11,7 @@ classmap = {
     'integer': 'int',
     'positiveInt': 'int',
     'unsignedInt': 'int',
+    'integer64': 'int',
     'date': 'FHIRDate',
     'dateTime': 'FHIRDateTime',
     'instant': 'FHIRInstant',

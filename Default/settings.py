@@ -59,7 +59,7 @@ manual_profiles = [
     ('Sample/fhirabstractbase.py', 'fhirabstractbase', [
         'boolean',
         'string', 'base64Binary', 'code', 'id',
-        'decimal', 'integer', 'unsignedInt', 'positiveInt',
+        'decimal', 'integer', 'integer64', 'unsignedInt', 'positiveInt',
         'uri', 'oid', 'uuid',
         'FHIRAbstractBase',
     ]),
